@@ -1,12 +1,13 @@
 import type { Metadata } from 'next';
 import { Editable } from '@/components/edit/Editable';
+import { EmptySection } from '@/components/edit/EmptySection';
 import { buildMetadata, JsonLd, breadcrumbJsonLd , siteName } from '@/lib/seo';
 import { ContactForm } from './ContactForm';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { colors as p, fonts } from '@/lib/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
-import { getCopy } from '@/lib/copy';
+import { getCopy, list } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
@@ -40,21 +41,22 @@ const Calendar = () => <svg width="22" height="22" viewBox="0 0 256 256" fill="c
  *  A card with nothing to show is left out rather than shown empty. A site with no phone number
  *  should have no phone card, not a card saying Phone and nothing else. */
 const buildCards = (
-  settings: { contact_email?: string | null; contact_phone?: string | null; contact_location?: string | null },
+  settings: { contact_email?: string | null; contact_phone?: string | null; contact_location?: string | null; show_bookings?: boolean | null },
   t: (key: string) => string,
-  bookingUrl: string,
 ) => [
-  { icon: <Mail />, title: t('contact.cards.email'), value: settings.contact_email?.trim(), href: (v: string) => `mailto:${v}` },
-  { icon: <Phone />, title: t('contact.cards.phone'), value: settings.contact_phone?.trim(), href: (v: string) => `tel:${v.replace(/[^\d+]/g, '')}` },
-  { icon: <MapPin />, title: t('contact.cards.location'), value: settings.contact_location?.trim(), href: null },
-  // Our own page now, so it opens in the same tab.
-  { icon: <Calendar />, title: t('contact.cards.booking'), value: t('contact.cards.bookingNote'), href: () => bookingUrl },
+  { icon: <Mail />, title: t('contact.cards.email'), titleKey: 'contact.cards.email', valueKey: 'site.contact_email', value: settings.contact_email?.trim(), href: (v: string) => `mailto:${v}` },
+  { icon: <Phone />, title: t('contact.cards.phone'), titleKey: 'contact.cards.phone', valueKey: 'site.contact_phone', value: settings.contact_phone?.trim(), href: (v: string) => `tel:${v.replace(/[^\d+]/g, '')}` },
+  { icon: <MapPin />, title: t('contact.cards.location'), titleKey: 'contact.cards.location', valueKey: 'site.contact_location', value: settings.contact_location?.trim(), href: null },
+  // Only while bookings are on. With them off the booking link falls back to the contact page, and
+  // on the contact page that is a card inviting you to book a call that takes you to where you are.
+  // Our own page, so it opens in the same tab.
+  { icon: <Calendar />, title: t('contact.cards.booking'), titleKey: 'contact.cards.booking', valueKey: 'contact.cards.bookingNote', value: settings.show_bookings ? t('contact.cards.bookingNote') : '', href: () => bookingHref(true) },
 ].flatMap((c) => (c.value ? [{ ...c, value: c.value, href: c.href ? c.href(c.value) : null }] : []));
 
 export default async function ContactPage() {
   await requireModule('contact');
   const [settings, t] = await Promise.all([getSiteSettings(), getCopy('contact')]);
-  const cards = buildCards(settings, t, bookingHref(settings.show_bookings));
+  const cards = buildCards(settings, t);
 
   return (
     <div style={{ fontFamily: fonts.sans, background: p.white }}>
@@ -77,14 +79,29 @@ export default async function ContactPage() {
       </div>
 
       {/* INFO CARDS */}
+      {/* Gone when there is nothing to put in it: no address, number or place on This Site and no
+          bookings. It was a white band of padding between the hero and the form. */}
+      {cards.length === 0 && (
+        <EmptySection
+          name="Contact details"
+          why="No email, phone or place on This Site, and bookings are off, so there is no card to show."
+          fills={{ kind: 'field', k: 'site.contact_email', label: 'the contact details' }}
+        />
+      )}
+      {cards.length > 0 && (
       <div className="aa-contact-wrap" style={{ background: '#fff' }}>
         <div className="aa-contact-cards" style={{ maxWidth: 1000, margin: '0 auto' }}>
           {cards.map((c) => {
             const inner = (
               <>
                 <div style={{ color: p.orange, marginBottom: 12 }}>{c.icon}</div>
-                <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 16, marginBottom: 6 }}>{c.title}</div>
-                <div style={{ color: p.body, fontSize: 14 }}>{c.value}</div>
+                <Editable k={c.titleKey} label="this heading" as="div" block>
+                  <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 16, marginBottom: 6 }}>{c.title}</div>
+                </Editable>
+                {/* The address, number and place are This Site's, so the pen opens that tab. */}
+                <Editable k={c.valueKey} label="this line" as="div" block>
+                  <div style={{ color: p.body, fontSize: 14 }}>{c.value}</div>
+                </Editable>
               </>
             );
             const cardStyle: React.CSSProperties = { background: p.paleTeal, borderRadius: 14, padding: '28px 24px', textAlign: 'center', textDecoration: 'none', display: 'block' };
@@ -98,11 +115,26 @@ export default async function ContactPage() {
           })}
         </div>
       </div>
+      )}
 
       {/* FORM */}
       <div className="aa-contact-wrap" style={{ background: p.skyTeal }}>
         <div style={{ maxWidth: 640, margin: '0 auto' }}>
-          <ContactForm />
+          <ContactForm
+            words={{
+              heading: t('contact.form.heading'), intro: t('contact.form.intro'),
+              nameLabel: t('contact.form.nameLabel'), namePlaceholder: t('contact.form.namePlaceholder'),
+              emailLabel: t('contact.form.emailLabel'), emailPlaceholder: t('contact.form.emailPlaceholder'),
+              phoneLabel: t('contact.form.phoneLabel'), phonePlaceholder: t('contact.form.phonePlaceholder'),
+              typeLabel: t('contact.form.typeLabel'),
+              subjectLabel: t('contact.form.subjectLabel'), subjectPlaceholder: t('contact.form.subjectPlaceholder'),
+              messageLabel: t('contact.form.messageLabel'), messagePlaceholder: t('contact.form.messagePlaceholder'),
+              methodLabel: t('contact.form.methodLabel'), methodEmail: t('contact.form.methodEmail'), methodPhone: t('contact.form.methodPhone'),
+              submit: t('contact.form.submit'), sending: t('contact.form.sending'),
+              sentHeading: t('contact.form.sentHeading'), sentBody: t('contact.form.sentBody'), sentAgain: t('contact.form.sentAgain'),
+            }}
+            types={list(t('contact.form.types'))}
+          />
         </div>
       </div>
     </div>

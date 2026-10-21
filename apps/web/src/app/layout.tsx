@@ -97,9 +97,15 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               the This Site tab when it is ready.
             </p>
           )}
-          <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} signedInAsAdmin={admin} />
+          {/* The menu and footer get pens too. They were outside the area, so the words on every
+              page were the only ones that could not be found by pointing at them. */}
+          <EditableArea on={admin}>
+            <Navigation settings={settings} name={displayName(user)} signedIn={!!user} labels={labels} signedInAsAdmin={admin} />
+          </EditableArea>
           <div className="flex-1"><EditableArea on={admin}>{children}</EditableArea></div>
-          <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} />
+          <EditableArea on={admin}>
+            <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} />
+          </EditableArea>
           </>
           )}
           {/* Not mounted at all for anyone else, so a visitor never downloads the editor, and

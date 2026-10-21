@@ -9,12 +9,15 @@ import { Editable, AddAPicture } from '@/components/edit/Editable';
 import { EmptySection } from '@/components/edit/EmptySection';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
+import { siteWords } from '@/lib/copy/siteWords';
+import { creditRules } from '@/lib/quoteCredit';
 import { Prose } from '@/lib/copy/Prose';
 import { sectionNodes } from '@/components/Sections';
 import { orderedSections, HOME_SECTIONS } from '@altogether/ui/editor/sections';
 import { Icon } from '@/components/icons/Icon';
-import { buildMetadata, JsonLd, organizationJsonLd } from '@/lib/seo';
+import { buildMetadata, JsonLd, organizationJsonLd, SITE_URL } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
+import { logoOf } from '@altogether/ui/brand';
 import { isAdmin } from '@/lib/auth';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
@@ -54,9 +57,15 @@ export default async function HomePage() {
   ]);
   const founder = founderOf(settings);
   const heroBg = picture(t('home.hero.background'));
+  // The site's own logo, for the Organization a search engine reads. It was always given the share
+  // picture, which is a wide illustration rather than a mark. Asked with a stand-in name so that
+  // an image comes back only when one has actually been uploaded, never the shipped fallback.
+  const logo = logoOf(settings.brand, '-');
+  const uploadedLogo = logo.mode === 'image' ? (logo.src.startsWith('http') ? logo.src : `${SITE_URL}${logo.src}`) : undefined;
   const order = orderedSections(t('home.sections'), HOME_SECTIONS);
   const showKnowledge = !!settings.show_knowledge;
-  const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const quoteRules = creditRules(settings);
+  const words = await siteWords();
   const bookingUrl = bookingHref(settings.show_bookings);
   // Where the two main buttons point. Chosen in the editor, and resolved against what this site
   // has switched on, so neither can end up addressing a page that answers Not Found.
@@ -179,6 +188,7 @@ export default async function HomePage() {
               </Editable>
               {/* However many there are, sharing the row. Three was a layout decision that had
                   become a limit on how many kinds of person you could name. */}
+              <Editable k="home.personas.items" label="the cards" as="div" block>
               <div className="aa-cards" style={{ ['--aa-card-min' as string]: '260px' }}>
                 {cards.map((card) => (
                   <div key={card.heading} className="aa-persona-card">
@@ -190,6 +200,7 @@ export default async function HomePage() {
                   </div>
                 ))}
               </div>
+              </Editable>
             </div>
           );
         })()}
@@ -198,7 +209,7 @@ export default async function HomePage() {
     testimonials: (
       <>
         {/* TESTIMONIALS */}
-        <HomeTestimonials items={testimonials} firstNameOnly={firstNameOnly} />
+        <HomeTestimonials items={testimonials} rules={quoteRules} heading={t('home.testimonials.heading')} headingKey="home.testimonials.heading" words={words} />
       </>
     ),
     courses: (
@@ -223,8 +234,12 @@ export default async function HomePage() {
           {courses === null ? (
             // The query failed. Worth saying, because refreshing might genuinely help.
             <div className="aa-error-box">
-              <p className="aa-error-box__title">{t('home.courses.empty.title')}</p>
-              <p className="aa-error-box__msg">{t('home.courses.empty.body')}</p>
+              <Editable k="home.courses.empty.title" label="this text" as="div" block>
+                <p className="aa-error-box__title">{t('home.courses.empty.title')}</p>
+              </Editable>
+              <Editable k="home.courses.empty.body" label="this text" as="div" block>
+                <p className="aa-error-box__msg">{t('home.courses.empty.body')}</p>
+              </Editable>
             </div>
           ) : (
             <HomeCarousel courses={courses} />
@@ -314,7 +329,7 @@ export default async function HomePage() {
 
   return (
     <div className="aa-page">
-      <JsonLd data={await organizationJsonLd(brandImagesFor(settings.brand).ogImage)} />
+      <JsonLd data={await organizationJsonLd(uploadedLogo ?? brandImagesFor(settings.brand).ogImage)} />
       <main id="main-content">
         {/* The page is its sections, in whatever order this site has put them.
             Each one is still a coded component with its words in the copy registry; what is

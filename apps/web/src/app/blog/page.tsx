@@ -7,6 +7,7 @@ import { colors as c } from '@/lib/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
+import { siteWords } from '@/lib/copy/siteWords';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function BlogPage() {
   await requireModule('blog');
-  const [posts, t] = await Promise.all([getPosts(), getCopy('blog')]);
+  const [posts, t, words] = await Promise.all([getPosts(), getCopy('blog'), siteWords()]);
   return (
     <>
       <JsonLd data={breadcrumbJsonLd(await pageCrumbs('blog', '/blog', 'Blog'))} />
@@ -41,7 +42,10 @@ export default async function BlogPage() {
         </Editable>
       </div>
 
-      <BlogList posts={posts} />
+      <BlogList
+        posts={posts}
+        words={{ all: t('blog.list.all'), noneInCategory: t('blog.list.noneInCategory'), empty: t('blog.list.empty'), minRead: words.minRead }}
+      />
     </>
   );
 }

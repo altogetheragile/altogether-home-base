@@ -85,4 +85,34 @@ describe('ContactForm', () => {
     expect(await screen.findByText(/message sent/i)).toBeInTheDocument();
     expect(insertMock).not.toHaveBeenCalled();
   });
+
+  // The form's words were all written into it, so a second site's form said "Send us a Message"
+  // and offered Altogether Agile's enquiry types whatever that site actually did.
+  it('says what this site has written, not what it shipped with', () => {
+    render(<ContactForm words={{ heading: 'Drop me a line', submit: 'Send it' }} types={['Strategy', 'Something else']} />);
+    expect(screen.getByRole('heading', { name: 'Drop me a line' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Send it' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Strategy' })).toBeInTheDocument();
+    expect(screen.queryByRole('option', { name: 'Partnership' })).not.toBeInTheDocument();
+  });
+
+  it('stores an enquiry type it does not know as one the database accepts, and emails the words', async () => {
+    // contacts.enquiry_type is checked against a fixed list. A type somebody wrote themselves would
+    // be rejected outright, and the message lost, if it were stored as written.
+    render(<ContactForm types={['Strategy session']} />);
+    fillValid();
+    now = 5000;
+    fireEvent.click(screen.getByRole('button', { name: /send message/i }));
+
+    expect(await screen.findByText(/message sent/i)).toBeInTheDocument();
+    expect(insertMock).toHaveBeenCalledWith(expect.objectContaining({ enquiry_type: 'other' }));
+    expect(invokeMock).toHaveBeenCalledWith('send-contact-email', expect.objectContaining({
+      body: expect.objectContaining({ enquiry_type: 'Strategy session' }),
+    }));
+  });
+
+  it('does not ask the question at all when there are no types', () => {
+    render(<ContactForm types={[]} />);
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+  });
 });

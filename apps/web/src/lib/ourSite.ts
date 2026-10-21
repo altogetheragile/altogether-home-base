@@ -26,3 +26,18 @@ export const OUR_SITE = 'https://altogetheragile.com';
  *  is written down once. */
 export const isOurSite = (): boolean =>
   (process.env.NEXT_PUBLIC_SITE_URL || OUR_SITE).replace(/\/$/, '') === OUR_SITE;
+
+/** The name a logo falls back to when a site has neither uploaded one nor said what it is called.
+ *
+ *  With nothing to go on, the shared fallback is this repository's lockup. That is right here and
+ *  wrong anywhere else: a second site with no name yet drew Altogether Agile's mark in its header,
+ *  its footer and its holding page. Its own address is the one name it certainly has. */
+export function logoName(companyName?: string | null): string | null {
+  const name = companyName?.trim();
+  if (name || isOurSite()) return name || null;
+  try {
+    return new URL(process.env.NEXT_PUBLIC_SITE_URL || OUR_SITE).host.replace(/^www\./, '');
+  } catch {
+    return null;
+  }
+}

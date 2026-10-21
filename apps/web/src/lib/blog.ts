@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 
 export type BlogCategory = { name: string; slug: string; color: string | null };
 export type BlogPostRow = {
+  id: string;
   slug: string;
   title: string;
   excerpt: string | null;
@@ -17,7 +18,7 @@ export type BlogPostRow = {
 };
 
 const FIELDS =
-  'slug, title, excerpt, content, featured_image_url, published_at, updated_at, seo_title, seo_description, estimated_reading_time, blog_categories(name, slug, color)';
+  'id, slug, title, excerpt, content, featured_image_url, published_at, updated_at, seo_title, seo_description, estimated_reading_time, blog_categories(name, slug, color)';
 
 export async function getPosts(): Promise<BlogPostRow[]> {
   try {

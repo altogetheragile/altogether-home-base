@@ -4,10 +4,11 @@ import type { Metadata } from 'next';
 import { ClipboardList, Clock, Award, HelpCircle } from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, faqPageJsonLd, breadcrumbJsonLd, itemListJsonLd } from '@/lib/seo';
-import { EXAM_FAQS } from '@/lib/exam-faqs';
 import { colors as c } from '@/lib/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
-import { getCopy, list } from '@/lib/copy';
+import { getCopy, list, items } from '@/lib/copy';
+import { Prose } from '@/lib/copy/Prose';
+import { EmptySection } from '@/components/edit/EmptySection';
 import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
@@ -50,23 +51,24 @@ async function getExams(): Promise<ExamRow[]> {
 export default async function ExamsPage() {
   await requireModule('exams');
   const [exams, t] = await Promise.all([getExams(), getCopy('exams')]);
+  // The questions people ask, as this site answers them. They were a list in code making this
+  // repository's claims about its own papers, in the first person, on every site and to Google.
+  const faqs = items<{ question: string; answer: string }>(t('exams.faq.items'), ['question', 'answer']);
+  const fill = (template: string, vars: Record<string, string | number | null>) =>
+    template.replace(/\{(\w+)\}/g, (hole, name: string) => (name in vars ? String(vars[name] ?? '') : hole));
 
   return (
     <>
-      <JsonLd data={faqPageJsonLd(EXAM_FAQS)} />
+      {faqs.length > 0 && <JsonLd data={faqPageJsonLd(faqs.map((f) => ({ q: f.question, a: f.answer })))} />}
       <JsonLd data={breadcrumbJsonLd(await pageCrumbs('exams', '/exams', 'Practice Exams'))} />
       <JsonLd data={itemListJsonLd(exams.map((e) => ({ name: e.title, path: `/exams/${e.slug}` })))} />
 
       {/* Teal gradient hero */}
       <div style={{ background: `linear-gradient(135deg, ${c.deepTeal} 0%, ${c.heroTeal} 100%)`, padding: '48px 24px', textAlign: 'center' }}>
-        <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
-          AgilePM &amp; Scrum Practice Exam Questions
-        </h1>
-        <p style={{ color: c.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginInline: 'auto' }}>
-          Prepare for your agile certification with timed mock exams or work through questions at your
-          own pace in revision mode. Free AgilePM Foundation and Scrum Master practice questions with
-          answers.
-        </p>
+        <Editable k="exams.hero.heading" label="this heading" as="div" block>
+          <h1 style={{ color: c.white, fontSize: 36, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>{t('exams.hero.heading')}</h1>
+        </Editable>
+        <Prose k="exams.hero.intro" text={t('exams.hero.intro')} style={{ color: c.paleTeal, fontSize: 16, lineHeight: 1.6, marginTop: 12, maxWidth: 600, marginInline: 'auto' }} />
       </div>
 
       <div style={{ maxWidth: 1100, margin: '0 auto', padding: '40px 24px' }}>
@@ -80,12 +82,12 @@ export default async function ExamsPage() {
                   <p style={{ color: c.muted, fontSize: 14, lineHeight: 1.6, margin: '0 0 20px', flex: 1 }}>{exam.description}</p>
                 )}
                 <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 20 }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: c.muted }}><HelpCircle size={14} /> {exam.total_questions} questions</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: c.muted }}><Clock size={14} /> {exam.duration_minutes} min</span>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: c.muted }}><Award size={14} /> Pass: {exam.pass_mark}/{exam.total_questions}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: c.muted }}><HelpCircle size={14} /> {fill(t('exams.card.questions'), { n: exam.total_questions })}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: c.muted }}><Clock size={14} /> {fill(t('exams.card.minutes'), { n: exam.duration_minutes })}</span>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 13, color: c.muted }}><Award size={14} /> {fill(t('exams.card.passMark'), { passMark: exam.pass_mark, total: exam.total_questions })}</span>
                 </div>
                 <Link href={`/exams/${exam.slug}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: c.orange, color: c.deepTeal, padding: '10px 24px', borderRadius: 8, fontWeight: 700, fontSize: 14, textDecoration: 'none', alignSelf: 'flex-start' }}>
-                  <ClipboardList size={15} /> Start Exam
+                  <ClipboardList size={15} /> {t('exams.card.start')}
                 </Link>
               </div>
             </div>
@@ -116,23 +118,40 @@ export default async function ExamsPage() {
           <Editable k="exams.prepare.heading" label="this text" as="div" block>
             <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '40px 0 16px', lineHeight: 1.25 }}>{t('exams.prepare.heading')}</h2>
           </Editable>
-          <ul style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: 0, paddingLeft: 22 }}>
-            {list(t('exams.prepare.steps')).map((step) => (
-              <li key={step}>{step}</li>
-            ))}
-          </ul>
-
-          <Editable k="exams.faq.heading" label="this text" as="div" block>
-            <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>{t('exams.faq.heading')}</h2>
+          <Editable k="exams.prepare.steps" label="these steps" as="div" block>
+            <ul style={{ color: c.muted, fontSize: 16, lineHeight: 1.7, margin: 0, paddingLeft: 22 }}>
+              {list(t('exams.prepare.steps')).map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ul>
           </Editable>
-          {EXAM_FAQS.map((f) => (
-            <div key={f.q} style={{ marginBottom: 20 }}>
-              <h3 style={{ color: c.deepTeal, fontSize: 17, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.4 }}>{f.q}</h3>
-              <p style={{ color: c.body, fontSize: 15, lineHeight: 1.6, margin: 0 }}>{f.a}</p>
-            </div>
-          ))}
+
+          {faqs.length > 0 && (
+            <>
+              <Editable k="exams.faq.heading" label="this text" as="div" block>
+                <h2 style={{ color: c.deepTeal, fontSize: 26, fontWeight: 800, margin: '48px 0 20px', lineHeight: 1.25 }}>{t('exams.faq.heading')}</h2>
+              </Editable>
+              <Editable k="exams.faq.items" label="the questions and answers" as="div" block>
+                {faqs.map((f) => (
+                  <div key={f.question} style={{ marginBottom: 20 }}>
+                    <h3 style={{ color: c.deepTeal, fontSize: 17, fontWeight: 700, margin: '0 0 8px', lineHeight: 1.4 }}>{f.question}</h3>
+                    <p style={{ color: c.body, fontSize: 15, lineHeight: 1.6, margin: 0 }}>{f.answer}</p>
+                  </div>
+                ))}
+              </Editable>
+            </>
+          )}
         </div>
       </div>
+
+      {faqs.length === 0 && (
+        <EmptySection
+          name="Questions people ask"
+          why="No questions yet. They are also what search engines are told this page answers, so nothing is said until you write them."
+          fills={{ kind: 'field', k: 'exams.faq.items', label: 'the questions and answers' }}
+          cards={2}
+        />
+      )}
 
       <style>{`.exams-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:24px}.exam-card{transition:box-shadow .2s,transform .2s}.exam-card:hover{box-shadow:0 8px 24px rgba(0,77,77,.10);transform:translateY(-2px)}`}</style>
     </>

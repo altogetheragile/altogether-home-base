@@ -8,6 +8,7 @@ import { colors as p, fonts } from '@/lib/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
+import { creditRules } from '@/lib/quoteCredit';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,9 +31,7 @@ export default async function TestimonialsPage() {
   await requireModule('testimonials');
   const [feedback, settings, t] = await Promise.all([getAllApprovedFeedback(), getSiteSettings(), getCopy('testimonials')]);
   const stats = feedbackStats(feedback);
-  const showName = settings.show_testimonial_name ?? true;
-  const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
-  const showCompany = settings.show_testimonial_company ?? true;
+  const quoteRules = creditRules(settings);
   // The editor has had a switch for this for a while. Nothing read it, so it did nothing.
   const showRating = settings.show_testimonial_rating_header ?? true;
 
@@ -51,15 +50,26 @@ export default async function TestimonialsPage() {
         {stats && showRating && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 18, color: p.deepTeal }}>
             <svg width={20} height={20} viewBox="0 0 256 256" style={{ fill: p.orange }}><path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34l13.49-58.54L22.76,114.38a16,16,0,0,1,9.12-28.06l59.46-5.14,23.16-55.35a15.95,15.95,0,0,1,29.48,0L167.14,81.18l59.46,5.14a16,16,0,0,1,9.12,28.06Z" /></svg>
-            <span style={{ fontWeight: 800, fontSize: 18 }}>{stats.averageRating}/10</span>
+            <span style={{ fontWeight: 800, fontSize: 18 }}>{stats.averageRating}{t('testimonials.hero.outOf')}</span>
             <Editable k="testimonials.hero.reviewsSuffix" label="this text" as="div" block>
-              <span style={{ color: p.muted, fontSize: 14 }}>from {stats.totalRatings} {t('testimonials.hero.reviewsSuffix')}</span>
+              <span style={{ color: p.muted, fontSize: 14 }}>{t('testimonials.hero.from')} {stats.totalRatings} {t('testimonials.hero.reviewsSuffix')}</span>
             </Editable>
           </div>
         )}
       </div>
 
-      <TestimonialsGrid feedback={feedback} showName={showName} firstNameOnly={firstNameOnly} showCompany={showCompany} />
+      <TestimonialsGrid
+        feedback={feedback}
+        rules={quoteRules}
+        words={{
+          search: t('testimonials.grid.search'), allCourses: t('testimonials.grid.allCourses'),
+          allRatings: t('testimonials.grid.allRatings'), starsSuffix: t('testimonials.grid.starsSuffix'),
+          featured: t('testimonials.grid.featured'), readMore: t('testimonials.grid.readMore'),
+          showLess: t('testimonials.grid.showLess'), viewOriginal: t('testimonials.grid.viewOriginal'),
+          noMatch: t('testimonials.grid.noMatch'), empty: t('testimonials.grid.empty'),
+          outOf: t('testimonials.hero.outOf'),
+        }}
+      />
     </div>
   );
 }

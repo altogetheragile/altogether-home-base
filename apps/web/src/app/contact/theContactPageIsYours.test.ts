@@ -48,4 +48,10 @@ describe('the contact page uses this site’s own details', () => {
     const entries = (contact as { entries: Record<string, { hint: string }> }).entries;
     expect(entries['contact.cards.email'].hint).toMatch(/This Site/);
   });
+
+  it('offers no booking card while bookings are off', () => {
+    // With bookings off the booking link falls back to the contact page, which made this card an
+    // invitation to book a call that took you to the page you were already on.
+    expect(source).toMatch(/settings\.show_bookings \? t\('contact\.cards\.bookingNote'\)/);
+  });
 });

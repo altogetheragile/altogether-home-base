@@ -33,6 +33,8 @@ const BLANK_BY_DESIGN = [
   // Was eight numbered keys, fixed at four statistics. One list now, which a site can add to.
   'home.stats.items',
   'events.stats.trained.number',
+  // Was "Up to 12" on every course card of every site: a promise about somebody else's courses.
+  'events.card.groupSize',
   // Was twelve numbered keys, fixed at six credentials, two of which were this person's alone.
   // Checkable claims about a named individual, so a new site makes none of them.
   'coaching.why.items',
@@ -51,6 +53,15 @@ const BLANK_BY_DESIGN = [
   // Was written into the coaching page, so every site had this one's illustration and no way to
   // change it. A site that has not chosen one gets the approach words at full width.
   'coaching.approach.picture',
+  // Were a list in code, answering in the first person about this site's own AgilePM papers, and
+  // given to search engines as every site's FAQ. A site writes its own or has none.
+  'exams.faq.items',
+  // Where the footer's legal links go. They went to this repository's own privacy notice, terms
+  // and cookie policy, naming its company number and registered office, on every site. A site
+  // links to its own once it has them; ours keeps its pages without a row (Footer.tsx).
+  'footer.privacy.href',
+  'footer.terms.href',
+  'footer.cookies.href',
   // Empty means "the order the code has them in", which is the right starting point and the
   // thing a saved order is a departure from.
   'home.sections',

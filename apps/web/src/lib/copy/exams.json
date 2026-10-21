@@ -20,10 +20,45 @@
       "label": "Browser tab and search result title",
       "hint": "What comes before the business name in the browser tab and in a search result. The page name on its own is fine; something a person would search for is better."
     },
+    "exams.hero.heading": {
+      "value": "AgilePM & Scrum Practice Exam Questions",
+      "label": "Hero heading",
+      "hint": "The teal band at the top of the page"
+    },
+    "exams.hero.intro": {
+      "value": "Prepare for your agile certification with timed mock exams or work through questions at your own pace in revision mode. Free AgilePM Foundation and Scrum Master practice questions with answers.",
+      "label": "Hero introduction",
+      "hint": "The teal band at the top of the page, under the heading"
+    },
+    "exams.card.questions": {
+      "value": "{n} questions",
+      "label": "Number of questions",
+      "hint": "Each exam card, under its description. {n} is the number",
+      "group": "Exam cards"
+    },
+    "exams.card.minutes": {
+      "value": "{n} min",
+      "label": "Time allowed",
+      "hint": "Each exam card, under its description. {n} is the number of minutes",
+      "group": "Exam cards"
+    },
+    "exams.card.passMark": {
+      "value": "Pass: {passMark}/{total}",
+      "label": "Pass mark",
+      "hint": "Each exam card, under its description. {passMark} and {total} are filled in",
+      "group": "Exam cards"
+    },
+    "exams.card.start": {
+      "value": "Start Exam",
+      "label": "Start button",
+      "hint": "The button on each exam card",
+      "group": "Exam cards"
+    },
     "exams.empty": {
       "value": "No exams available yet. Check back soon.",
       "label": "Empty state",
-      "hint": "Shown only when no exam is published"
+      "hint": "Shown only when no exam is published",
+      "group": "Exam cards"
     },
     "exams.about.heading": {
       "value": "About the AgilePM Foundation Exam",
@@ -53,7 +88,27 @@
     "exams.faq.heading": {
       "value": "Frequently Asked Questions",
       "label": "FAQ heading",
-      "hint": "The explainer below the exam cards. The questions themselves are in code, because each also feeds the page's FAQ structured data"
+      "hint": "Above the questions and answers below the exam cards. Shown only when there is at least one"
+    },
+    "exams.faq.items": {
+      "value": "",
+      "label": "Questions and answers",
+      "hint": "One per question people ask. They appear below the exam cards and are also given to search engines as the page’s questions and answers, so write what is true of your own papers. Leave it empty and the section disappears, heading and all.",
+      "type": "items",
+      "fields": [
+        {
+          "key": "question",
+          "label": "Question",
+          "placeholder": "Are these practice exams free?",
+          "required": true
+        },
+        {
+          "key": "answer",
+          "label": "Answer",
+          "type": "textarea",
+          "required": true
+        }
+      ]
     }
   }
 }

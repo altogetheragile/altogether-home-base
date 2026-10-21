@@ -9,6 +9,18 @@ import {
   CheckCircle2, XCircle, RotateCcw, ArrowLeft,
 } from 'lucide-react';
 import { colors as c } from '@/lib/brand';
+import registry from '@/lib/copy/exam.json';
+
+// The player's words, which the page reads from this site's copy and passes in. Falling back to
+// the shipped ones, read from the registry rather than written here a second time, so a caller
+// that passes nothing (the tests) still says something.
+const entries = registry.entries as Record<string, { value: string }>;
+export type ExamWords = Record<string, string>;
+const shipped: ExamWords = Object.fromEntries(Object.entries(entries).map(([k, e]) => [k.replace(/^exam\./, ''), e.value]));
+
+/** A template with {name} holes, filled. A hole with nothing to fill it is left as it was. */
+const fill = (template: string, vars: Record<string, string | number>) =>
+  template.replace(/\{(\w+)\}/g, (hole, name: string) => (name in vars ? String(vars[name]) : hole));
 
 
 /** Another paper for the same qualification. */
@@ -87,12 +99,12 @@ function isCorrect(q: Question, a: Answer | undefined) {
  *  Worth being honest about what this is not. Every paper is already linked from /exams and listed
  *  in the sitemap, so this is not how Google discovers them; agilepm-practitioner-paper-2 has never
  *  been crawled despite both. This is for the person who just finished a paper. */
-function OtherPapers({ siblings, tight = false }: { siblings: Sibling[]; tight?: boolean }) {
+function OtherPapers({ siblings, tight = false, w }: { siblings: Sibling[]; tight?: boolean; w: ExamWords }) {
   if (siblings.length === 0) return null;
   return (
     <div style={{ maxWidth: 560, margin: tight ? '0 0 24px' : '24px auto 0' }}>
       <p style={{ fontSize: 12, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em', color: c.muted, margin: '0 0 8px' }}>
-        {siblings.length === 1 ? 'The other paper in this set' : 'Other papers in this set'}
+        {siblings.length === 1 ? w['others.one'] : w['others.many']}
       </p>
       <div style={{ display: 'grid', gap: 8 }}>
         {siblings.map((sib) => (
@@ -100,7 +112,7 @@ function OtherPapers({ siblings, tight = false }: { siblings: Sibling[]; tight?:
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '12px 14px', borderRadius: 10, border: `1px solid ${c.lightTeal}`, background: c.white, textDecoration: 'none' }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: c.deepTeal }}>{sib.title}</span>
             <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: c.muted, whiteSpace: 'nowrap' }}>
-              {sib.total_questions} questions · {sib.duration_minutes} min
+              {fill(w['others.questions'], { n: sib.total_questions })} · {fill(w['start.minutes'], { n: sib.duration_minutes })}
               <ChevronRight size={14} />
             </span>
           </Link>
@@ -110,7 +122,8 @@ function OtherPapers({ siblings, tight = false }: { siblings: Sibling[]; tight?:
   );
 }
 
-export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; siblings?: Sibling[] }) {
+export function ExamPlayer({ exam, siblings = [], words }: { exam: ExamForPlayer; siblings?: Sibling[]; words?: ExamWords }) {
+  const w: ExamWords = { ...shipped, ...words };
   const supabase = useMemo(() => createClient(), []);
   const [phase, setPhase] = useState<Phase>('choose');
   const [mode, setMode] = useState<Mode>('exam');
@@ -283,11 +296,11 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
       <div style={{ maxWidth: 560, margin: '0 auto', background: c.white, borderRadius: 16, border: '1px solid #E5E7EB', overflow: 'hidden' }}>
         <div style={{ height: 6, background: `linear-gradient(90deg, ${c.deepTeal}, ${c.midTeal})` }} />
         <div style={{ padding: 32 }}>
-          <Link href="/exams" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: c.muted, textDecoration: 'none', marginBottom: 16 }}><ArrowLeft size={14} /> All exams</Link>
+          <Link href="/exams" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 13, color: c.muted, textDecoration: 'none', marginBottom: 16 }}><ArrowLeft size={14} /> {w['start.back']}</Link>
           <h1 style={{ color: c.deepTeal, fontSize: 28, fontWeight: 800, margin: '0 0 8px', lineHeight: 1.2 }}>{exam.title}</h1>
           {exam.description && <p style={{ color: c.body, fontSize: 15, lineHeight: 1.6, margin: '0 0 24px' }}>{exam.description}</p>}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 28 }}>
-            {[{ icon: <BookOpen size={18} />, label: 'Questions', value: exam.total_questions }, { icon: <Clock size={18} />, label: 'Duration', value: `${exam.duration_minutes} min` }, { icon: <CheckCircle2 size={18} />, label: 'Pass mark', value: `${exam.pass_mark}/${exam.total_questions}` }].map((s) => (
+            {[{ icon: <BookOpen size={18} />, label: w['start.questions'], value: exam.total_questions }, { icon: <Clock size={18} />, label: w['start.duration'], value: fill(w['start.minutes'], { n: exam.duration_minutes }) }, { icon: <CheckCircle2 size={18} />, label: w['start.passMark'], value: `${exam.pass_mark}/${exam.total_questions}` }].map((s) => (
               <div key={s.label} style={{ background: c.skyTeal, borderRadius: 10, padding: '14px 12px', textAlign: 'center' }}>
                 <div style={{ color: c.midTeal, marginBottom: 4, display: 'flex', justifyContent: 'center' }}>{s.icon}</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: c.deepTeal }}>{s.value}</div>
@@ -303,23 +316,21 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
               <input id="reorder" type="checkbox" checked={reorder} onChange={(e) => setChoice(e.target.checked)}
                 style={{ width: 16, height: 16, marginTop: 2, accentColor: c.midTeal, cursor: 'pointer' }} />
               <span>
-                <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: c.deepTeal }}>Shuffle the question order</span>
+                <span style={{ display: 'block', fontSize: 14, fontWeight: 700, color: c.deepTeal }}>{w['start.shuffle']}</span>
                 <span style={{ display: 'block', fontSize: 12.5, color: c.muted, lineHeight: 1.5, marginTop: 2 }}>
-                  Off, so everyone sitting this paper gets the questions in the same order and
-                  question 7 is question 7 for the whole room. Turn it on for a re-sit, or to
-                  practise without learning the order.
+                  {w['start.shuffleHint']}
                 </span>
               </span>
             </label>
           )}
           <div style={{ display: 'flex', gap: 12 }}>
-            <button onClick={() => start('exam')} disabled={loading} style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}><Timer size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Exam Mode</button>
-            <button onClick={() => start('practice')} disabled={loading} style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: `2px solid ${c.deepTeal}`, background: c.white, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}><BookOpen size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> Practice Mode</button>
+            <button onClick={() => start('exam')} disabled={loading} style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}><Timer size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> {w['start.examMode']}</button>
+            <button onClick={() => start('practice')} disabled={loading} style={{ flex: 1, padding: '14px 20px', borderRadius: 10, border: `2px solid ${c.deepTeal}`, background: c.white, color: c.deepTeal, fontWeight: 700, fontSize: 15, cursor: 'pointer' }}><BookOpen size={16} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 6 }} /> {w['start.practiceMode']}</button>
           </div>
-          <p style={{ fontSize: 12, color: c.muted, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>Exam mode is timed with answers at the end. Practice mode is untimed and reveals answers as you go.</p>
+          <p style={{ fontSize: 12, color: c.muted, textAlign: 'center', marginTop: 14, lineHeight: 1.5 }}>{w['start.modesHint']}</p>
         </div>
       </div>
-      <OtherPapers siblings={siblings} />
+      <OtherPapers siblings={siblings} w={w} />
       {/* Below the card, and only before the paper starts: reading about the exam is what you do
           instead of sitting it, not during it. Next server-renders this client component, so the
           guide is in the HTML a crawler receives - which is the point of it. Without it every exam
@@ -356,15 +367,15 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
       <div>
         <div style={{ background: c.skyTeal, border: `1px solid ${c.lightTeal}`, borderRadius: 16, padding: 28, textAlign: 'center', marginBottom: 24, overflow: 'hidden', position: 'relative' }}>
           <div style={{ position: 'absolute', top: 0, left: 0, right: 0, height: 6, background: results.passed ? `linear-gradient(90deg, ${c.deepTeal}, ${c.midTeal})` : `linear-gradient(90deg, ${c.orange}, #E07B00)` }} />
-          <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', background: results.passed ? c.midTeal : c.orange, color: results.passed ? c.white : c.deepTeal }}>{results.passed ? 'Passed' : 'Not passed'}</span>
+          <span style={{ display: 'inline-block', marginTop: 6, padding: '4px 14px', borderRadius: 20, fontSize: 12, fontWeight: 800, letterSpacing: '.05em', textTransform: 'uppercase', background: results.passed ? c.midTeal : c.orange, color: results.passed ? c.white : c.deepTeal }}>{results.passed ? w['results.passed'] : w['results.notPassed']}</span>
           <p style={{ margin: '12px 0 0', fontSize: 44, fontWeight: 800, color: c.deepTeal }}>{results.correct} <span style={{ color: c.muted, fontWeight: 700 }}>/ {questions.length}</span></p>
-          <p style={{ margin: '4px 0 0', fontSize: 14, color: c.body }}>{pct}% · pass mark {exam.pass_mark} · {results.unanswered} unanswered</p>
-          <button onClick={retake} style={{ marginTop: 18, padding: '10px 22px', borderRadius: 8, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}><RotateCcw size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} /> Retake</button>
+          <p style={{ margin: '4px 0 0', fontSize: 14, color: c.body }}>{fill(w['results.summary'], { percent: pct, passMark: exam.pass_mark, unanswered: results.unanswered })}</p>
+          <button onClick={retake} style={{ marginTop: 18, padding: '10px 22px', borderRadius: 8, border: 'none', background: c.orange, color: c.deepTeal, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}><RotateCcw size={14} style={{ display: 'inline', verticalAlign: '-2px', marginRight: 4 }} /> {w['results.retake']}</button>
         </div>
         {/* Directly under the score, where "what now" is actually being asked. Retaking the paper
             you have just been marked on teaches you its answers; the other paper teaches the
             subject. */}
-        <OtherPapers siblings={siblings} tight />
+        <OtherPapers siblings={siblings} tight w={w} />
         <ol style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 14 }}>
           {questions.map((qq, i) => {
             const a = answers[i]; const ok = isCorrect(qq, a); const corr = correctLetters(qq);
@@ -379,7 +390,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
                     return <li key={o.letter} style={{ fontSize: 13, color: isC ? '#047857' : sel ? '#B91C1C' : c.muted, fontWeight: isC ? 700 : 400, textDecoration: sel && !isC ? 'line-through' : 'none' }}>{o.letter}. {o.text}{isC ? ' ✓' : ''}</li>;
                   })}
                 </ul>
-                {qq.reference && <p style={{ margin: '8px 0 0 26px', fontSize: 12, color: c.muted }}>Reference: {qq.reference}</p>}
+                {qq.reference && <p style={{ margin: '8px 0 0 26px', fontSize: 12, color: c.muted }}>{fill(w['results.reference'], { reference: qq.reference })}</p>}
               </li>
             );
           })}
@@ -389,7 +400,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
   }
 
   // ── Playing ──
-  if (!q) return <div style={{ ...card, padding: 24, color: c.muted, fontSize: 14 }}>Loading questions…</div>;
+  if (!q) return <div style={{ ...card, padding: 24, color: c.muted, fontSize: 14 }}>{w['play.loading']}</div>;
 
   const opts = optionsOf(q);
   const revealed = mode === 'practice' && practiceRevealed;
@@ -409,20 +420,20 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
       {/* Top bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, flexWrap: 'wrap', gap: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <span style={{ fontSize: 14, color: c.muted }}>Question <strong style={{ color: c.deepTeal }}>{currentIdx + 1}</strong> / {questions.length}</span>
-          <span style={{ fontSize: 13, color: c.muted }}>{answeredCount} answered</span>
-          {flaggedCount > 0 && <span style={{ fontSize: 13, color: '#F59E0B', display: 'flex', alignItems: 'center', gap: 3 }}><Flag size={12} /> {flaggedCount} flagged</span>}
+          <span style={{ fontSize: 14, color: c.muted }}>{w['play.question']} <strong style={{ color: c.deepTeal }}>{currentIdx + 1}</strong> / {questions.length}</span>
+          <span style={{ fontSize: 13, color: c.muted }}>{fill(w['play.answered'], { n: answeredCount })}</span>
+          {flaggedCount > 0 && <span style={{ fontSize: 13, color: '#F59E0B', display: 'flex', alignItems: 'center', gap: 3 }}><Flag size={12} /> {fill(w['play.flagged'], { n: flaggedCount })}</span>}
         </div>
         {mode === 'exam' ? (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, background: urgent ? '#FEF2F2' : c.skyTeal, padding: '6px 14px', borderRadius: 8, color: urgent ? c.danger : c.deepTeal, fontWeight: 700, fontSize: 16, fontVariantNumeric: 'tabular-nums' }}><Clock size={16} /> {mm}:{ss.toString().padStart(2, '0')}</div>
-        ) : <span style={{ fontSize: 13, color: c.midTeal, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><BookOpen size={14} /> Practice Mode</span>}
+        ) : <span style={{ fontSize: 13, color: c.midTeal, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}><BookOpen size={14} /> {w['start.practiceMode']}</span>}
       </div>
 
       {/* Scenario tabs (Practitioner) */}
       {grouped && (
         <div style={{ display: 'flex', gap: 8, marginBottom: 12 }} className="aa-tabs">
-          <ScenarioTabBtn active={scenarioTab === 'question'} onClick={() => setScenarioTab('question')}>Question</ScenarioTabBtn>
-          <ScenarioTabBtn active={scenarioTab === 'scenario'} onClick={() => setScenarioTab('scenario')}>Project Scenario</ScenarioTabBtn>
+          <ScenarioTabBtn active={scenarioTab === 'question'} onClick={() => setScenarioTab('question')}>{w['play.question']}</ScenarioTabBtn>
+          <ScenarioTabBtn active={scenarioTab === 'scenario'} onClick={() => setScenarioTab('scenario')}>{w['play.scenario']}</ScenarioTabBtn>
         </div>
       )}
 
@@ -431,7 +442,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
           {/* Scenario pane */}
           {grouped && (
             <div className="pane-scenario" data-active={scenarioTab === 'scenario'} style={{ ...card, padding: 20 }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: c.deepTeal, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>Project Scenario</div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: c.deepTeal, marginBottom: 10, textTransform: 'uppercase', letterSpacing: '.05em' }}>{w['play.scenario']}</div>
               <div className="aa-scenario-body" dangerouslySetInnerHTML={{ __html: scenarioHtml }} />
             </div>
           )}
@@ -441,16 +452,16 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
             <div style={{ ...card, padding: 24 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
                 {q.area && <span style={{ background: c.skyTeal, color: c.deepTeal, fontSize: 11, fontWeight: 700, padding: '3px 10px', borderRadius: 20, textTransform: 'uppercase', letterSpacing: '.05em' }}>{q.area}</span>}
-                {isMatch && currentPart && <span style={{ fontSize: 12, color: c.muted, fontWeight: 600 }}>Matching — {currentPart.items.length} rows</span>}
+                {isMatch && currentPart && <span style={{ fontSize: 12, color: c.muted, fontWeight: 600 }}>{fill(w['play.matching'], { n: currentPart.items.length })}</span>}
               </div>
               {grouped && q.part_instruction && <p style={{ color: c.body, fontSize: 14, lineHeight: 1.55, margin: '0 0 16px' }}>{q.part_instruction}</p>}
 
               {isMatch && currentPart ? (
-                <MatchingPart items={currentPart.items} answers={answers} mode={mode} currentIdx={currentIdx} onSelect={selectMatchRow} onFocusRow={goTo} />
+                <MatchingPart w={w} items={currentPart.items} answers={answers} mode={mode} currentIdx={currentIdx} onSelect={selectMatchRow} onFocusRow={goTo} />
               ) : (
                 <>
                   <p style={{ margin: 0, fontSize: 16, fontWeight: 600, color: c.body, whiteSpace: 'pre-line' }}>{q.question_text}</p>
-                  {isMulti && <p style={{ margin: '4px 0 0', fontSize: 12, color: c.muted }}>Select {corr.length}.</p>}
+                  {isMulti && <p style={{ margin: '4px 0 0', fontSize: 12, color: c.muted }}>{fill(w['play.selectN'], { n: corr.length })}</p>}
                   <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
                     {opts.map((o) => (
                       // Which option is held was said in colour and nowhere else, so a screen
@@ -462,7 +473,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
                   </div>
                   {revealed && q.reference && <div style={{ marginTop: 14, padding: '10px 14px', background: '#F8FAFC', borderRadius: 8, fontSize: 13, color: c.muted }}>{q.reference}</div>}
                   {isMulti && mode === 'practice' && !practiceRevealed && answer?.selected.length === corr.length && (
-                    <button onClick={() => setPracticeRevealed(true)} style={{ marginTop: 12, padding: '8px 20px', borderRadius: 8, border: 'none', background: c.deepTeal, color: c.white, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>Confirm Answer</button>
+                    <button onClick={() => setPracticeRevealed(true)} style={{ marginTop: 12, padding: '8px 20px', borderRadius: 8, border: 'none', background: c.deepTeal, color: c.white, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>{w['play.confirm']}</button>
                   )}
                 </>
               )}
@@ -470,14 +481,14 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
               {/* Nav buttons */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 18, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <NavBtn onClick={() => goTo(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0}><ChevronLeft size={16} /> Prev</NavBtn>
-                  <NavBtn onClick={() => goTo(Math.min(questions.length - 1, currentIdx + 1))} disabled={currentIdx === questions.length - 1}>Next <ChevronRight size={16} /></NavBtn>
-                  <NavBtn onClick={goNextUnanswered}><SkipForward size={14} /> Unanswered</NavBtn>
-                  {flaggedCount > 0 && <NavBtn onClick={goNextFlagged}><Flag size={14} /> Flagged</NavBtn>}
+                  <NavBtn onClick={() => goTo(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0}><ChevronLeft size={16} /> {w['nav.prev']}</NavBtn>
+                  <NavBtn onClick={() => goTo(Math.min(questions.length - 1, currentIdx + 1))} disabled={currentIdx === questions.length - 1}>{w['nav.next']} <ChevronRight size={16} /></NavBtn>
+                  <NavBtn onClick={goNextUnanswered}><SkipForward size={14} /> {w['nav.unanswered']}</NavBtn>
+                  {flaggedCount > 0 && <NavBtn onClick={goNextFlagged}><Flag size={14} /> {w['nav.flagged']}</NavBtn>}
                 </div>
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <button onClick={toggleFlag} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 8, border: `1px solid ${answer?.flagged ? '#F59E0B' : '#D1D5DB'}`, background: answer?.flagged ? '#FFFBEB' : c.white, color: answer?.flagged ? '#B45309' : c.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Flag size={14} /> {answer?.flagged ? 'Unflag' : 'Flag'}</button>
-                  <button onClick={finish} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: c.deepTeal, color: c.white, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Finish</button>
+                  <button onClick={toggleFlag} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '8px 14px', borderRadius: 8, border: `1px solid ${answer?.flagged ? '#F59E0B' : '#D1D5DB'}`, background: answer?.flagged ? '#FFFBEB' : c.white, color: answer?.flagged ? '#B45309' : c.muted, fontSize: 13, fontWeight: 600, cursor: 'pointer' }}><Flag size={14} /> {answer?.flagged ? w['nav.unflag'] : w['nav.flag']}</button>
+                  <button onClick={finish} style={{ padding: '8px 18px', borderRadius: 8, border: 'none', background: c.deepTeal, color: c.white, fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>{w['nav.finish']}</button>
                 </div>
               </div>
             </div>
@@ -487,10 +498,10 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
         {/* Sidebar */}
         <div style={{ ...card, padding: 16 }} className="exam-sidebar">
           {grouped ? (
-            <GroupedProgress parts={parts} answers={answers} currentIdx={currentIdx} onGoTo={goTo} />
+            <GroupedProgress w={w} parts={parts} answers={answers} currentIdx={currentIdx} onGoTo={goTo} />
           ) : (
             <>
-              <div style={{ fontSize: 13, fontWeight: 700, color: c.deepTeal, marginBottom: 10 }}>Progress</div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: c.deepTeal, marginBottom: 10 }}>{w['nav.progress']}</div>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 4 }}>
                 {questions.map((_, i) => {
                   const a = answers[i]; const isCur = i === currentIdx;
@@ -503,7 +514,7 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
                 })}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, marginTop: 12, fontSize: 11, color: c.muted }}>
-                <Legend bg={c.paleTeal} border={c.lightTeal} label="Answered" /><Legend bg="#FFFBEB" border="#FDE68A" label="Flagged" /><Legend bg="#F3F4F6" border={c.deepTeal} label="Current" />
+                <Legend bg={c.paleTeal} border={c.lightTeal} label={w['nav.legendAnswered']} /><Legend bg="#FFFBEB" border="#FDE68A" label={w['nav.legendFlagged']} /><Legend bg="#F3F4F6" border={c.deepTeal} label={w['nav.legendCurrent']} />
               </div>
             </>
           )}
@@ -525,7 +536,8 @@ export function ExamPlayer({ exam, siblings = [] }: { exam: ExamForPlayer; sibli
   );
 }
 
-function MatchingPart({ items, answers, mode, currentIdx, onSelect, onFocusRow }: {
+function MatchingPart({ w, items, answers, mode, currentIdx, onSelect, onFocusRow }: {
+  w: ExamWords;
   items: PartItem[]; answers: Record<number, Answer>; mode: Mode; currentIdx: number;
   onSelect: (gi: number, letter: string) => void; onFocusRow: (gi: number) => void;
 }) {
@@ -533,7 +545,7 @@ function MatchingPart({ items, answers, mode, currentIdx, onSelect, onFocusRow }
   return (
     <div>
       <div style={{ border: '1px solid #E5E7EB', borderRadius: 10, padding: '12px 14px', marginBottom: 16, background: '#F8FAFC' }}>
-        <div style={{ fontSize: 11, fontWeight: 700, color: c.deepTeal, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>Options (Column 2)</div>
+        <div style={{ fontSize: 11, fontWeight: 700, color: c.deepTeal, textTransform: 'uppercase', letterSpacing: '.05em', marginBottom: 8 }}>{w['play.options']}</div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px,1fr))', gap: '5px 16px' }}>
           {options.map((o) => <div key={o.letter} style={{ fontSize: 13, color: c.body, lineHeight: 1.4 }}><strong style={{ color: c.deepTeal }}>{o.letter}.</strong> {o.text}</div>)}
         </div>
@@ -580,16 +592,16 @@ function MatchingPart({ items, answers, mode, currentIdx, onSelect, onFocusRow }
   );
 }
 
-function GroupedProgress({ parts, answers, currentIdx, onGoTo }: { parts: PartGroup[]; answers: Record<number, Answer>; currentIdx: number; onGoTo: (i: number) => void }) {
+function GroupedProgress({ w, parts, answers, currentIdx, onGoTo }: { w: ExamWords; parts: PartGroup[]; answers: Record<number, Answer>; currentIdx: number; onGoTo: (i: number) => void }) {
   const byQ = new Map<number, PartGroup[]>();
   parts.forEach((pt) => { if (!byQ.has(pt.qnum)) byQ.set(pt.qnum, []); byQ.get(pt.qnum)!.push(pt); });
   return (
     <div>
-      <div style={{ fontSize: 13, fontWeight: 700, color: c.deepTeal, marginBottom: 12 }}>Progress</div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: c.deepTeal, marginBottom: 12 }}>{w['nav.progress']}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
         {Array.from(byQ.entries()).map(([qnum, qParts]) => (
           <div key={qnum}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>Question {qnum}</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: c.muted, textTransform: 'uppercase', letterSpacing: '.04em', marginBottom: 6 }}>{w['play.question']} {qnum}</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
               {qParts.map((pt) => (
                 <div key={pt.key} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
