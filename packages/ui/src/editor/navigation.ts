@@ -152,7 +152,7 @@ export const navigationRegistry: CopyRegistry = {
     "footer.privacy.href": {
       "value": "",
       "label": "Privacy page address",
-      "hint": "Where your privacy notice lives, for example a page on your own site or a document you host elsewhere. Leave empty and the link is not shown.",
+      "hint": "Only needed if your privacy notice lives somewhere else. Write it under Legal pages on This Site and the link appears by itself. Leave both empty and the link is not shown.",
       "group": "The legal links"
     },
     "footer.terms": {
@@ -164,7 +164,7 @@ export const navigationRegistry: CopyRegistry = {
     "footer.terms.href": {
       "value": "",
       "label": "Terms page address",
-      "hint": "Where your terms and conditions live. Leave empty and the link is not shown.",
+      "hint": "Only needed if your terms live somewhere else. Write it under Legal pages on This Site and the link appears by itself. Leave both empty and the link is not shown.",
       "group": "The legal links"
     },
     "footer.cookies": {
@@ -176,7 +176,7 @@ export const navigationRegistry: CopyRegistry = {
     "footer.cookies.href": {
       "value": "",
       "label": "Cookies page address",
-      "hint": "Where your cookie policy lives. Leave empty and the link is not shown.",
+      "hint": "Only needed if your cookie policy lives somewhere else. Write it under Legal pages on This Site and the link appears by itself. Leave both empty and the link is not shown.",
       "group": "The legal links"
     },
     "nav.signIn": {

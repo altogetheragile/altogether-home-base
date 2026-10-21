@@ -191,16 +191,36 @@ export function wordChecks(
 
 // ============= Step five: the pages that are somebody else's =============
 
-export function legalChecks(s: SiteSettings): Check[] {
+export function legalChecks(s: SiteSettings, own: string[] = []): Check[] {
+  // Written on This Site, under Legal pages, and shown at the usual addresses. Read first, because
+  // a site's own words are the answer this check is waiting for.
+  const names: Record<string, string> = { privacy: 'privacy notice', terms: 'terms', cookies: 'cookie policy' };
+  const missing = Object.keys(names).filter((p) => !own.includes(p));
+  const where = { label: 'This Site, Legal pages', href: '/?edit=site' };
+  const list = (pages: string[]) => pages.map((p) => names[p]).join(', ');
+
+  if (own.length) {
+    return [{
+      id: 'legal',
+      title: 'Terms, privacy and cookies',
+      // A site with an enquiry form collects personal details, so the privacy notice is the one
+      // that cannot wait. The other two depend on what the business sells and sets.
+      status: missing.length === 0 ? 'done' : missing.includes('privacy') ? 'todo' : 'optional',
+      detail: missing.length === 0
+        ? 'Your own privacy notice, terms and cookie policy are written and published, and linked from the footer.'
+        : `Written and published: ${list(own)}. Still to write: ${list(missing)}.`,
+      where,
+    }];
+  }
   const published = s.show_legal === true;
   return [{
     id: 'legal',
     title: 'Terms, privacy and cookies',
-    status: published ? 'optional' : 'done',
+    status: published ? 'optional' : 'todo',
     detail: published
       ? 'Published. Check they are yours: the pages this software ships with carry another company’s wording, registration number and registered office, and publishing those as your own is worse than having none.'
-      : 'Not published, so those pages say they are unwritten rather than presenting somebody else’s liability wording as yours. Write your own before switching them on.',
-    where: { label: 'This Site', href: '/?edit=site' },
+      : 'Not written yet, so those pages say they are unwritten rather than presenting somebody else’s wording as yours. Write your own under Legal pages: a site with an enquiry form collects personal details, and needs a privacy notice to say what it does with them.',
+    where,
   }];
 }
 

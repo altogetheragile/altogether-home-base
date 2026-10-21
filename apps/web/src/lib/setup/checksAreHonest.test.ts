@@ -71,8 +71,21 @@ describe('the things that are choices rather than gaps', () => {
 });
 
 describe('the legal pages', () => {
-  it('treats unpublished as the safe state', () => {
-    expect(status(legalChecks({ show_legal: false }), 'legal')).toBe('done');
+  it('never treats the shipped documents as finished, and asks for a privacy notice', () => {
+    // Unpublished is the safe state, but not a finished one: a site with an enquiry form collects
+    // personal details, and there is somewhere to write its own notice now.
+    const check = legalChecks({ show_legal: false })[0];
+    expect(check.status).toBe('todo');
+    expect(check.detail).toMatch(/privacy notice/i);
+  });
+
+  it('is done when the site has written all three of its own', () => {
+    expect(status(legalChecks({ show_legal: false }, ['privacy', 'terms', 'cookies']), 'legal')).toBe('done');
+  });
+
+  it('still wants the privacy notice before the other two', () => {
+    expect(status(legalChecks({ show_legal: false }, ['terms']), 'legal')).toBe('todo');
+    expect(status(legalChecks({ show_legal: false }, ['privacy']), 'legal')).toBe('optional');
   });
 
   it('asks you to check them once they are published', () => {

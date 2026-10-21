@@ -7,7 +7,7 @@
 // Each step names the fields it wants by key. Pure data, so a test can check every key exists and
 // that nothing important was left out of every step.
 
-export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'starter' | 'words';
+export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'starter' | 'words' | 'legal';
 
 export type Step = {
   id: StepId;
@@ -132,6 +132,16 @@ export const STEPS: Step[] = [
     page: '',
     keys: [],
     footnote: 'There is much more copy on each page than this. These are the pieces somebody reads first.',
+  },
+  {
+    // Last, because it is the one step nothing here can write for you, and the one that has to
+    // be done before the holding page comes down.
+    id: 'legal',
+    title: 'Legal pages',
+    blurb: 'Your privacy notice, terms and cookie policy, in your own words. Each appears at its usual address and in the footer once written. Until then those pages say they have not been published.',
+    page: 'site',
+    keys: ['site.legal.privacy', 'site.legal.terms', 'site.legal.cookies'],
+    footnote: 'A site with an enquiry form collects personal details, so the privacy notice is the one to write before you go live. These are never written for you: they have to say what your business actually does.',
   },
 ];
 

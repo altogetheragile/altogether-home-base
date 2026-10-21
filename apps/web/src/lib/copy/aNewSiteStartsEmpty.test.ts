@@ -70,6 +70,11 @@ const BLANK_BY_DESIGN = [
   // What the business is, in its owner's words, for the starter wording to write from. Nobody
   // else's description could be the right one.
   'site.brief',
+  // A business's own legal documents. The ones written into the App are this repository's
+  // company's, and are shown only on its own site.
+  'site.legal.privacy',
+  'site.legal.terms',
+  'site.legal.cookies',
 ];
 
 describe('a new site starts empty', () => {

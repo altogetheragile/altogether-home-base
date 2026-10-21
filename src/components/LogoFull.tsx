@@ -1,4 +1,5 @@
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { logoNameOr } from '@/config/ourSite';
 import { logoOf, wordmarkOf } from '@altogether/ui/brand';
 import { colors } from '@/theme/colors';
 
@@ -10,14 +11,14 @@ import { colors } from '@/theme/colors';
 const LogoFull = ({ height = 48 }: { height?: number; light?: boolean }) => {
   const { settings } = useSiteSettings();
   const s = settings as { brand?: unknown; company_name?: string | null } | undefined;
-  const logo = logoOf(s?.brand as Parameters<typeof logoOf>[0], s?.company_name);
+  const logo = logoOf(s?.brand as Parameters<typeof logoOf>[0], logoNameOr(s?.company_name));
 
   if (logo.mode === 'image') {
     return <img src={logo.src} alt={s?.company_name ?? 'Home'} style={{ height }} className="w-auto" />;
   }
   // The same wordmark as the Site's header (apps/web SiteLogo). Two components because the two
   // apps do not share a React tree, one rule because they share @altogether/ui/brand.
-  const mark = wordmarkOf(s?.brand as Parameters<typeof wordmarkOf>[0], s?.company_name);
+  const mark = wordmarkOf(s?.brand as Parameters<typeof wordmarkOf>[0], logoNameOr(s?.company_name));
   const base: React.CSSProperties = {
     display: 'inline-flex', alignItems: 'center', height,
     fontFamily: "'DM Sans', system-ui, sans-serif",

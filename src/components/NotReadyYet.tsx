@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { logoNameOr } from '@/config/ourSite';
 import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
@@ -64,8 +65,8 @@ export function NotReadyYet({ children }: { children: React.ReactNode }) {
   if (role === 'admin') return <>{children}</>;
   if (ALWAYS_OPEN.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return <>{children}</>;
 
-  const logo = logoOf(s.brand as Parameters<typeof logoOf>[0], s.company_name);
-  const mark = wordmarkOf(s.brand as Parameters<typeof wordmarkOf>[0], s.company_name);
+  const logo = logoOf(s.brand as Parameters<typeof logoOf>[0], logoNameOr(s.company_name));
+  const mark = wordmarkOf(s.brand as Parameters<typeof wordmarkOf>[0], logoNameOr(s.company_name));
   const shown: HoldingLogo = logo.mode === 'image'
     ? { mode: 'image', src: logo.src }
     : { mode: 'wordmark', text: mark.gap ? `${mark.first} ${mark.second}` : `${mark.first}${mark.second}` };

@@ -6,11 +6,21 @@ import { useUserRole } from '@/hooks/useUserRole';
 import { Mail, Phone, MapPin, Linkedin, Twitter, Facebook, Youtube, Github } from 'lucide-react';
 import LogoFull from '@/components/LogoFull';
 import { AppLink } from '@/components/AppLink';
+import { isOurSite, siteNameOr } from '@/config/ourSite';
+import { useOwnLegal } from '@/components/legal/legalText';
 
 const Footer = () => {
   const { settings } = useSiteSettings();
   const { user } = useAuth();
   const { data: userRole } = useUserRole();
+  // Our own legal pages on our site; anywhere else, only the ones this site has written. These
+  // linked every site to this repository's company documents, as the Site's footer once did.
+  const { data: ownLegal } = useOwnLegal();
+  const legalLinks = [
+    { page: 'privacy' as const, label: 'Privacy Policy' },
+    { page: 'terms' as const, label: 'Terms & Conditions' },
+    { page: 'cookies' as const, label: 'Cookie Policy' },
+  ].filter(({ page }) => isOurSite() || ownLegal?.[page]);
 
   const socialLinks = [
     { icon: Linkedin, url: settings?.social_linkedin, label: 'LinkedIn' },
@@ -117,13 +127,15 @@ const Footer = () => {
         </div>
         <div className="border-t border-border mt-8 pt-6 flex flex-col md:flex-row justify-between items-center gap-3 text-sm text-muted-foreground">
           <p>
-            © {new Date().getFullYear()} {settings?.company_name || 'AltogetherAgile'}. {settings?.copyright_text || 'All rights reserved.'}
+            © {new Date().getFullYear()} {siteNameOr(settings?.company_name)}. {settings?.copyright_text || 'All rights reserved.'}
           </p>
-          <div className="flex gap-6">
-            <Link to="/privacy" className="hover:text-primary transition-colors">Privacy Policy</Link>
-            <Link to="/terms" className="hover:text-primary transition-colors">Terms &amp; Conditions</Link>
-            <Link to="/cookies" className="hover:text-primary transition-colors">Cookie Policy</Link>
-          </div>
+          {legalLinks.length > 0 && (
+            <div className="flex gap-6">
+              {legalLinks.map(({ page, label }) => (
+                <Link key={page} to={`/${page}`} className="hover:text-primary transition-colors">{label}</Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </footer>

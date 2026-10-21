@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation';
 import { getSiteSettings } from '@/lib/site-settings';
 import { isAdmin } from '@/lib/auth';
 import { createClient } from '@/lib/supabase/server';
-import { REGISTRIES } from '@/lib/copy';
+import { REGISTRIES, getCopy } from '@/lib/copy';
 import { COPY_ROUTES, MODULE_FOR_PATH } from '@/lib/copy/routes';
 import { moduleIsShown, type GatedModule } from '@/lib/module-gate';
 import { colors as p } from '@/lib/brand';
@@ -91,8 +91,8 @@ function CheckRow({ check }: { check: Check }) {
 export default async function SetupPage() {
   if (!(await isAdmin())) notFound();
 
-  const [settings, written, enquiryEmail] = await Promise.all([
-    getSiteSettings(), writtenByPage(), enquiryEmailCheck(),
+  const [settings, written, enquiryEmail, siteWords] = await Promise.all([
+    getSiteSettings(), writtenByPage(), enquiryEmailCheck(), getCopy('site'),
   ]);
 
   // Only the pages this site actually shows. A checklist that asked somebody to write the words
@@ -146,7 +146,7 @@ export default async function SetupPage() {
     {
       title: 'The pages that are somebody else’s',
       blurb: 'Legal text is the one thing here that cannot be adapted, only replaced.',
-      checks: legalChecks(settings),
+      checks: legalChecks(settings, ['privacy', 'terms', 'cookies'].filter((page) => siteWords(`site.legal.${page}`).trim())),
     },
   ];
 
@@ -193,7 +193,7 @@ export default async function SetupPage() {
           Setting up this site
         </h1>
         <p style={{ color: p.body, fontSize: 15, lineHeight: 1.75, margin: '0 0 8px' }}>
-          Seven steps, in the order that makes sense to answer them. Each one saves as you go, so
+          Eight steps, in the order that makes sense to answer them. Each one saves as you go, so
           you can stop anywhere and pick it up later, and nothing here is compulsory. Everything
           can also be changed from the page it appears on, for the rest of this site&rsquo;s life.
         </p>
