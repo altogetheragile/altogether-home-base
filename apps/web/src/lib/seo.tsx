@@ -166,12 +166,16 @@ export async function blogPostingJsonLd(opts: {
 }
 
 /** A function rather than a constant, because the name is no longer known at module load. */
-const courseProvider = async () => ({
-  '@type': 'Organization',
-  name: await siteName(),
-  url: SITE_URL,
-  areaServed: ['London', 'United Kingdom'],
-});
+const courseProvider = async () => {
+  // Where this site says it is, not where this repository's site is. Claimed nowhere until it does.
+  const where = (await getSiteSettings()).contact_location?.trim();
+  return {
+    '@type': 'Organization',
+    name: await siteName(),
+    url: SITE_URL,
+    ...(where ? { areaServed: where } : {}),
+  };
+};
 
 /** A single training course (provider = Altogether Agile). */
 export async function courseJsonLd(opts: {

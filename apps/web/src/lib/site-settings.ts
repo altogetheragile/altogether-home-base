@@ -30,6 +30,7 @@ export type SiteSettings = {
   show_testimonial_first_name_only?: boolean | null;
   show_testimonial_name?: boolean | null;
   show_testimonial_company?: boolean | null;
+  show_testimonial_rating_header?: boolean | null;
   /** Whether this site has a founder section at all. Some will not. */
   show_founder?: boolean | null;
   /** Whether the Terms, Privacy and Cookie pages are published. */

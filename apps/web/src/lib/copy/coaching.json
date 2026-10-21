@@ -70,10 +70,16 @@
       "label": "Approach, third paragraph",
       "hint": "What you bring into the room, and what stays the client’s."
     },
+    "coaching.approach.picture": {
+      "value": "",
+      "label": "Approach picture",
+      "hint": "Beside the approach words, on pale teal. Upright pictures suit it best. Leave it empty and the words take the full width.",
+      "type": "image"
+    },
     "coaching.services": {
       "value": "",
       "label": "Services",
-      "hint": "One block per service you offer. Add or remove as many as you like; leave it empty and the services section disappears. Each one alternates side and background down the page automatically.",
+      "hint": "One block per service you offer, each with its own picture. Press Add to start one: the name, words, price and Picture boxes appear inside it. Leave the list empty and the services section disappears. Each one alternates side and background down the page automatically.",
       "type": "items",
       "fields": [
         {
@@ -138,27 +144,29 @@
           "label": "Picture",
           "type": "image"
         }
-      ]
+      ],
+      "group": "Services"
     },
     "coaching.service.includesHeading": {
       "value": "What's included",
       "label": "\"What's included\" heading",
-      "hint": "Shown above the list on both service blocks"
+      "hint": "Shown above the \"What's included\" list in every service that has one",
+      "group": "Services"
     },
     "coaching.why.label": {
       "value": "Why This Practice",
       "label": "Why eyebrow",
-      "hint": "The teal band listing why Altogether Agile"
+      "hint": "The teal band listing reasons to work with you"
     },
     "coaching.why.heading": {
       "value": "Coaching grounded in real experience.",
       "label": "Why heading",
-      "hint": "The teal band listing why Altogether Agile"
+      "hint": "The teal band listing reasons to work with you"
     },
     "coaching.why.items": {
       "value": "",
       "label": "Credentials",
-      "hint": "One per credential or reason to work with you. Leave it empty and the whole section disappears. These are checkable claims about a real person, so a new site starts with none.",
+      "hint": "One per credential or reason to work with you. Leave it empty and the whole band disappears, heading and all. These are checkable claims about a real person, so a new site starts with none.",
       "type": "items",
       "fields": [
         {
@@ -189,6 +197,11 @@
       "label": "Chemistry body",
       "hint": "The dark teal chemistry-session band"
     },
+    "coaching.chemistry.tags": {
+      "value": "30 minutes\nNo commitment\nVideo or phone\nFree",
+      "label": "Chemistry tags",
+      "hint": "The small pills under the chemistry words. One per line, two or three words each. Leave empty and no pills appear."
+    },
     "coaching.chemistry.boxHeading": {
       "value": "Book your chemistry session",
       "label": "Chemistry box heading",
@@ -213,6 +226,76 @@
       "value": "Send an enquiry.",
       "label": "Enquiry heading",
       "hint": "Above the enquiry form"
+    },
+    "coaching.enquiry.nameLabel": {
+      "value": "Your name",
+      "label": "Name box label",
+      "hint": "The enquiry form at the foot of the page"
+    },
+    "coaching.enquiry.namePlaceholder": {
+      "value": "Jane Smith",
+      "label": "Name box example",
+      "hint": "Shown faintly in the empty box"
+    },
+    "coaching.enquiry.emailLabel": {
+      "value": "Email address",
+      "label": "Email box label",
+      "hint": "The enquiry form at the foot of the page"
+    },
+    "coaching.enquiry.emailPlaceholder": {
+      "value": "jane@company.com",
+      "label": "Email box example",
+      "hint": "Shown faintly in the empty box"
+    },
+    "coaching.enquiry.serviceLabel": {
+      "value": "I'm interested in",
+      "label": "Choice label",
+      "hint": "Above the drop-down. The choices are your services, then the two below"
+    },
+    "coaching.enquiry.servicePlaceholder": {
+      "value": "Select a service...",
+      "label": "Choice prompt",
+      "hint": "What the drop-down says before anything is picked"
+    },
+    "coaching.enquiry.chemistryOption": {
+      "value": "Free chemistry session",
+      "label": "Chemistry choice",
+      "hint": "Offered in the drop-down after your services. Leave empty to leave it out"
+    },
+    "coaching.enquiry.unsureOption": {
+      "value": "Not sure yet",
+      "label": "Undecided choice",
+      "hint": "The last choice in the drop-down. Leave empty to leave it out"
+    },
+    "coaching.enquiry.messageLabel": {
+      "value": "What's on your mind?",
+      "label": "Message box label",
+      "hint": "The enquiry form at the foot of the page"
+    },
+    "coaching.enquiry.messagePlaceholder": {
+      "value": "Tell me a bit about what you're working through or what you're looking for...",
+      "label": "Message box example",
+      "hint": "Shown faintly in the empty box"
+    },
+    "coaching.enquiry.submit": {
+      "value": "Send enquiry",
+      "label": "Send button",
+      "hint": "The enquiry form at the foot of the page"
+    },
+    "coaching.enquiry.footnote": {
+      "value": "I aim to respond within one working day. No hard sell - just a conversation.",
+      "label": "Under the send button",
+      "hint": "A short reassurance under the button. Leave empty to leave it out"
+    },
+    "coaching.enquiry.sentHeading": {
+      "value": "Message sent",
+      "label": "Thank-you heading",
+      "hint": "Replaces the form once it has been sent"
+    },
+    "coaching.enquiry.sentBody": {
+      "value": "Thanks - I'll be in touch within one working day.",
+      "label": "Thank-you message",
+      "hint": "Replaces the form once it has been sent. Say when they will hear back"
     }
   }
 }

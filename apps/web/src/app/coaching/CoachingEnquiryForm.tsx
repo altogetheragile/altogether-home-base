@@ -3,11 +3,27 @@
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { colors as p } from '@/lib/brand';
+import registry from '@/lib/copy/coaching.json';
+
+const WORDS = ['nameLabel', 'namePlaceholder', 'emailLabel', 'emailPlaceholder', 'serviceLabel', 'servicePlaceholder',
+  'messageLabel', 'messagePlaceholder', 'submit', 'footnote', 'sentHeading', 'sentBody'] as const;
+export type EnquiryWords = Record<(typeof WORDS)[number], string>;
+
+// The page passes this site's words in. Falling back to the shipped ones, read from the registry
+// rather than written here a second time, so a caller that passes nothing still says something.
+const entries = registry.entries as Record<string, { value: string }>;
+const shipped = Object.fromEntries(WORDS.map((w) => [w, entries[`coaching.enquiry.${w}`].value])) as EnquiryWords;
+const shippedChoices = ['chemistryOption', 'unsureOption'].map((w) => entries[`coaching.enquiry.${w}`].value);
 
 const ArrowRight = () => <svg width="14" height="14" viewBox="0 0 256 256" fill="currentColor"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z" /></svg>;
 const CheckCircle = () => <svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z" /></svg>;
 
-export function CoachingEnquiryForm() {
+export function CoachingEnquiryForm({ words: given, choices = shippedChoices }: {
+  words?: Partial<EnquiryWords>;
+  /** What the drop-down offers: this site's services, then whatever else it asks about. */
+  choices?: string[];
+} = {}) {
+  const w = { ...shipped, ...given };
   const [form, setForm] = useState({ name: '', email: '', service: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -49,8 +65,8 @@ export function CoachingEnquiryForm() {
     return (
       <div style={{ background: p.white, borderRadius: 16, padding: '40px 32px', textAlign: 'center' }}>
         <div style={{ width: 56, height: 56, borderRadius: '50%', background: '#E6F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', color: '#1A9090' }}><CheckCircle /></div>
-        <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 20, marginBottom: 8 }}>Message sent</div>
-        <div style={{ color: p.muted, fontSize: 14 }}>Thanks - I&apos;ll be in touch within one working day.</div>
+        <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 20, marginBottom: 8 }}>{w.sentHeading}</div>
+        {w.sentBody.trim() && <div style={{ color: p.muted, fontSize: 14 }}>{w.sentBody}</div>}
       </div>
     );
   }
@@ -64,35 +80,33 @@ export function CoachingEnquiryForm() {
     <div style={{ background: p.white, borderRadius: 16, padding: '40px 40px' }}>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div>
-          <label style={labelStyle}>Your name</label>
-          <input type="text" placeholder="Jane Smith" value={form.name} onChange={(e) => { field('name', e.target.value); clearErr('name'); }} style={inputStyle(!!vErrors.name)} />
+          <label style={labelStyle}>{w.nameLabel}</label>
+          <input type="text" placeholder={w.namePlaceholder} value={form.name} onChange={(e) => { field('name', e.target.value); clearErr('name'); }} style={inputStyle(!!vErrors.name)} />
           {vErrors.name && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors.name}</div>}
         </div>
         <div>
-          <label style={labelStyle}>Email address</label>
-          <input type="email" placeholder="jane@company.com" value={form.email} onChange={(e) => { field('email', e.target.value); clearErr('email'); }} style={inputStyle(!!vErrors.email)} />
+          <label style={labelStyle}>{w.emailLabel}</label>
+          <input type="email" placeholder={w.emailPlaceholder} value={form.email} onChange={(e) => { field('email', e.target.value); clearErr('email'); }} style={inputStyle(!!vErrors.email)} />
           {vErrors.email && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors.email}</div>}
         </div>
         <div>
-          <label style={labelStyle}>I&apos;m interested in</label>
+          <label style={labelStyle}>{w.serviceLabel}</label>
           <select value={form.service} onChange={(e) => setForm((d) => ({ ...d, service: e.target.value }))} style={{ ...inputStyle(), color: form.service ? p.body : p.muted }}>
-            <option value="">Select a service...</option>
-            <option value="one-to-one">One-to-One Professional Coaching</option>
-            <option value="team">Agile Team Coaching</option>
-            <option value="chemistry">Free Chemistry Session</option>
-            <option value="unsure">Not sure yet</option>
+            <option value="">{w.servicePlaceholder}</option>
+            {/* The wording is the value, so the enquiry says what was chosen in the site's own words. */}
+            {choices.map((c) => <option key={c} value={c}>{c}</option>)}
           </select>
         </div>
         <div>
-          <label style={labelStyle}>What&apos;s on your mind?</label>
-          <textarea placeholder="Tell me a bit about what you're working through or what you're looking for..." value={form.message} onChange={(e) => { field('message', e.target.value); clearErr('message'); }} rows={5} style={{ ...inputStyle(!!vErrors.message), resize: 'vertical', fontFamily: 'inherit' }} />
+          <label style={labelStyle}>{w.messageLabel}</label>
+          <textarea placeholder={w.messagePlaceholder} value={form.message} onChange={(e) => { field('message', e.target.value); clearErr('message'); }} rows={5} style={{ ...inputStyle(!!vErrors.message), resize: 'vertical', fontFamily: 'inherit' }} />
           {vErrors.message && <div style={{ color: p.danger, fontSize: 12, marginTop: 4 }}>{vErrors.message}</div>}
         </div>
         {error && <div style={{ color: p.danger, fontSize: 13, textAlign: 'center' }}>{error}</div>}
         <button onClick={handleSubmit} disabled={submitting} style={{ background: submitting ? p.muted : p.orange, color: submitting ? p.white : p.deepTeal, border: 'none', padding: '14px 28px', borderRadius: 10, fontWeight: 700, fontSize: 15, cursor: submitting ? 'default' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, opacity: submitting ? 0.7 : 1 }}>
-          {submitting ? 'Sending...' : <>Send enquiry <ArrowRight /></>}
+          {submitting ? 'Sending...' : <>{w.submit} <ArrowRight /></>}
         </button>
-        <div style={{ color: p.muted, fontSize: 12, textAlign: 'center' }}>I aim to respond within one working day. No hard sell - just a conversation.</div>
+        {w.footnote.trim() && <div style={{ color: p.muted, fontSize: 12, textAlign: 'center' }}>{w.footnote}</div>}
       </div>
     </div>
   );

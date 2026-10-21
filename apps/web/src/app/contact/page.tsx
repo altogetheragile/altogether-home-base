@@ -69,9 +69,7 @@ export default async function ContactPage() {
       {/* HERO */}
       <div id="main-content" style={{ background: p.paleTeal, padding: '56px 24px', textAlign: 'center' }}>
         <Editable k="contact.hero.heading" label="this text" as="div" block>
-          <Editable k="contact.hero.heading" label="this text" as="div" block>
-            <h1 style={{ color: p.deepTeal, fontSize: 'clamp(30px, 5vw, 40px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.15 }}>{t('contact.hero.heading')}</h1>
-          </Editable>
+          <h1 style={{ color: p.deepTeal, fontSize: 'clamp(30px, 5vw, 40px)', fontWeight: 800, margin: '0 0 12px', lineHeight: 1.15 }}>{t('contact.hero.heading')}</h1>
         </Editable>
         <Editable k="contact.hero.intro" label="this text" as="div" block>
           <p style={{ color: p.body, fontSize: 16, lineHeight: 1.6, margin: '0 auto', maxWidth: 620 }}>{t('contact.hero.intro')}</p>

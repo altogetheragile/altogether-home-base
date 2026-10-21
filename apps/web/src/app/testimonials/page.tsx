@@ -33,6 +33,8 @@ export default async function TestimonialsPage() {
   const showName = settings.show_testimonial_name ?? true;
   const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
   const showCompany = settings.show_testimonial_company ?? true;
+  // The editor has had a switch for this for a while. Nothing read it, so it did nothing.
+  const showRating = settings.show_testimonial_rating_header ?? true;
 
   return (
     <div style={{ fontFamily: fonts.sans, background: p.white }}>
@@ -46,7 +48,7 @@ export default async function TestimonialsPage() {
         <Editable k="testimonials.hero.intro" label="this text" as="div" block>
           <p style={{ color: p.body, fontSize: 16, lineHeight: 1.6, margin: '0 auto', maxWidth: 600 }}>{t('testimonials.hero.intro')}</p>
         </Editable>
-        {stats && (
+        {stats && showRating && (
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginTop: 18, color: p.deepTeal }}>
             <svg width={20} height={20} viewBox="0 0 256 256" style={{ fill: p.orange }}><path d="M234.5,114.38l-45.1,39.36,13.51,58.6a16,16,0,0,1-23.84,17.34l-51.11-31-51,31a16,16,0,0,1-23.84-17.34l13.49-58.54L22.76,114.38a16,16,0,0,1,9.12-28.06l59.46-5.14,23.16-55.35a15.95,15.95,0,0,1,29.48,0L167.14,81.18l59.46,5.14a16,16,0,0,1,9.12,28.06Z" /></svg>
             <span style={{ fontWeight: 800, fontSize: 18 }}>{stats.averageRating}/10</span>

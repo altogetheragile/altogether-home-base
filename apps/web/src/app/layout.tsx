@@ -30,8 +30,9 @@ export async function generateMetadata(): Promise<Metadata> {
       default: settings.company_description?.trim() ? `${name} - ${settings.company_description.trim().split('.')[0]}` : name,
       template: `%s - ${name}`,
     },
-    description:
-      'Framework-based agile training and coaching, with 80+ techniques and 25 years of hands-on experience for teams who want real results.',
+    // What this site says about itself in Settings. It was one sentence written here, so every site
+    // made from this one told search engines it had 80+ techniques and 25 years of experience.
+    ...(settings.company_description?.trim() ? { description: settings.company_description.trim() } : {}),
     // No icon declared at all when this site has not chosen one. An empty href is a broken link
     // rather than an absent one, and the shipped kanji is this repository's face: a site that has
     // not chosen an icon should look unfinished rather than look like Altogether Agile.

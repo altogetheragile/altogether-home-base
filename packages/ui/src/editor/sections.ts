@@ -155,7 +155,7 @@ export const ABOUT_SECTIONS: SectionChoice[] = [
   { key: 'story', label: 'Story and credentials', hint: 'The written story, the qualifications and the badges.', shape: ['space'] },
   { key: 'testimonials', label: 'Testimonials', hint: 'The quotes. Empty until somebody has left one.', shape: ['space'] },
   { key: 'mission', label: 'Mission', hint: 'The centred paragraphs on teal.', shape: ['space'] },
-  { key: 'philosophy', label: 'Philosophy cards', hint: 'The two-up cards.', shape: ['space', 'across'] },
+  { key: 'philosophy', label: 'Philosophy cards', hint: 'The cards, as many as you have written.', shape: ['space', 'across'] },
   { key: 'timeline', label: 'Timeline', hint: 'The dated list of how it unfolded.', shape: ['space'] },
   { key: 'cta', label: 'Closing call to action', hint: 'The band at the bottom.', shape: ['space'] },
 ];

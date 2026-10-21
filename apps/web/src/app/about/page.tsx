@@ -6,13 +6,13 @@ import Link from 'next/link';
 import { getSiteSettings } from '@/lib/site-settings';
 import { bookingHref } from '@/lib/booking';
 import { getAllApprovedFeedback } from '@/lib/testimonials';
-import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, SITE_NAME , siteName } from '@/lib/seo';
+import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, siteName } from '@/lib/seo';
 import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf, fonts } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { isAdmin } from '@/lib/auth';
-import { getCopy, lines, list, items } from '@/lib/copy';
+import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 import { Prose, When, has } from '@/lib/copy/Prose';
 import { sectionNodes } from '@/components/Sections';
@@ -79,11 +79,19 @@ const philosophyStyles = [
  *  all. A second site would have displayed them as its own, which is worse than borrowed prose:
  *  they are checkable claims about a named individual. They are copy now, and empty by default.
  *
- *  One per line, "name | image | link". A line missing a field is skipped rather than rendered
- *  half-built, because this is typed into a textarea by a person, not generated. */
+ *  A list of rows with a picture box each. They were "name | image address | link", one per line,
+ *  which made the one picture on this page that was not chosen with a picture box: you had to
+ *  know the address of a file somebody had already uploaded. A saved value still in that shape is
+ *  read as it always was, so a site whose row has not been converted keeps its badges. */
 type Badge = { alt: string; src: string; url: string };
 
 function badgesFrom(text: string): Badge[] {
+  if (text.trim().startsWith('[')) {
+    return items<{ name: string; image: string; link: string }>(text, ['name', 'image'])
+      .map((b) => ({ b, pic: picture(b.image) }))
+      .filter(({ pic }) => pic)
+      .map(({ b, pic }) => ({ alt: pic!.alt || b.name, src: pic!.src, url: b.link?.trim() ?? '' }));
+  }
   return list(text)
     .map((line) => line.split('|').map((f) => f.trim()))
     .filter((f) => f.length === 3 && f.every(Boolean))
@@ -137,8 +145,19 @@ export default async function AboutPage() {
             </div>
           </div>
           <div style={{ display: 'flex', justifyContent: 'center' }}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            {founder.shown && founder.photo && <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '65%', height: 'auto', display: 'block', borderRadius: 16 }} />}
+            {founder.shown && founder.photo && (
+              <div style={{ width: '65%' }}>
+                <Editable k="site.brand.images.founderPhoto" label="the founder photograph" as="div" block>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={founder.photo} alt={founder.name} loading="lazy" style={{ width: '100%', height: 'auto', display: 'block', borderRadius: 16 }} />
+                </Editable>
+              </div>
+            )}
+            {founder.shown && !founder.photo && admin && (
+              <div style={{ width: '65%' }}>
+                <AddAPicture k="site.brand.images.founderPhoto" label="the founder photograph" height={320} />
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -182,14 +201,19 @@ export default async function AboutPage() {
                     <Editable k="about.badges.heading" label="this text" as="div" block>
                       <div style={{ color: p.deepTeal, fontWeight: 800, fontSize: 13, marginBottom: 12 }}>{t('about.badges.heading')}</div>
                     </Editable>
+                    <Editable k="about.badges.list" label="the badges" as="div" block>
                     <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', justifyContent: 'center' }}>
-                      {badgesFrom(t('about.badges.list')).map((badge) => (
-                        <a key={badge.src} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 }}>
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={badge.src} alt={badge.alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                        </a>
-                      ))}
+                      {badgesFrom(t('about.badges.list')).map((badge) => {
+                        const style = { display: 'flex', alignItems: 'center', justifyContent: 'center', width: 80, height: 80, borderRadius: '50%', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', flexShrink: 0, padding: 6 } as const;
+                        // eslint-disable-next-line @next/next/no-img-element
+                        const img = <img src={badge.src} alt={badge.alt} loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />;
+                        // A badge with no verification page is still a badge; it just is not a link.
+                        return badge.url
+                          ? <a key={badge.src} href={badge.url} target="_blank" rel="noopener noreferrer" title={badge.alt} style={style}>{img}</a>
+                          : <div key={badge.src} title={badge.alt} style={style}>{img}</div>;
+                      })}
                     </div>
+                    </Editable>
                   </div>
                 )}
               </div>
@@ -366,7 +390,9 @@ export default async function AboutPage() {
           {/* The column existed to hold the portrait. Without one it is half a banner of nothing. */}
           {founder.shown && founder.portrait && (
             <div className="aa-hide-mobile" style={{ alignItems: 'center', justifyContent: 'center' }}>
-              <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+              <Editable k="site.brand.images.founderPortrait" label="the founder portrait" as="div" block>
+                <FounderPortrait imgSrc={founder.portrait} name={founder.name} />
+              </Editable>
             </div>
           )}
           {portraitSlot && (
@@ -383,7 +409,7 @@ export default async function AboutPage() {
   return (
     <div style={{ fontFamily: fonts.sans, background: p.white }}>
       {founder.shown && (
-        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, jobTitle: t('about.founder.role'), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
+        <JsonLd data={{ '@context': 'https://schema.org', '@type': 'ProfilePage', mainEntity: { '@type': 'Person', name: founder.name, ...(settings.founder_role?.trim() ? { jobTitle: settings.founder_role.trim() } : {}), description: t('about.meta.description'), url: `${SITE_URL}/about`, ...(founder.photo ? { image: founder.photo.startsWith('http') ? founder.photo : `${SITE_URL}${founder.photo}` } : {}), worksFor: { '@type': 'Organization', name: await siteName(), url: SITE_URL } } }} />
       )}
       <JsonLd data={breadcrumbJsonLd(await pageCrumbs('about', '/about', 'About'))} />
 
