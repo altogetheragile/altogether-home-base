@@ -19,6 +19,12 @@ export const siteRegistry: CopyRegistry = {
       ],
       "group": "Sites you look after"
     },
+    "site.brief": {
+      "value": "",
+      "label": "Describe your website",
+      "hint": "A few sentences about what the business does, who it is for and how it sounds. The setup page uses it to write starter wording for every page, saved as drafts for you to read before anything goes live. Never shown to visitors.",
+      "group": "Starter wording"
+    },
     "site.company_name": {
       "value": "",
       "label": "Business name",

@@ -8,6 +8,7 @@ import type { CopyField } from '@altogether/ui/editor/store';
 import { createClient } from '@/lib/supabase/client';
 import { loadPageCopy, savePageCopy } from '@/app/actions/copy';
 import { STEPS, fieldsForStep, type Step } from '@/lib/setup/steps';
+import { StarterRun } from './StarterRun';
 
 // ============= Being stepped through it =============
 //
@@ -30,9 +31,13 @@ export function SetupWizard({
    *  server where the settings already are. */
   modulePages,
   wordPages,
+  starterPages,
 }: {
   modulePages: { page: string; label: string; key: string }[];
   wordPages: { page: string; label: string; href: string; keys: string[] }[];
+  /** What the starter writes for: every page that is on, the menu and footer, and the pages
+   *  with one address per course or paper when their section is on. */
+  starterPages: { page: string; label: string }[];
 }) {
   const router = useRouter();
   const [at, setAt] = useState(0);
@@ -120,6 +125,22 @@ export function SetupWizard({
       move();
     })(); });
   };
+
+  /** Saves what has been typed without moving, for the starter, which has to write from the
+   *  description as it stands rather than as it was last saved. */
+  const saveNow = async (): Promise<string | null> => {
+    for (const [page, changes] of changedPages) {
+      const result = await savePageCopy(page, changes);
+      if (!result.ok) return result.error;
+    }
+    if (changedCount) {
+      setEdits({});
+      const fresh = await Promise.all(changedPages.map(async ([p]) => [p, await loadPageCopy(p)] as const));
+      setLoaded((prev) => ({ ...prev, ...Object.fromEntries(fresh) }));
+    }
+    return null;
+  };
+  const brief = loaded.site?.find((f) => f.key === 'site.brief');
 
   const upload = async (file: File) => {
     const supabase = createClient();
@@ -212,6 +233,14 @@ export function SetupWizard({
               ))}
             </section>
           ))
+        )}
+
+        {step.id === 'starter' && !waiting && (
+          <StarterRun
+            pages={starterPages}
+            saveFirst={saveNow}
+            hasBrief={Boolean(brief && valueOf('site', brief).trim())}
+          />
         )}
 
         {step.id === 'words' && wordPages.length > 0 && (

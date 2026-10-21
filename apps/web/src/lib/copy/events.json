@@ -63,7 +63,8 @@
     "events.stats.trained.number": {
       "value": "",
       "label": "Stat 3 number",
-      "hint": "How many people you have trained. Leave empty and the figure does not appear."
+      "hint": "How many people you have trained. Leave empty and the figure does not appear.",
+      "claim": true
     },
     "events.stats.trained.label": {
       "value": "Practitioners trained",
@@ -152,7 +153,8 @@
       "value": "",
       "label": "Group size",
       "hint": "Shown on every card, for example \"Up to 12\". A promise about every course you run, so it starts empty. Leave it empty and it is left out",
-      "group": "Course cards"
+      "group": "Course cards",
+      "claim": true
     },
     "events.card.halfDay": {
       "value": "Half day",

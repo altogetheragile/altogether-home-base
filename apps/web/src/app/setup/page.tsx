@@ -171,6 +171,18 @@ export default async function SetupPage() {
     keys: headlineKeys(page, Object.keys(REGISTRIES.find((r) => r.page === page)?.entries ?? {})),
   }));
 
+  // The starter writes for every page that is on, plus the two families of pages with one
+  // address per course or paper, which belong to the section that lists them, and the menu and
+  // footer, which are on every page.
+  const familyOf: Record<string, string> = { training: '/events', exam: '/exams' };
+  const starterPages = [
+    ...pagesOn.map(({ page, label }) => ({ page, label })),
+    ...Object.entries(familyOf)
+      .filter(([, href]) => pagesOn.some((on) => COPY_ROUTES[href] === on.page))
+      .map(([page]) => ({ page, label: REGISTRIES.find((r) => r.page === page)?.label ?? page })),
+    { page: 'navigation', label: REGISTRIES.find((r) => r.page === 'navigation')?.label ?? 'Menu and footer' },
+  ].filter(({ page }) => REGISTRIES.some((r) => r.page === page));
+
   return (
     <div style={{ background: p.skyTeal, minHeight: '70vh' }}>
       <div style={{ maxWidth: 820, margin: '0 auto', padding: '56px 24px 72px' }}>
@@ -181,12 +193,12 @@ export default async function SetupPage() {
           Setting up this site
         </h1>
         <p style={{ color: p.body, fontSize: 15, lineHeight: 1.75, margin: '0 0 8px' }}>
-          Five steps, in the order that makes sense to answer them. Each one saves as you go, so
+          Seven steps, in the order that makes sense to answer them. Each one saves as you go, so
           you can stop anywhere and pick it up later, and nothing here is compulsory. Everything
           can also be changed from the page it appears on, for the rest of this site&rsquo;s life.
         </p>
 
-        <SetupWizard modulePages={modulePages} wordPages={wordPages} />
+        <SetupWizard modulePages={modulePages} wordPages={wordPages} starterPages={starterPages} />
 
         <CopySheet />
 
