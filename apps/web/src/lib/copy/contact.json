@@ -48,12 +48,132 @@
     "contact.cards.booking": {
       "value": "Book a Call",
       "label": "Booking card heading",
-      "hint": "The card that links to your booking page."
+      "hint": "The card that links to your booking page. Only shown while bookings are switched on, on the This Site tab: with them off it would link to this page."
     },
     "contact.cards.bookingNote": {
       "value": "Free 30-min chemistry session",
       "label": "What the call is",
       "hint": "One short line under the booking heading. Say how long it takes and what it costs, because that is what somebody hesitating wants to know."
+    },
+    "contact.form.heading": {
+      "value": "Send us a Message",
+      "label": "Form heading",
+      "hint": "The form at the foot of the page"
+    },
+    "contact.form.intro": {
+      "value": "Fill out the form below and we'll get back to you shortly.",
+      "label": "Form introduction",
+      "hint": "One line under the form heading. Leave empty to leave it out"
+    },
+    "contact.form.nameLabel": {
+      "value": "Name *",
+      "label": "Name box label",
+      "hint": "The form at the foot of the page",
+      "group": "Form boxes"
+    },
+    "contact.form.namePlaceholder": {
+      "value": "Your name",
+      "label": "Name box example",
+      "hint": "Shown faintly in the empty box",
+      "group": "Form boxes"
+    },
+    "contact.form.emailLabel": {
+      "value": "Email *",
+      "label": "Email box label",
+      "hint": "The form at the foot of the page",
+      "group": "Form boxes"
+    },
+    "contact.form.emailPlaceholder": {
+      "value": "your.email@example.com",
+      "label": "Email box example",
+      "hint": "Shown faintly in the empty box",
+      "group": "Form boxes"
+    },
+    "contact.form.phoneLabel": {
+      "value": "Phone (Optional)",
+      "label": "Phone box label",
+      "hint": "The form at the foot of the page",
+      "group": "Form boxes"
+    },
+    "contact.form.phonePlaceholder": {
+      "value": "+44 7XXX XXX XXX",
+      "label": "Phone box example",
+      "hint": "Shown faintly in the empty box. Worth writing in the shape of a number from wherever most of your visitors are",
+      "group": "Form boxes"
+    },
+    "contact.form.typeLabel": {
+      "value": "Enquiry Type *",
+      "label": "Enquiry type label",
+      "hint": "Above the drop-down of enquiry types"
+    },
+    "contact.form.types": {
+      "value": "General Enquiry\nTraining\nCoaching\nPartnership\nFeedback",
+      "label": "Enquiry types",
+      "hint": "The choices in the drop-down, one per line, the first one chosen to begin with. Leave empty and the drop-down is not shown"
+    },
+    "contact.form.subjectLabel": {
+      "value": "Subject *",
+      "label": "Subject box label",
+      "hint": "The form at the foot of the page",
+      "group": "Form boxes"
+    },
+    "contact.form.subjectPlaceholder": {
+      "value": "What is this about?",
+      "label": "Subject box example",
+      "hint": "Shown faintly in the empty box",
+      "group": "Form boxes"
+    },
+    "contact.form.messageLabel": {
+      "value": "Message *",
+      "label": "Message box label",
+      "hint": "The form at the foot of the page",
+      "group": "Form boxes"
+    },
+    "contact.form.messagePlaceholder": {
+      "value": "Tell us more about your enquiry...",
+      "label": "Message box example",
+      "hint": "Shown faintly in the empty box",
+      "group": "Form boxes"
+    },
+    "contact.form.methodLabel": {
+      "value": "Preferred Contact Method",
+      "label": "Contact method label",
+      "hint": "Above the choice of email or phone"
+    },
+    "contact.form.methodEmail": {
+      "value": "Email",
+      "label": "Email choice",
+      "hint": "Beside the first of the two round buttons"
+    },
+    "contact.form.methodPhone": {
+      "value": "Phone",
+      "label": "Phone choice",
+      "hint": "Beside the second of the two round buttons"
+    },
+    "contact.form.submit": {
+      "value": "Send Message",
+      "label": "Send button",
+      "hint": "The form at the foot of the page"
+    },
+    "contact.form.sending": {
+      "value": "Sending...",
+      "label": "Send button while sending",
+      "hint": "Replaces the button wording for the second or two it takes"
+    },
+    "contact.form.sentHeading": {
+      "value": "Message Sent",
+      "label": "Thank-you heading",
+      "hint": "Replaces the form once it has been sent"
+    },
+    "contact.form.sentBody": {
+      "value": "Thanks for getting in touch. We'll get back to you as soon as possible.",
+      "label": "Thank-you message",
+      "hint": "Replaces the form once it has been sent. Say when they will hear back"
+    },
+    "contact.form.sentAgain": {
+      "value": "Send Another Message",
+      "label": "Send another button",
+      "hint": "Under the thank-you message, to bring the form back"
     }
   }
 }
