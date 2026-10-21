@@ -1,7 +1,7 @@
 import { colors as p } from '@/theme/colors';
 import { Helmet } from 'react-helmet-async';
 import { SITE_URL, CONTACT_EMAIL } from '@/config/featureFlags';
-import { UnpublishedLegal, usePublishesLegal } from '@/components/legal/UnpublishedLegal';
+import { useLegalStandIn } from '@/components/legal/legalStandIn';
 
 const h1Style = { color: p.deepTeal, fontSize: 32, fontWeight: 800 as const, marginBottom: 8 };
 const h2Style = { color: p.deepTeal, fontSize: 20, fontWeight: 700 as const, marginTop: 40, marginBottom: 12 };
@@ -24,7 +24,8 @@ const tdStyle: React.CSSProperties = {
 };
 
 const CookiePolicy = () => {
-  if (!usePublishesLegal()) return <UnpublishedLegal title="Cookie Policy" />;
+  const standIn = useLegalStandIn('cookies', 'Cookie Policy');
+  if (standIn) return standIn;
   return (
   <div style={{ fontFamily: "'Segoe UI', system-ui, sans-serif", background: '#FFFFFF', minHeight: '100vh' }}>
     <Helmet>

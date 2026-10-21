@@ -1,4 +1,5 @@
 import { useSiteSettings } from '@/hooks/useSiteSettings';
+import { siteNameOr } from '@/config/ourSite';
 
 /** What this site calls itself, for the handful of places in the App that say it out loud.
  *
@@ -7,5 +8,5 @@ import { useSiteSettings } from '@/hooks/useSiteSettings';
  *  by a stranger, and all four said Altogether Agile on a site that was not. */
 export function useCompanyName(): string {
   const { settings } = useSiteSettings();
-  return (settings as { company_name?: string | null } | undefined)?.company_name?.trim() || 'Altogether Agile';
+  return siteNameOr((settings as { company_name?: string | null } | undefined)?.company_name);
 }

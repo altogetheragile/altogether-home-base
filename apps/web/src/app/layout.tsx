@@ -104,7 +104,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           </EditableArea>
           <div className="flex-1"><EditableArea on={admin}>{children}</EditableArea></div>
           <EditableArea on={admin}>
-            <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} />
+            <Footer settings={settings} year={new Date().getFullYear()} t={t} signedInAsAdmin={admin} legalWritten={['privacy', 'terms', 'cookies'].filter((page) => siteWords(`site.legal.${page}`).trim())} />
           </EditableArea>
           </>
           )}

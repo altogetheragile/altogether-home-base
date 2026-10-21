@@ -49,6 +49,27 @@ export const siteRegistry: CopyRegistry = {
       "path": "copyright_text",
       "group": "What this site is called"
     },
+    "site.legal.privacy": {
+      "value": "",
+      "label": "Privacy notice",
+      "hint": "What this business collects about people, why, how long it keeps it and how to ask for it. Shown at /privacy, and linked from the footer once written. The ICO publishes a free privacy notice generator for small businesses. A line starting ## is a heading, a line starting - is a bullet, and a blank line starts a new paragraph. Leave it empty and the page says it has not been published yet.",
+      "group": "Legal pages",
+      "claim": true
+    },
+    "site.legal.terms": {
+      "value": "",
+      "label": "Terms and conditions",
+      "hint": "The terms people book or buy under. Shown at /terms, and linked from the footer once written. A line starting ## is a heading, a line starting - is a bullet, and a blank line starts a new paragraph. Leave it empty and the page says it has not been published yet.",
+      "group": "Legal pages",
+      "claim": true
+    },
+    "site.legal.cookies": {
+      "value": "",
+      "label": "Cookie policy",
+      "hint": "Which cookies the site sets and why. Shown at /cookies, and linked from the footer once written. A line starting ## is a heading, a line starting - is a bullet, and a blank line starts a new paragraph. Leave it empty and the page says it has not been published yet.",
+      "group": "Legal pages",
+      "claim": true
+    },
     "site.under_construction": {
       "value": "",
       "label": "Show visitors a holding page",

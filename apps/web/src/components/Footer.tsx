@@ -8,7 +8,7 @@ import { isOurSite } from '@/lib/ourSite';
 
 // Server component (no interactivity). The auth-only links (Dashboard, Admin) from
 // the Vite footer are intentionally dropped - this is the public content surface.
-export function Footer({ settings, year, t, signedInAsAdmin = false }: {
+export function Footer({ settings, year, t, signedInAsAdmin = false, legalWritten = [] }: {
   settings: SiteSettings;
   year: number;
   /** Keep hidden pages listed, marked, for somebody who can unhide them. The menu does the same;
@@ -17,6 +17,9 @@ export function Footer({ settings, year, t, signedInAsAdmin = false }: {
   signedInAsAdmin?: boolean;
   /** The navigation registry's reader, so the footer and the menu agree on what a page is called. */
   t: (key: string) => string;
+  /** The legal pages this site has written for itself on This Site, which the App then shows at
+   *  their usual addresses. */
+  legalWritten?: string[];
 }) {
   // The shared list, not a fourth copy. This was the last place still carrying its own.
   const on = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
@@ -35,14 +38,15 @@ export function Footer({ settings, year, t, signedInAsAdmin = false }: {
     .filter((l) => l.show || signedInAsAdmin);
 
   // The three pages these used to point at are this repository's own legal documents, naming its
-  // company number and registered office, and every site linked to them. A site says where its
-  // own are; until it does, there is no link. Ours keeps its pages without having to say so.
+  // company number and registered office, and every site linked to them. A site links to its own:
+  // an address it gives, or the page it has written on This Site. Until then, there is no link.
+  // Ours keeps its pages without having to say so.
   const ours = isOurSite();
   const legal = (['privacy', 'terms', 'cookies'] as const)
     .map((page) => ({
       key: `footer.${page}`,
       label: t(`footer.${page}`),
-      href: t(`footer.${page}.href`).trim() || (ours ? `/${page}` : ''),
+      href: t(`footer.${page}.href`).trim() || (ours || legalWritten.includes(page) ? `/${page}` : ''),
     }))
     .filter((l) => l.href && l.label.trim());
 
