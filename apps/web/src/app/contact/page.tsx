@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Editable } from '@/components/edit/Editable';
+import { EmptySection } from '@/components/edit/EmptySection';
 import { buildMetadata, JsonLd, breadcrumbJsonLd , siteName } from '@/lib/seo';
 import { ContactForm } from './ContactForm';
 import { getSiteSettings } from '@/lib/site-settings';
@@ -78,6 +79,16 @@ export default async function ContactPage() {
       </div>
 
       {/* INFO CARDS */}
+      {/* Gone when there is nothing to put in it: no address, number or place on This Site and no
+          bookings. It was a white band of padding between the hero and the form. */}
+      {cards.length === 0 && (
+        <EmptySection
+          name="Contact details"
+          why="No email, phone or place on This Site, and bookings are off, so there is no card to show."
+          fills={{ kind: 'field', k: 'site.contact_email', label: 'the contact details' }}
+        />
+      )}
+      {cards.length > 0 && (
       <div className="aa-contact-wrap" style={{ background: '#fff' }}>
         <div className="aa-contact-cards" style={{ maxWidth: 1000, margin: '0 auto' }}>
           {cards.map((c) => {
@@ -104,6 +115,7 @@ export default async function ContactPage() {
           })}
         </div>
       </div>
+      )}
 
       {/* FORM */}
       <div className="aa-contact-wrap" style={{ background: p.skyTeal }}>
