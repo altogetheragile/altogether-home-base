@@ -6,6 +6,8 @@ import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { isAdmin } from '@/lib/auth';
 import { GuideEditor } from './GuideEditor';
+import { getCopy } from '@/lib/copy';
+import { pageCrumbs } from '@/lib/copy/pageName';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,14 +62,14 @@ export async function generateMetadata({
   // A page this site has switched off does not name itself. See lib/module-gate.ts.
   if (await moduleHidden('exams')) return {};
   const { slug } = await params;
-  const exam = await getExam(slug);
-  if (!exam) return { title: 'Exam not found' };
+  const [exam, t] = await Promise.all([getExam(slug), getCopy('exam')]);
+  if (!exam) return { title: t('exam.meta.notFound') };
   return buildMetadata({
     title: exam.seo_title || exam.title,
     description:
       exam.seo_description ||
       exam.description ||
-      `Free ${examSubject(exam.title)} practice exam with answers and explanations.`,
+      t('exam.meta.description').replace('{subject}', examSubject(exam.title)),
     path: `/exams/${slug}`,
     ogImage: `${SITE_URL}/og/exams/${slug}.png`,
   });
@@ -97,7 +99,30 @@ export default async function ExamDetailPage({
   const { slug } = await params;
   const exam = await getExam(slug);
   if (!exam) notFound();
-  const siblings = await getSiblings(examSubject(exam.title), slug);
+  const [siblings, t] = await Promise.all([getSiblings(examSubject(exam.title), slug), getCopy('exam')]);
+  // Every word the player says, read here because the player runs in the browser and this site's
+  // copy is read on the server. Listed out rather than looped so each key is visibly read, which is
+  // how the registry test knows the page uses it.
+  const words = {
+    'start.back': t('exam.start.back'), 'start.questions': t('exam.start.questions'),
+    'start.duration': t('exam.start.duration'), 'start.passMark': t('exam.start.passMark'),
+    'start.minutes': t('exam.start.minutes'), 'start.shuffle': t('exam.start.shuffle'),
+    'start.shuffleHint': t('exam.start.shuffleHint'), 'start.examMode': t('exam.start.examMode'),
+    'start.practiceMode': t('exam.start.practiceMode'), 'start.modesHint': t('exam.start.modesHint'),
+    'others.one': t('exam.others.one'), 'others.many': t('exam.others.many'), 'others.questions': t('exam.others.questions'),
+    'play.loading': t('exam.play.loading'), 'play.question': t('exam.play.question'),
+    'play.answered': t('exam.play.answered'), 'play.flagged': t('exam.play.flagged'),
+    'play.scenario': t('exam.play.scenario'), 'play.matching': t('exam.play.matching'),
+    'play.options': t('exam.play.options'), 'play.selectN': t('exam.play.selectN'), 'play.confirm': t('exam.play.confirm'),
+    'nav.prev': t('exam.nav.prev'), 'nav.next': t('exam.nav.next'), 'nav.unanswered': t('exam.nav.unanswered'),
+    'nav.flagged': t('exam.nav.flagged'), 'nav.flag': t('exam.nav.flag'), 'nav.unflag': t('exam.nav.unflag'),
+    'nav.finish': t('exam.nav.finish'), 'nav.progress': t('exam.nav.progress'),
+    'nav.legendAnswered': t('exam.nav.legendAnswered'), 'nav.legendFlagged': t('exam.nav.legendFlagged'),
+    'nav.legendCurrent': t('exam.nav.legendCurrent'),
+    'results.passed': t('exam.results.passed'), 'results.notPassed': t('exam.results.notPassed'),
+    'results.summary': t('exam.results.summary'), 'results.retake': t('exam.results.retake'),
+    'results.reference': t('exam.results.reference'),
+  };
   // Read from the real session on the server. A visitor never receives the editor's code, and
   // saving re-checks this anyway (see actions.ts).
   const canEdit = await isAdmin();
@@ -109,12 +134,12 @@ export default async function ExamDetailPage({
       <JsonLd data={await quizJsonLd(exam, slug)} />
       <JsonLd
         data={breadcrumbJsonLd([
-          { name: 'Home', path: '/' },
-          { name: 'Practice Exams', path: '/exams' },
+          // Home and the exams page under whatever this site calls them, as on every other page.
+          ...(await pageCrumbs('exams', '/exams', 'Practice Exams')),
           { name: exam.title, path: `/exams/${slug}` },
         ])}
       />
-      <ExamPlayer exam={exam} siblings={siblings} />
+      <ExamPlayer exam={exam} siblings={siblings} words={words} />
       {canEdit && <GuideEditor examId={exam.id} initial={exam.guide ?? ''} />}
     </main>
   );
