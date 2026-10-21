@@ -17,6 +17,8 @@ const PAGES: Record<string, string | null> = {
   blog: 'src/app/blog/page.tsx',
   events: 'src/app/events/page.tsx',
   exams: 'src/app/exams/page.tsx',
+  // One registry for every paper: the player's furniture, the same on each.
+  exam: 'src/app/exams/[slug]/page.tsx',
   // Not a page: the menu and the footer, which share one registry because they name the same
   // links and a site that renames Coaching to Services should rename it once.
   navigation: 'src/components/Navigation.tsx',

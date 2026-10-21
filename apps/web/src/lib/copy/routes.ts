@@ -19,10 +19,22 @@ export const COPY_ROUTES: Record<string, string> = {
   '/exams': 'exams',
 };
 
+/** Pages with one address per thing, whose furniture is the same on all of them: every exam paper
+ *  says Prev, Next and Finish whichever paper it is. Matched after the exact routes, and only one
+ *  level down, so /exams itself is still the exams page.
+ *
+ *  Not /blog/: a post's words are the post, edited in Admin, and there is no furniture around it
+ *  worth a registry of its own. */
+export const COPY_PREFIXES: Record<string, string> = {
+  '/exams/': 'exam',
+};
+
 /** The registry a pathname edits, or null where there is nothing on the page to edit. */
 export function copyPageFor(pathname: string): string | null {
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  return COPY_ROUTES[clean] ?? null;
+  if (COPY_ROUTES[clean]) return COPY_ROUTES[clean];
+  const prefix = Object.keys(COPY_PREFIXES).find((p) => clean.startsWith(p) && !clean.slice(p.length).includes('/'));
+  return prefix ? COPY_PREFIXES[prefix] : null;
 }
 
 /** Always offered, on every page, because the menu and footer are on every page. */

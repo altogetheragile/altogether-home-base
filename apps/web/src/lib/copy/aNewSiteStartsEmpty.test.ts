@@ -51,6 +51,9 @@ const BLANK_BY_DESIGN = [
   // Was written into the coaching page, so every site had this one's illustration and no way to
   // change it. A site that has not chosen one gets the approach words at full width.
   'coaching.approach.picture',
+  // Were a list in code, answering in the first person about this site's own AgilePM papers, and
+  // given to search engines as every site's FAQ. A site writes its own or has none.
+  'exams.faq.items',
   // Empty means "the order the code has them in", which is the right starting point and the
   // thing a saved order is a departure from.
   'home.sections',

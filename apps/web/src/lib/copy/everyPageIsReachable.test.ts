@@ -1,14 +1,14 @@
 import { describe, it, expect } from 'vitest';
 import { existsSync } from 'node:fs';
 import { REGISTRIES } from './index';
-import { COPY_ROUTES, copyPageFor, CHROME_PAGE, SITE_PAGE } from './routes';
+import { COPY_ROUTES, COPY_PREFIXES, copyPageFor, CHROME_PAGE, SITE_PAGE } from './routes';
 
 // The on-page editor decides what it is editing from the URL. Two ways for that to go quietly
 // wrong: a page whose words nobody can reach from the page itself, and a route claiming a registry
 // that no longer exists, which shows an admin an empty drawer on a page full of editable words.
 
 describe('every page can be edited from itself', () => {
-  const editable = new Set(Object.values(COPY_ROUTES));
+  const editable = new Set([...Object.values(COPY_ROUTES), ...Object.values(COPY_PREFIXES)]);
 
   it('offers every registry from somewhere', () => {
     const alwaysOffered = new Set([CHROME_PAGE, SITE_PAGE]);
@@ -28,6 +28,19 @@ describe('every page can be edited from itself', () => {
       return !existsSync(file);
     });
     expect(missing, `no page file for: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('points every prefix at a page that answers under it', () => {
+    const missing = Object.keys(COPY_PREFIXES).filter((prefix) => !existsSync(`src/app${prefix}[slug]/page.tsx`));
+    expect(missing, `no [slug] page under: ${missing.join(', ')}`).toEqual([]);
+  });
+
+  it('gives every exam paper the player registry, and the list its own', () => {
+    expect(copyPageFor('/exams/agilepm-foundation-paper-1')).toBe('exam');
+    expect(copyPageFor('/exams/agilepm-foundation-paper-1/')).toBe('exam');
+    expect(copyPageFor('/exams')).toBe('exams');
+    // One level only: anything deeper is not a paper.
+    expect(copyPageFor('/exams/a/b')).toBeNull();
   });
 
   it('reads a trailing slash as the same page', () => {

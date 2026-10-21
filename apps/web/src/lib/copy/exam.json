@@ -1,0 +1,206 @@
+{
+  "page": "exam",
+  "label": "Exam paper",
+  "entries": {
+    "exam.start.back": {
+      "value": "All exams",
+      "label": "Back link",
+      "hint": "The card at the top of every exam, before it starts"
+    },
+    "exam.start.questions": {
+      "value": "Questions",
+      "label": "Questions label",
+      "hint": "The card at the top of every exam, before it starts. Under the number of questions"
+    },
+    "exam.start.duration": {
+      "value": "Duration",
+      "label": "Duration label",
+      "hint": "The card at the top of every exam, before it starts. Under the time allowed"
+    },
+    "exam.start.passMark": {
+      "value": "Pass mark",
+      "label": "Pass mark label",
+      "hint": "The card at the top of every exam, before it starts. Under the pass mark"
+    },
+    "exam.start.minutes": {
+      "value": "{n} min",
+      "label": "Minutes",
+      "hint": "How a time allowed is written, on the card and in the list of other papers. {n} is the number of minutes"
+    },
+    "exam.start.shuffle": {
+      "value": "Shuffle the question order",
+      "label": "Shuffle switch",
+      "hint": "The card at the top of every exam. Only offered on a paper whose questions do not build on one another"
+    },
+    "exam.start.shuffleHint": {
+      "value": "Off, so everyone sitting this paper gets the questions in the same order and question 7 is question 7 for the whole room. Turn it on for a re-sit, or to practise without learning the order.",
+      "label": "Shuffle explanation",
+      "hint": "Under the shuffle switch"
+    },
+    "exam.start.examMode": {
+      "value": "Exam Mode",
+      "label": "Exam mode button",
+      "hint": "The card at the top of every exam. Starts the timed paper"
+    },
+    "exam.start.practiceMode": {
+      "value": "Practice Mode",
+      "label": "Practice mode button",
+      "hint": "The card at the top of every exam. Starts the untimed paper, and is shown in the bar at the top while practising"
+    },
+    "exam.start.modesHint": {
+      "value": "Exam mode is timed with answers at the end. Practice mode is untimed and reveals answers as you go.",
+      "label": "Modes explanation",
+      "hint": "Under the two buttons"
+    },
+    "exam.others.one": {
+      "value": "The other paper in this set",
+      "label": "Heading, one other paper",
+      "hint": "Above the link to the other paper for the same qualification, under the start card and under the score"
+    },
+    "exam.others.many": {
+      "value": "Other papers in this set",
+      "label": "Heading, several other papers",
+      "hint": "Above the links to the other papers for the same qualification, under the start card and under the score"
+    },
+    "exam.others.questions": {
+      "value": "{n} questions",
+      "label": "Number of questions",
+      "hint": "Beside each of the other papers. {n} is the number"
+    },
+    "exam.play.loading": {
+      "value": "Loading questions…",
+      "label": "Loading",
+      "hint": "While a paper is being sat. Shown for a moment while the questions arrive"
+    },
+    "exam.play.question": {
+      "value": "Question",
+      "label": "Question",
+      "hint": "While a paper is being sat. Before the question number in the top bar, on the Question tab and in the progress panel"
+    },
+    "exam.play.answered": {
+      "value": "{n} answered",
+      "label": "Answered count",
+      "hint": "While a paper is being sat, in the top bar. {n} is how many"
+    },
+    "exam.play.flagged": {
+      "value": "{n} flagged",
+      "label": "Flagged count",
+      "hint": "While a paper is being sat, in the top bar. {n} is how many"
+    },
+    "exam.play.scenario": {
+      "value": "Project Scenario",
+      "label": "Scenario tab",
+      "hint": "While a paper is being sat. Only on a paper with a scenario"
+    },
+    "exam.play.matching": {
+      "value": "Matching - {n} rows",
+      "label": "Matching label",
+      "hint": "Above a matching question. {n} is how many rows it has"
+    },
+    "exam.play.options": {
+      "value": "Options (Column 2)",
+      "label": "Matching options heading",
+      "hint": "Above the options of a matching question"
+    },
+    "exam.play.selectN": {
+      "value": "Select {n}.",
+      "label": "Select how many",
+      "hint": "Under a question with more than one right answer. {n} is how many to choose"
+    },
+    "exam.play.confirm": {
+      "value": "Confirm Answer",
+      "label": "Confirm button",
+      "hint": "In practice mode, on a question with more than one right answer"
+    },
+    "exam.nav.prev": {
+      "value": "Prev",
+      "label": "Previous button",
+      "hint": "The buttons under each question"
+    },
+    "exam.nav.next": {
+      "value": "Next",
+      "label": "Next button",
+      "hint": "The buttons under each question"
+    },
+    "exam.nav.unanswered": {
+      "value": "Unanswered",
+      "label": "Next unanswered button",
+      "hint": "The buttons under each question"
+    },
+    "exam.nav.flagged": {
+      "value": "Flagged",
+      "label": "Next flagged button",
+      "hint": "The buttons under each question. Only once something is flagged"
+    },
+    "exam.nav.flag": {
+      "value": "Flag",
+      "label": "Flag button",
+      "hint": "The buttons under each question"
+    },
+    "exam.nav.unflag": {
+      "value": "Unflag",
+      "label": "Unflag button",
+      "hint": "The buttons under each question. Replaces Flag on a flagged question"
+    },
+    "exam.nav.finish": {
+      "value": "Finish",
+      "label": "Finish button",
+      "hint": "The buttons under each question. Ends the paper and marks it"
+    },
+    "exam.nav.progress": {
+      "value": "Progress",
+      "label": "Progress heading",
+      "hint": "The panel of numbered squares beside the question"
+    },
+    "exam.nav.legendAnswered": {
+      "value": "Answered",
+      "label": "Key: answered",
+      "hint": "The key under the progress panel"
+    },
+    "exam.nav.legendFlagged": {
+      "value": "Flagged",
+      "label": "Key: flagged",
+      "hint": "The key under the progress panel"
+    },
+    "exam.nav.legendCurrent": {
+      "value": "Current",
+      "label": "Key: current",
+      "hint": "The key under the progress panel"
+    },
+    "exam.results.passed": {
+      "value": "Passed",
+      "label": "Passed",
+      "hint": "The score, once a paper is finished"
+    },
+    "exam.results.notPassed": {
+      "value": "Not passed",
+      "label": "Not passed",
+      "hint": "The score, once a paper is finished"
+    },
+    "exam.results.summary": {
+      "value": "{percent}% · pass mark {passMark} · {unanswered} unanswered",
+      "label": "Score line",
+      "hint": "Under the score. {percent}, {passMark} and {unanswered} are filled in"
+    },
+    "exam.results.retake": {
+      "value": "Retake",
+      "label": "Retake button",
+      "hint": "Under the score"
+    },
+    "exam.results.reference": {
+      "value": "Reference: {reference}",
+      "label": "Reference",
+      "hint": "Under each marked answer that has one. {reference} is filled in"
+    },
+    "exam.meta.description": {
+      "value": "Free {subject} practice exam with answers and explanations.",
+      "label": "Search description, when a paper has none",
+      "hint": "What Google shows under a paper that has no description of its own. {subject} is the qualification, from the paper's title"
+    },
+    "exam.meta.notFound": {
+      "value": "Exam not found",
+      "label": "Not found title",
+      "hint": "The browser tab on an address with no published exam"
+    }
+  }
+}
