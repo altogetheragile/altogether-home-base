@@ -10,16 +10,17 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
+import { legalTabFor, withLegalTabs } from './legalTab';
 
 // ============= The App's half of the editor =============
 //
 // The same drawer the Site mounts. It was only on Site pages, so opening a knowledge item or the
 // flow game lost the editor entirely, with nothing to say why.
 //
-// Only the two site-wide tabs are offered here. These pages have no copy of their own: a
-// knowledge item is domain data, edited in Admin, and inventing a registry for it would be a
-// second way to edit the same thing. What is genuinely site-wide - the menu, the footer, the
-// brand, the founder, how to reach you - belongs on every page, and now is.
+// Only the two site-wide tabs are offered here, bar the legal pages (legalTab.ts). These pages have
+// no copy of their own: a knowledge item is domain data, edited in Admin, and inventing a registry
+// for it would be a second way to edit the same thing. What is genuinely site-wide - the menu, the
+// footer, the brand, the founder, how to reach you - belongs on every page, and now is.
 //
 // There are no server actions in this app, so the writes go straight to Supabase on the person's
 // own session. That is not a weaker check: the "admins write site copy" policy decides either
@@ -44,19 +45,22 @@ export function EditThisSite() {
     // No server render to revalidate here; the pages read through react-query, so clearing it is
     // the equivalent of Next's refresh.
     refresh: () => { void queryClient.invalidateQueries(); },
-    // No page-specific registry in this app, so only the site-wide tabs.
-    pageForPath: () => null,
+    // No page-specific registry in this app, so only the site-wide tabs, except on a legal page,
+    // whose words are one box on This Site. See legalTab.ts.
+    pageForPath: legalTabFor,
     alwaysOffered: [
       { page: 'navigation', label: 'Menu and Footer' },
       { page: 'site', label: 'This Site' },
     ],
-    load: (page) => loadPage(supabase, REGISTRIES, page),
-    save: (page, changes) => savePage(supabase, REGISTRIES, page, changes, user?.id ?? null),
-    reset: (page, key) => resetField(supabase, page, key, user?.id ?? null),
-    undo: (page, key) => undoField(supabase, REGISTRIES, page, key, user?.id ?? null),
-    saveDraft: (page, changes) => saveDraft(supabase, REGISTRIES, page, changes, user?.id ?? null),
-    publishDrafts: (page) => publishDrafts(supabase, REGISTRIES, page, user?.id ?? null),
-    discardDrafts: (page, key) => discardDrafts(supabase, page, key),
+    ...withLegalTabs({
+      load: (page) => loadPage(supabase, REGISTRIES, page),
+      save: (page, changes) => savePage(supabase, REGISTRIES, page, changes, user?.id ?? null),
+      reset: (page, key) => resetField(supabase, page, key, user?.id ?? null),
+      undo: (page, key) => undoField(supabase, REGISTRIES, page, key, user?.id ?? null),
+      saveDraft: (page, changes) => saveDraft(supabase, REGISTRIES, page, changes, user?.id ?? null),
+      publishDrafts: (page) => publishDrafts(supabase, REGISTRIES, page, user?.id ?? null),
+      discardDrafts: (page, key) => discardDrafts(supabase, page, key),
+    }),
     setupHref: '/setup',
     // No preview offered here, deliberately. This app edits the menu, the footer and the brand
     // but does not render any of them: the Site does. A preview button here would put the page
