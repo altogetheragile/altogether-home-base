@@ -28,7 +28,7 @@ describe('who may turn the preview on', () => {
   it('gives an admin the draft cookie', async () => {
     const response = await get('https://example.test/api/preview?on=1&back=%2Fabout');
     expect(enable).toHaveBeenCalled();
-    expect(response.headers.get('location')).toBe('https://example.test/about');
+    expect(response.headers.get('location')).toBe('/about');
   });
 
   it('gives a visitor nothing, and says nothing about why', async () => {
@@ -37,7 +37,7 @@ describe('who may turn the preview on', () => {
     admin = false;
     const response = await get('https://example.test/api/preview?on=1&back=%2Fabout');
     expect(enable, 'a visitor was handed the draft cookie').not.toHaveBeenCalled();
-    expect(response.headers.get('location')).toBe('https://example.test/about');
+    expect(response.headers.get('location')).toBe('/about');
   });
 
   it('turns it off again when asked', async () => {
@@ -56,5 +56,15 @@ describe('where it agrees to send you afterwards', () => {
     expect(safeBack('//evil.example/steal')).toBe('/');
     expect(safeBack(null)).toBe('/');
     expect(safeBack('/about')).toBe('/about');
+    // A browser reads a backslash as a slash, which makes this the same escape as the one above.
+    expect(safeBack('/\\evil.example/steal')).toBe('/');
+  });
+
+  it('stays on the address the browser is on', async () => {
+    // This app is reached through the other one's rewrite, so the request it sees is addressed to
+    // its own deployment. An absolute redirect built from that sent the administrator to a domain
+    // they were not signed in on, and they saw the holding page instead of their drafts.
+    const response = await get('https://her-site-web-next.vercel.app/api/preview?on=1&back=%2Fabout');
+    expect(response.headers.get('location')).toBe('/about');
   });
 });

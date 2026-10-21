@@ -98,6 +98,20 @@ function describeOrder(value: string): string {
 }
 
 /** A JSON blob quoted back at somebody says nothing. How many there were says what undo will do. */
+/** What a drafted list would say, row by row: the first words in each row, which is its name. */
+function itemNames(value: string): string[] {
+  try {
+    const out = JSON.parse(value || '[]');
+    if (!Array.isArray(out)) return [];
+    return out.map((row) => {
+      const first = row && typeof row === 'object' ? Object.values(row).find((v) => typeof v === 'string' && v.trim()) : null;
+      return typeof first === 'string' ? first : '';
+    }).filter(Boolean);
+  } catch {
+    return [];
+  }
+}
+
 function countItems(value: string): number {
   try {
     const out = JSON.parse(value || '[]');
@@ -322,28 +336,50 @@ export function EditDrawer({ host }: { host: EditorHost }) {
               </div>
               <p className="mb-1.5 text-xs text-muted-foreground">{f.hint}</p>
               {f.draft && (
-                <p className="mb-1.5 flex items-start gap-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1 text-xs text-amber-900">
-                  <span className="flex-1">
-                    {/* The box below shows the published value, because that is what this field
-                        currently is. Saying what the draft would make it, rather than swapping
-                        the box's contents, keeps "what is live" answerable at a glance. */}
-                    <span className="font-medium">Draft waiting:</span>{' '}
-                    {f.type === 'sections'
-                      ? describeOrder(f.draft.value)
-                      : f.type === 'items'
-                      ? `${countItems(f.draft.value)} item${countItems(f.draft.value) === 1 ? '' : 's'}`
-                      : f.draft.value.trim()
-                        ? `“${f.draft.value.replace(/\n/g, ' ').slice(0, 80)}”`
-                        : 'empty'}
-                  </span>
-                  <button
-                    onClick={() => discard(f.key)}
-                    disabled={pending}
-                    className="shrink-0 underline hover:no-underline disabled:opacity-50"
-                  >
-                    Discard
-                  </button>
-                </p>
+                <div className="mb-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
+                  {/* The box below shows the published value, because that is what this field
+                      currently is. Saying what the draft would make it, rather than swapping the
+                      box's contents, keeps "what is live" answerable at a glance.
+
+                      All of it, not the first eighty characters. A starter draft is read here,
+                      one field at a time, and a sentence cut off mid-word cannot be judged. */}
+                  <p className="mb-1 font-medium">Draft waiting:</p>
+                  {f.type === 'sections' ? (
+                    <p>{describeOrder(f.draft.value)}</p>
+                  ) : f.type === 'items' ? (
+                    <p>
+                      {countItems(f.draft.value)} item{countItems(f.draft.value) === 1 ? '' : 's'}
+                      {itemNames(f.draft.value).length > 0 && `: ${itemNames(f.draft.value).join(', ')}`}
+                    </p>
+                  ) : (
+                    <p className="whitespace-pre-wrap">{f.draft.value.trim() ? f.draft.value : 'empty'}</p>
+                  )}
+                  {/* One field at a time, as well as the whole page from the band at the top. */}
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    <button
+                      onClick={() => takeDraft(f.key, f.draft!.value)}
+                      disabled={pending}
+                      className="rounded bg-amber-900 px-2 py-0.5 font-medium text-amber-50 hover:bg-amber-800 disabled:opacity-50"
+                    >
+                      Use this
+                    </button>
+                    <button
+                      onClick={() => setField(f.key, f.draft!.value)}
+                      disabled={pending || value === f.draft.value}
+                      className="rounded border border-amber-300 bg-background px-2 py-0.5 hover:bg-amber-100 disabled:opacity-50"
+                      title="Put the draft in the box below to change it, then save"
+                    >
+                      Edit it
+                    </button>
+                    <button
+                      onClick={() => discard(f.key)}
+                      disabled={pending}
+                      className="rounded border border-amber-300 bg-background px-2 py-0.5 hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      Discard
+                    </button>
+                  </div>
+                </div>
               )}
               {f.undo && (
                 <p className="mb-1.5 truncate text-xs text-muted-foreground/80">
@@ -373,8 +409,32 @@ export function EditDrawer({ host }: { host: EditorHost }) {
 
   const save = () => {
     setError(null);
+    // A field published from the box no longer has a draft worth keeping: whatever was waiting
+    // for it is older than what was just put live, and left there it would read as still to do.
+    const superseded = Object.keys(draft).filter((k) => fields?.find((f) => f.key === k)?.draft);
     startSaving(() => { void (async () => {
-      await afterWriting(await host.save(active, draft), true);
+      const result = await host.save(active, draft);
+      if (result.ok && host.discardDrafts) {
+        for (const k of superseded) await host.discardDrafts(active, k);
+      }
+      await afterWriting(result, true);
+    })(); });
+  };
+
+  /** Publishes one field's draft as it stands, and forgets it. The same write as Save, for one
+   *  field, so it is undone the same way. */
+  const takeDraft = (key: string, value: string) => {
+    if (!host.discardDrafts) return;
+    setError(null);
+    startSaving(() => { void (async () => {
+      const result = await host.save(active, { [key]: value });
+      if (result.ok) await host.discardDrafts!(active, key);
+      // Anything typed into this one box is dropped with it; the rest of the typing stays.
+      setDrafts((d) => {
+        const { [key]: _dropped, ...rest } = d[active] ?? {};
+        return { ...d, [active]: rest };
+      });
+      await afterWriting(result, false);
     })(); });
   };
 

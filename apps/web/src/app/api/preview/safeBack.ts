@@ -8,6 +8,8 @@
  *  `//evil.example` is a protocol-relative URL that a browser reads as another origin, so a
  *  leading slash on its own is not enough. */
 export function safeBack(raw: string | null): string {
-  if (!raw || !raw.startsWith('/') || raw.startsWith('//')) return '/';
+  // A browser reads a backslash as a slash, so `/\evil.example` is the same escape as `//`. The
+  // redirect is relative now, which makes either one an address on another site.
+  if (!raw || !raw.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '/';
   return raw;
 }

@@ -25,6 +25,7 @@ export function StarterRun({
   const [status, setStatus] = useState<Record<string, Status>>({});
   const [running, setRunning] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replace, setReplace] = useState(false);
 
   const run = async () => {
     setError(null);
@@ -36,7 +37,7 @@ export function StarterRun({
       setStatus((s) => ({ ...s, [page]: 'writing' }));
       let result: StarterResult;
       try {
-        result = await draftStarterPage(page);
+        result = await draftStarterPage(page, replace);
       } catch (e) {
         result = { ok: false, error: e instanceof Error ? e.message : 'That page did not work.' };
       }
@@ -62,8 +63,18 @@ export function StarterRun({
         }}
       >
         {running ? <Loader2 size={15} className="animate-spin" /> : <Sparkles size={15} />}
-        {running ? 'Writing starter drafts' : finished ? 'Write drafts for anything still empty' : 'Write starter drafts'}
+        {running ? 'Writing starter drafts' : replace ? 'Write them again' : finished ? 'Write drafts for anything still empty' : 'Write starter drafts'}
       </button>
+
+      {/* For a second go: a changed description, or drafts that missed. Off by default, because
+          it also throws away drafts somebody saved by hand. Published words are never touched. */}
+      <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, fontSize: 13, color: '#3D4F57', margin: '12px 0 0', cursor: 'pointer' }}>
+        <input type="checkbox" checked={replace} disabled={running} onChange={(e) => setReplace(e.target.checked)} style={{ marginTop: 3 }} />
+        <span>
+          Start again: throw away the drafts already waiting on these pages, including any you saved
+          yourself, and write new ones. Anything published stays as it is.
+        </span>
+      </label>
 
       {error && <p style={{ color: '#C0392B', fontSize: 14, margin: '12px 0 0' }}>{error}</p>}
 
@@ -99,7 +110,8 @@ export function StarterRun({
           <a href="/api/preview?on=1&back=/" style={{ color: '#1A9090', fontWeight: 700, textDecoration: 'none' }}>
             See the site with them
           </a>
-          , then publish each page from its editor when you are happy with it.
+          , then open the editor on each page: publish a whole page at once, or take, change or throw
+          away each draft on its own.
         </p>
       )}
     </div>
