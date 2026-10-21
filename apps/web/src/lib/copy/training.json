@@ -1,0 +1,186 @@
+{
+  "page": "training",
+  "label": "Course pages",
+  "entries": {
+    "training.hero.accredited": {
+      "value": "accredited",
+      "label": "After the accrediting body",
+      "hint": "Follows the body's name in the band under the title: \"APMG accredited\"",
+      "group": "Top of every course page"
+    },
+    "training.hero.datesTbc": {
+      "value": "Dates TBC",
+      "label": "No dates yet",
+      "hint": "The badge under the title when a course has no upcoming dates",
+      "group": "Top of every course page"
+    },
+    "training.about.heading": {
+      "value": "About This Course",
+      "label": "Description heading",
+      "hint": "Above the course's own description. The description is the course's, edited in Admin",
+      "group": "Section headings"
+    },
+    "training.learn.heading": {
+      "value": "What You'll Learn",
+      "label": "Outcomes heading",
+      "hint": "Above the learning outcomes, when a course has any",
+      "group": "Section headings"
+    },
+    "training.why.heading": {
+      "value": "Why This Course",
+      "label": "Benefits heading",
+      "hint": "Above the key benefits, when a course has any",
+      "group": "Section headings"
+    },
+    "training.who.heading": {
+      "value": "Who Is This For",
+      "label": "Audience heading",
+      "hint": "Above who the course is for, when that has been written",
+      "group": "Section headings"
+    },
+    "training.prerequisites.heading": {
+      "value": "Prerequisites",
+      "label": "Prerequisites heading",
+      "hint": "Above the prerequisites, when a course has any",
+      "group": "Section headings"
+    },
+    "training.private.body": {
+      "value": "Want to run this course privately for your team?",
+      "label": "Private delivery question",
+      "hint": "The dashed box at the foot of the course's description",
+      "group": "Run it privately"
+    },
+    "training.private.cta": {
+      "value": "Get in touch →",
+      "label": "Private delivery link",
+      "hint": "Under it. Goes to the contact page, or wherever is switched on instead",
+      "group": "Run it privately"
+    },
+    "training.dates.heading": {
+      "value": "Upcoming dates",
+      "label": "Dates heading",
+      "hint": "The panel beside the course, when it has dates",
+      "group": "Upcoming dates"
+    },
+    "training.dates.priceSuffix": {
+      "value": "+ VAT",
+      "label": "After the price",
+      "hint": "Follows each date's price. Leave empty if your prices include everything",
+      "group": "Upcoming dates"
+    },
+    "training.dates.register": {
+      "value": "Register →",
+      "label": "Register link",
+      "hint": "Beside each date",
+      "group": "Upcoming dates"
+    },
+    "training.noDates.heading": {
+      "value": "No Dates Scheduled Yet",
+      "label": "No dates heading",
+      "hint": "The panel beside a course with no upcoming dates",
+      "group": "No dates yet"
+    },
+    "training.noDates.body": {
+      "value": "This course is available for private or scheduled delivery. Get in touch and we'll arrange dates that work for your team.",
+      "label": "No dates message",
+      "hint": "Under that heading",
+      "group": "No dates yet"
+    },
+    "training.facts.duration": {
+      "value": "Typical duration",
+      "label": "Duration label",
+      "hint": "In the same panel, beside how long the course runs",
+      "group": "No dates yet"
+    },
+    "training.facts.format": {
+      "value": "Format",
+      "label": "Format label",
+      "hint": "In the same panel, beside how the course is run",
+      "group": "No dates yet"
+    },
+    "training.facts.bothFormats": {
+      "value": "In-person & remote",
+      "label": "Both formats",
+      "hint": "How a course offered both ways is described. Other formats are named as they are in Admin",
+      "group": "No dates yet"
+    },
+    "training.facts.day": {
+      "value": "Day",
+      "label": "One day",
+      "hint": "After the number: \"1 Day\"",
+      "group": "No dates yet"
+    },
+    "training.facts.days": {
+      "value": "Days",
+      "label": "Several days",
+      "hint": "After the number: \"3 Days\"",
+      "group": "No dates yet"
+    },
+    "training.level.beginner": {
+      "value": "Beginner",
+      "label": "Beginner",
+      "hint": "Beside the three dots showing how demanding a course is",
+      "group": "Level"
+    },
+    "training.level.intermediate": {
+      "value": "Intermediate",
+      "label": "Intermediate",
+      "hint": "Beside the three dots showing how demanding a course is",
+      "group": "Level"
+    },
+    "training.level.advanced": {
+      "value": "Advanced",
+      "label": "Advanced",
+      "hint": "Beside the three dots showing how demanding a course is",
+      "group": "Level"
+    },
+    "training.interest.nameLabel": {
+      "value": "Your name",
+      "label": "Name box label",
+      "hint": "The form under a course with no dates",
+      "group": "Register interest form"
+    },
+    "training.interest.emailLabel": {
+      "value": "Email",
+      "label": "Email box label",
+      "hint": "The form under a course with no dates",
+      "group": "Register interest form"
+    },
+    "training.interest.noteLabel": {
+      "value": "Anything we should know?",
+      "label": "Note box label",
+      "hint": "The form under a course with no dates",
+      "group": "Register interest form"
+    },
+    "training.interest.noteOptional": {
+      "value": "(optional)",
+      "label": "Optional marker",
+      "hint": "After the note box label, in lighter type. Leave empty to leave it out",
+      "group": "Register interest form"
+    },
+    "training.interest.submit": {
+      "value": "Register My Interest",
+      "label": "Send button",
+      "hint": "The form under a course with no dates",
+      "group": "Register interest form"
+    },
+    "training.interest.footnote": {
+      "value": "No spam. We'll only contact you about this course.",
+      "label": "Under the button",
+      "hint": "A short reassurance under the button. Leave empty to leave it out",
+      "group": "Register interest form"
+    },
+    "training.interest.sentHeading": {
+      "value": "Thanks for your interest!",
+      "label": "Thank-you heading",
+      "hint": "Replaces the form once it has been sent",
+      "group": "Register interest form"
+    },
+    "training.interest.sentBody": {
+      "value": "We'll be in touch when dates are confirmed.",
+      "label": "Thank-you message",
+      "hint": "Replaces the form once it has been sent",
+      "group": "Register interest form"
+    }
+  }
+}

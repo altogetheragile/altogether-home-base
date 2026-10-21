@@ -1,6 +1,25 @@
 /** Server-free types and formatting helpers for events/courses.
  *  Safe to import from Client Components (no server-only dependencies). */
 
+import eventsRegistry from '@/lib/copy/events.json';
+import trainingRegistry from '@/lib/copy/training.json';
+
+/** The words a course card is built from. The page passes this site's; a caller that passes
+ *  nothing gets the shipped ones, read from the registry rather than written here a second time. */
+export type CardWords = { groupSize: string; halfDay: string; day: string; days: string };
+
+const shippedEntries = eventsRegistry.entries as Record<string, { value: string }>;
+export const SHIPPED_CARD_WORDS: CardWords = {
+  groupSize: shippedEntries['events.card.groupSize'].value,
+  halfDay: shippedEntries['events.card.halfDay'].value,
+  day: shippedEntries['events.card.day'].value,
+  days: shippedEntries['events.card.days'].value,
+};
+const SHIPPED_LONG_DAYS = {
+  day: trainingRegistry.entries['training.facts.day'].value,
+  days: trainingRegistry.entries['training.facts.days'].value,
+};
+
 type Named = { name: string } | null;
 
 export type ScheduledEvent = {
@@ -80,7 +99,9 @@ export function topFeedbackFor(title: string, all: CourseFeedback[]): CourseFeed
 }
 
 /** Map a template to the listing card model (mirrors the live Events page). */
-export function toCardModel(t: EventTemplate, feedback: CourseFeedback[], now: number): CourseCardModel {
+export function toCardModel(
+  t: EventTemplate, feedback: CourseFeedback[], now: number, words: CardWords = SHIPPED_CARD_WORDS,
+): CourseCardModel {
   const type = t.event_types?.name || 'Course';
   const format = t.formats?.name || 'Both';
   const cert = t.certification_bodies?.name || null;
@@ -98,9 +119,10 @@ export function toCardModel(t: EventTemplate, feedback: CourseFeedback[], now: n
     title: t.title,
     cert,
     forWho: t.target_audience || '',
-    duration: durationLabel(t.duration_days),
+    duration: durationLabel(t.duration_days, words),
     format,
-    groupSize: 'Up to 12',
+    // Was 'Up to 12' on every card of every site: a promise about somebody else's courses.
+    groupSize: words.groupSize.trim(),
     objectives: t.learning_outcomes || [],
     description,
     scheduledDates,
@@ -124,15 +146,19 @@ export function formatDateRange(start: string, end: string | null): string {
   return `${s} – ${formatShortDate(end)}`;
 }
 
-export function durationLabel(days: number | null): string {
-  if (!days) return '-';
-  if (days < 1) return 'Half day';
-  return `${days} day${days > 1 ? 's' : ''}`;
+/** Empty when the course has no length recorded, so the card leaves the line out rather than
+ *  showing a lone dash. */
+export function durationLabel(days: number | null, words: CardWords = SHIPPED_CARD_WORDS): string {
+  if (!days) return '';
+  if (days < 1) return words.halfDay;
+  return `${days} ${days > 1 ? words.days : words.day}`;
 }
 
-export function durationLong(days: number | null | undefined): string | null {
+export function durationLong(
+  days: number | null | undefined, words: { day: string; days: string } = SHIPPED_LONG_DAYS,
+): string | null {
   if (!days) return null;
-  return days === 1 ? '1 Day' : `${days} Days`;
+  return days === 1 ? `1 ${words.day}` : `${days} ${words.days}`;
 }
 
 const CURRENCY_CODES: Record<string, string> = {

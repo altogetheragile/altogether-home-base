@@ -33,6 +33,8 @@ const BLANK_BY_DESIGN = [
   // Was eight numbered keys, fixed at four statistics. One list now, which a site can add to.
   'home.stats.items',
   'events.stats.trained.number',
+  // Was "Up to 12" on every course card of every site: a promise about somebody else's courses.
+  'events.card.groupSize',
   // Was twelve numbered keys, fixed at six credentials, two of which were this person's alone.
   // Checkable claims about a named individual, so a new site makes none of them.
   'coaching.why.items',

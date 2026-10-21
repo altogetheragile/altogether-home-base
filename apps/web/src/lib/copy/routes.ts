@@ -19,10 +19,22 @@ export const COPY_ROUTES: Record<string, string> = {
   '/exams': 'exams',
 };
 
+/** Pages that answer many addresses, one per row of something in the database. Every course page
+ *  is the same page with a different course in it, so one registry holds the words they share:
+ *  the headings, the buttons, the form. What the course itself says is that course's row, edited
+ *  in Admin, and is not offered here.
+ *
+ *  Keyed by the prefix, trailing slash included, so '/training' itself matches nothing. */
+export const COPY_ROUTE_PREFIXES: Record<string, string> = {
+  '/training/': 'training',
+};
+
 /** The registry a pathname edits, or null where there is nothing on the page to edit. */
 export function copyPageFor(pathname: string): string | null {
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
-  return COPY_ROUTES[clean] ?? null;
+  if (COPY_ROUTES[clean]) return COPY_ROUTES[clean];
+  const prefix = Object.keys(COPY_ROUTE_PREFIXES).find((pre) => clean.startsWith(pre) && clean.length > pre.length);
+  return prefix ? COPY_ROUTE_PREFIXES[prefix] : null;
 }
 
 /** Always offered, on every page, because the menu and footer are on every page. */

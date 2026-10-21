@@ -70,6 +70,108 @@
       "label": "Stat 3 label",
       "hint": "The figures under the hero. The first two are counted from the data"
     },
+    "events.list.all": {
+      "value": "All",
+      "label": "\"All\" tab",
+      "hint": "The first tab above the course cards. The other tabs are the kinds of course you have published, named as they are in Admin",
+      "group": "Course cards"
+    },
+    "events.list.countOne": {
+      "value": "course",
+      "label": "Count, one",
+      "hint": "Beside the tabs: \"1 course\"",
+      "group": "Course cards"
+    },
+    "events.list.countMany": {
+      "value": "courses",
+      "label": "Count, several",
+      "hint": "Beside the tabs: \"5 courses\"",
+      "group": "Course cards"
+    },
+    "events.list.empty": {
+      "value": "No courses in this category yet.",
+      "label": "Nothing in this tab",
+      "hint": "Shown when a tab has no courses in it",
+      "group": "Course cards"
+    },
+    "events.card.datesTbc": {
+      "value": "Dates TBC",
+      "label": "No dates yet",
+      "hint": "The badge on a card with no upcoming dates",
+      "group": "Course cards"
+    },
+    "events.card.quoteHeading": {
+      "value": "What attendees say",
+      "label": "Quote heading",
+      "hint": "Above the quote on a card, when somebody has left feedback about that course",
+      "group": "Course cards"
+    },
+    "events.card.forLabel": {
+      "value": "For:",
+      "label": "Who it is for",
+      "hint": "Before the course's audience, in the tinted strip on a card",
+      "group": "Course cards"
+    },
+    "events.card.showObjectives": {
+      "value": "Show learning objectives",
+      "label": "Open the objectives",
+      "hint": "The link that opens a card's learning objectives",
+      "group": "Course cards"
+    },
+    "events.card.hideObjectives": {
+      "value": "Hide learning objectives",
+      "label": "Close the objectives",
+      "hint": "The same link once they are open",
+      "group": "Course cards"
+    },
+    "events.card.details": {
+      "value": "View details",
+      "label": "Details button",
+      "hint": "The dark button at the foot of every card",
+      "group": "Course cards"
+    },
+    "events.card.enquire": {
+      "value": "Enquire",
+      "label": "Enquire button",
+      "hint": "The outlined button beside it. Goes to the contact page, or wherever is switched on instead",
+      "group": "Course cards"
+    },
+    "events.card.bothFormats": {
+      "value": "In-person & remote",
+      "label": "Both formats",
+      "hint": "How a course offered both ways is described. Other formats are named as they are in Admin",
+      "group": "Course cards"
+    },
+    "events.card.accredited": {
+      "value": "accredited",
+      "label": "After the accrediting body",
+      "hint": "Follows the body's name on a card: \"APMG accredited\"",
+      "group": "Course cards"
+    },
+    "events.card.groupSize": {
+      "value": "",
+      "label": "Group size",
+      "hint": "Shown on every card, for example \"Up to 12\". A promise about every course you run, so it starts empty. Leave it empty and it is left out",
+      "group": "Course cards"
+    },
+    "events.card.halfDay": {
+      "value": "Half day",
+      "label": "Shorter than a day",
+      "hint": "How a course under a day long is described",
+      "group": "Course cards"
+    },
+    "events.card.day": {
+      "value": "day",
+      "label": "One day",
+      "hint": "After the number: \"1 day\"",
+      "group": "Course cards"
+    },
+    "events.card.days": {
+      "value": "days",
+      "label": "Several days",
+      "hint": "After the number: \"3 days\"",
+      "group": "Course cards"
+    },
     "events.bespoke.eyebrow": {
       "value": "In-house & bespoke",
       "label": "Bespoke eyebrow",

@@ -9,6 +9,14 @@ import { InterestForm } from './InterestForm';
 import { colors as p, fonts } from '@/lib/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { pageName } from '@/lib/copy/pageName';
+import { getCopy } from '@/lib/copy';
+import { getSiteSettings } from '@/lib/site-settings';
+import { ctaHref } from '@/lib/cta';
+import { Editable } from '@/components/edit/Editable';
+
+/** What a course says about itself when nobody has written a description: its short one, or its
+ *  name. It said "Agile training course: <name>." on every site, whatever that site taught. */
+const describe = (course: EventTemplate) => course.description || course.short_description || course.title;
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   const { slug: id } = await params;
   const course = await getCourse(id);
   if (!course) return { title: `Course Not Found - ${await siteName()}` };
-  const description = course.seo_description || truncateText(course.description || `Agile training course: ${course.title}.`, 160);
+  const description = course.seo_description || truncateText(describe(course), 160);
   return buildMetadata({
     title: course.seo_title || course.title,
     description,
@@ -56,9 +64,14 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
   // Google has to fetch the old address to learn where it went.
   if (course.slug && id !== course.slug) permanentRedirect(`/training/${course.slug}`);
 
+  // The words every course page shares, from this site's copy. What the course itself says is its
+  // own row, edited in Admin. The menu's own labels name the way back and the breadcrumb.
+  const [t, nav, settings] = await Promise.all([getCopy('training'), getCopy('navigation'), getSiteSettings()]);
+  const enquireHref = ctaHref('contact', settings as Record<string, unknown>);
+
   const now = Date.now();
   const dates = upcomingEvents(course, now);
-  const duration = durationLong(course.duration_days);
+  const duration = durationLong(course.duration_days, { day: t('training.facts.day'), days: t('training.facts.days') });
   const level = course.levels?.name;
   const tags = course.template_tags || [];
   const outcomes = course.learning_outcomes || [];
@@ -66,20 +79,24 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
   const prereqs = course.prerequisites || [];
   const difficulty = course.difficulty_rating;
   const filledPips = difficulty === 'advanced' ? 3 : difficulty === 'intermediate' ? 2 : 1;
-  const difficultyLabel = difficulty ? difficulty.charAt(0).toUpperCase() + difficulty.slice(1) : 'Beginner';
+  const levels: Record<string, string> = {
+    beginner: t('training.level.beginner'), intermediate: t('training.level.intermediate'), advanced: t('training.level.advanced'),
+  };
+  const difficultyLabel = difficulty ? levels[difficulty] ?? difficulty : '';
+  const bothFormats = t('training.facts.bothFormats');
 
   return (
     <div style={{ fontFamily: fonts.sans, background: p.white }}>
       <JsonLd
         data={await courseJsonLd({
           name: course.title,
-          description: truncateText(course.description || `Agile training course: ${course.title}.`, 300),
+          description: truncateText(describe(course), 300),
           path: `/training/${id}`,
         })}
       />
       <JsonLd
         data={breadcrumbJsonLd([
-          { name: 'Home', path: '/' },
+          { name: nav('nav.home').trim() || 'Home', path: '/' },
           // The catalogue, by whatever this site calls it in its menu. It said "Courses" while
           // the menu said "Courses and Workshops" and half of these are workshops.
           { name: await pageName('events', 'Courses and Workshops'), path: '/events' },
@@ -106,7 +123,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
       {/* Hero */}
       <div style={{ background: p.deepTeal, padding: '48px 0 40px' }}>
         <div style={{ maxWidth: 1000, margin: '0 auto', padding: '0 24px' }}>
-          <Link href="/events" style={{ color: p.lightTeal, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>← All Events</Link>
+          {/* By whatever this site calls the catalogue in its menu. It said "All Events" while the
+              menu might say Courses, Training or anything else. */}
+          <Link href="/events" style={{ color: p.lightTeal, fontSize: 14, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 6, marginBottom: 20 }}>← {await pageName('events', 'All Events')}</Link>
           {tags.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
               {tags.map((tag, i) => (
@@ -118,9 +137,11 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           <div className="cd-meta-strip">
             {duration && <span style={{ color: p.lightTeal, fontSize: 14 }}>{duration}</span>}
             {level && <span style={{ color: p.lightTeal, fontSize: 14 }}>{level}</span>}
-            {course.certification_bodies?.name && <span style={{ color: p.lightTeal, fontSize: 14 }}>{course.certification_bodies.name} accredited</span>}
+            {course.certification_bodies?.name && <span style={{ color: p.lightTeal, fontSize: 14 }}>{`${course.certification_bodies.name} ${t('training.hero.accredited')}`.trim()}</span>}
             {dates.length === 0 && (
-              <span style={{ background: p.orange, color: p.deepTeal, fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20 }}>Dates TBC</span>
+              <Editable k="training.hero.datesTbc" label="this badge">
+                <span style={{ background: p.orange, color: p.deepTeal, fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20 }}>{t('training.hero.datesTbc')}</span>
+              </Editable>
             )}
           </div>
         </div>
@@ -131,13 +152,17 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
         {/* Main column */}
         <div>
           <section style={{ marginBottom: 40 }}>
-            <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 16px' }}>About This Course</h2>
+            <Editable k="training.about.heading" label="this heading" as="div" block>
+              <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 16px' }}>{t('training.about.heading')}</h2>
+            </Editable>
             <div className="cd-md" style={{ color: p.body, fontSize: 16, lineHeight: 1.8 }} dangerouslySetInnerHTML={{ __html: renderDescription(course.description) }} />
           </section>
 
           {outcomes.length > 0 && (
             <section style={{ marginBottom: 40 }}>
-              <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>What You&apos;ll Learn</h2>
+              <Editable k="training.learn.heading" label="this heading" as="div" block>
+                <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>{t('training.learn.heading')}</h2>
+              </Editable>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
                 {outcomes.map((o, i) => (
                   <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
@@ -151,7 +176,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
 
           {benefits.length > 0 && (
             <section style={{ marginBottom: 40 }}>
-              <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>Why This Course</h2>
+              <Editable k="training.why.heading" label="this heading" as="div" block>
+                <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 28, fontWeight: 400, margin: '0 0 20px' }}>{t('training.why.heading')}</h2>
+              </Editable>
               <div className="cd-benefits-grid">
                 {benefits.map((b, i) => (
                   <div key={i} style={{ background: p.skyTeal, borderLeft: `3px solid ${p.orange}`, borderRadius: 8, padding: '16px 20px' }}>
@@ -166,7 +193,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
             <section style={{ marginBottom: 40, display: 'grid', gridTemplateColumns: course.target_audience && prereqs.length > 0 ? '1fr 1fr' : '1fr', gap: 24 }}>
               {course.target_audience && (
                 <div>
-                  <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>Who Is This For</h2>
+                  <Editable k="training.who.heading" label="this heading" as="div" block>
+                    <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>{t('training.who.heading')}</h2>
+                  </Editable>
                   <div style={{ background: p.paleTeal, borderRadius: 10, padding: '20px 24px' }}>
                     <p style={{ color: p.body, fontSize: 15, lineHeight: 1.7, margin: 0 }}>{course.target_audience}</p>
                   </div>
@@ -174,7 +203,9 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
               )}
               {prereqs.length > 0 && (
                 <div>
-                  <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>Prerequisites</h2>
+                  <Editable k="training.prerequisites.heading" label="this heading" as="div" block>
+                    <h2 style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 24, fontWeight: 400, margin: '0 0 16px' }}>{t('training.prerequisites.heading')}</h2>
+                  </Editable>
                   <ul style={{ margin: 0, paddingLeft: 0, listStyle: 'none' }}>
                     {prereqs.map((pr, i) => (
                       <li key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 10 }}>
@@ -189,8 +220,13 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           )}
 
           <section style={{ border: `2px dashed ${p.lightTeal}`, borderRadius: 12, padding: '28px 24px', textAlign: 'center' }}>
-            <p style={{ color: p.body, fontSize: 16, margin: '0 0 12px' }}>Want to run this course privately for your team?</p>
-            <Link href="/contact" style={{ color: p.orange, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>Get in touch →</Link>
+            <Editable k="training.private.body" label="this question" as="div" block>
+              <p style={{ color: p.body, fontSize: 16, margin: '0 0 12px' }}>{t('training.private.body')}</p>
+            </Editable>
+            {/* Wherever this site can take an enquiry: /contact answers Not Found with Contact off. */}
+            <Editable k="training.private.cta" label="this link" outside>
+              <Link href={enquireHref} style={{ color: p.orange, fontWeight: 700, fontSize: 15, textDecoration: 'none' }}>{t('training.private.cta')}</Link>
+            </Editable>
           </section>
         </div>
 
@@ -199,16 +235,18 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           {dates.length > 0 ? (
             <div style={{ border: `1px solid ${p.lightTeal}`, borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ background: p.deepTeal, padding: '20px 24px' }}>
-                <div style={{ fontFamily: fonts.serif, color: p.white, fontSize: 22, fontWeight: 400 }}>Upcoming dates</div>
+                <Editable k="training.dates.heading" label="this heading" as="div" block>
+                  <div style={{ fontFamily: fonts.serif, color: p.white, fontSize: 22, fontWeight: 400 }}>{t('training.dates.heading')}</div>
+                </Editable>
               </div>
               <div style={{ padding: '12px 24px 24px' }}>
                 {dates.map((e) => (
                   <Link key={e.id} href={`/events/${e.id}`} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 0', borderBottom: `1px solid ${p.paleTeal}`, textDecoration: 'none' }}>
                     <div>
                       <div style={{ color: p.deepTeal, fontWeight: 700, fontSize: 14 }}>{formatDateRange(e.start_date!, e.end_date)}</div>
-                      <div style={{ color: p.muted, fontSize: 12 }}>{formatPrice(e.price_cents, e.currency)} + VAT</div>
+                      <div style={{ color: p.muted, fontSize: 12 }}>{`${formatPrice(e.price_cents, e.currency)} ${t('training.dates.priceSuffix')}`.trim()}</div>
                     </div>
-                    <span style={{ color: p.orange, fontWeight: 700, fontSize: 13 }}>Register →</span>
+                    <span style={{ color: p.orange, fontWeight: 700, fontSize: 13 }}>{t('training.dates.register')}</span>
                   </Link>
                 ))}
                 {difficulty && (
@@ -224,20 +262,24 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
           ) : (
             <div style={{ border: `2px dashed ${p.lightTeal}`, borderRadius: 12, overflow: 'hidden' }}>
               <div style={{ background: p.skyTeal, padding: '24px 24px 20px' }}>
-                <div style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 22, fontWeight: 400, marginBottom: 8 }}>No Dates Scheduled Yet</div>
-                <p style={{ color: p.muted, fontSize: 14, lineHeight: 1.6, margin: 0 }}>This course is available for private or scheduled delivery. Get in touch and we&apos;ll arrange dates that work for your team.</p>
+                <Editable k="training.noDates.heading" label="this heading" as="div" block>
+                  <div style={{ fontFamily: fonts.serif, color: p.deepTeal, fontSize: 22, fontWeight: 400, marginBottom: 8 }}>{t('training.noDates.heading')}</div>
+                </Editable>
+                <Editable k="training.noDates.body" label="this text" as="div" block>
+                  <p style={{ color: p.muted, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{t('training.noDates.body')}</p>
+                </Editable>
               </div>
               <div style={{ padding: '20px 24px 24px' }}>
                 {duration && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${p.paleTeal}` }}>
-                    <span style={{ color: p.muted, fontSize: 14 }}>Typical duration</span>
+                    <span style={{ color: p.muted, fontSize: 14 }}>{t('training.facts.duration')}</span>
                     <span style={{ color: p.deepTeal, fontSize: 14, fontWeight: 700 }}>{duration}</span>
                   </div>
                 )}
                 {course.formats?.name && (
                   <div style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: `1px solid ${p.paleTeal}` }}>
-                    <span style={{ color: p.muted, fontSize: 14 }}>Format</span>
-                    <span style={{ color: p.deepTeal, fontSize: 14, fontWeight: 700 }}>{course.formats.name === 'Both' ? 'In-person & remote' : course.formats.name}</span>
+                    <span style={{ color: p.muted, fontSize: 14 }}>{t('training.facts.format')}</span>
+                    <span style={{ color: p.deepTeal, fontSize: 14, fontWeight: 700 }}>{course.formats.name === 'Both' ? bothFormats : course.formats.name}</span>
                   </div>
                 )}
                 {difficulty && (
@@ -248,7 +290,15 @@ export default async function CoursePage({ params }: { params: Promise<{ slug: s
                     <span style={{ color: p.muted, fontSize: 13, marginLeft: 4 }}>{difficultyLabel}</span>
                   </div>
                 )}
-                <InterestForm courseTitle={course.title} />
+                <InterestForm
+                  courseTitle={course.title}
+                  words={{
+                    nameLabel: t('training.interest.nameLabel'), emailLabel: t('training.interest.emailLabel'),
+                    noteLabel: t('training.interest.noteLabel'), noteOptional: t('training.interest.noteOptional'),
+                    submit: t('training.interest.submit'), footnote: t('training.interest.footnote'),
+                    sentHeading: t('training.interest.sentHeading'), sentBody: t('training.interest.sentBody'),
+                  }}
+                />
               </div>
             </div>
           )}
