@@ -71,7 +71,7 @@ describe('drafts, one at a time', () => {
   it('throws one away without touching the site', async () => {
     const h = host();
     await openHero(h);
-    await userEvent.setup().click(screen.getAllByRole('button', { name: 'Discard' }).at(-1)!);
+    await userEvent.setup().click(screen.getAllByRole('button', { name: 'Discard' }).slice(-1)[0]);
     await waitFor(() => expect(h.discardDrafts).toHaveBeenCalledWith('home', 'home.hero.intro'));
     expect(h.save).not.toHaveBeenCalled();
   });
