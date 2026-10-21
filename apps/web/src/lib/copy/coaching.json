@@ -180,7 +180,8 @@
           "label": "What it means",
           "type": "textarea"
         }
-      ]
+      ],
+      "claim": true
     },
     "coaching.testimonials.heading": {
       "value": "What practitioners say",

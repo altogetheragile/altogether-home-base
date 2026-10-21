@@ -85,6 +85,11 @@ export interface CopyEntry {
    *  "Hidden from visitors". On a switch that chooses a style those words describe nothing, and a
    *  status that describes nothing is worse than no status at all. */
   says?: { on: string; off: string };
+  /** A checkable claim about a real business or person: a qualification, a figure, a year, a
+   *  quotation, somebody's own story. Never written for anybody, by a shipped default or by the
+   *  starter drafts, because a claim nobody made is not placeholder text, it is a falsehood with
+   *  the site's name on it. The owner writes these or leaves them empty. */
+  claim?: boolean;
 }
 export interface CopyRegistry { page: string; label: string; entries: Record<string, CopyEntry> }
 

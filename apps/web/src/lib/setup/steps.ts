@@ -7,7 +7,7 @@
 // Each step names the fields it wants by key. Pure data, so a test can check every key exists and
 // that nothing important was left out of every step.
 
-export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'words';
+export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'starter' | 'words';
 
 export type Step = {
   id: StepId;
@@ -114,6 +114,16 @@ export const STEPS: Step[] = [
       'site.show_scrum_game',
       'site.show_recommendations',
     ],
+  },
+  {
+    // After the switches, so only the pages that are on get written for, and before the words,
+    // so the step that asks for the headlines has something to start from.
+    id: 'starter',
+    title: 'Starter wording',
+    blurb: 'Describe the business in a few sentences: what you do, who for, and how you like to sound. Every page you have switched on then gets wording written for it, saved as drafts. Visitors see none of it until you have read it in the preview and published it, page by page.',
+    page: 'site',
+    keys: ['site.brief'],
+    footnote: 'Only empty boxes are written for: anything you have already saved or drafted is left alone. Nothing is written about qualifications, figures, years, quotations or your own story, because those have to be true and only you know them.',
   },
   {
     id: 'words',

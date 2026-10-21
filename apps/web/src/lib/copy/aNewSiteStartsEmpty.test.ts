@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { REGISTRIES } from './index';
+import { UNEARNED } from './claims';
 
 // A shipped value of "" means: this site says nothing here until somebody writes it.
 //
@@ -66,10 +67,10 @@ const BLANK_BY_DESIGN = [
   // thing a saved order is a departure from.
   'home.sections',
   'about.sections',
+  // What the business is, in its owner's words, for the starter wording to write from. Nobody
+  // else's description could be the right one.
+  'site.brief',
 ];
-
-/** Claims a site has to earn before it makes them. Checked against everything that DOES ship. */
-const UNEARNED = /\d[\d,]*\s*\+|★|\bco-author\b|\b\d+\s*years?\b|contributed to the frameworks/i;
 
 describe('a new site starts empty', () => {
   // Settings-backed fields have no shipped value at all: what they show comes from

@@ -108,7 +108,8 @@
           "type": "textarea",
           "required": true
         }
-      ]
+      ],
+      "claim": true
     }
   }
 }

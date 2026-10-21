@@ -21,7 +21,8 @@
     "home.hero.eyebrow": {
       "value": "",
       "label": "Hero eyebrow",
-      "hint": "The small line above the headline. A credential or a claim you can stand behind. Leave empty and it does not appear."
+      "hint": "The small line above the headline. A credential or a claim you can stand behind. Leave empty and it does not appear.",
+      "claim": true
     },
     "home.hero.heading": {
       "value": "Practical agile training\nand coaching, delivered personally.",
@@ -104,7 +105,8 @@
           "label": "Icon",
           "type": "icon"
         }
-      ]
+      ],
+      "claim": true
     },
     "home.personas.heading": {
       "value": "Who is this for?",
@@ -247,7 +249,8 @@
     "home.founder.years": {
       "value": "",
       "label": "Years of experience badge",
-      "hint": "The orange number on the photograph, for example 25. Leave empty and the badge does not appear."
+      "hint": "The orange number on the photograph, for example 25. Leave empty and the badge does not appear.",
+      "claim": true
     },
     "home.founder.yearsLabel": {
       "value": "years\nexperience",
@@ -257,7 +260,8 @@
     "home.founder.credentials": {
       "value": "",
       "label": "Credentials beside the photograph",
-      "hint": "One per line, kept short: these sit in a narrow column. Leave empty and the list does not appear."
+      "hint": "One per line, kept short: these sit in a narrow column. Leave empty and the list does not appear.",
+      "claim": true
     },
     "home.founder.credentialsLabel": {
       "value": "Credentials",
@@ -272,12 +276,14 @@
     "home.founder.body": {
       "value": "",
       "label": "Founder section, introduction",
-      "hint": "Two sentences about whoever runs this."
+      "hint": "Two sentences about whoever runs this.",
+      "claim": true
     },
     "home.founder.quote": {
       "value": "",
       "label": "Founder quote",
-      "hint": "The pulled-out line beside the orange rule. Something the founder believes, in their own words. Leave empty and the quote does not appear."
+      "hint": "The pulled-out line beside the orange rule. Something the founder believes, in their own words. Leave empty and the quote does not appear.",
+      "claim": true
     },
     "home.founder.cta": {
       "value": "Read More",
