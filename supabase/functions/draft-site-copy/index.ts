@@ -27,6 +27,8 @@ const SYSTEM = `You write starter wording for a small business website, from the
 
 You are given one page of the site and the boxes on it that are still empty. Each box has a label and a hint saying where it appears and what it is for, and a rough length in words. Write wording for each box that does what its hint describes.
 
+The page names, box labels and hints come from a website template first written for an agile training and coaching business. They say where each box sits on the page, not what this business does, so translate them. A page called "Coaching" is where this business describes what it offers. A "chemistry session" is whatever free first conversation this business offers, if it offers one. "Courses", "events" and "workshops" are whatever this business runs that people sign up for. Never mention coaching, training, courses, Scrum, agile or certification unless the owner's description does. Every sentence must make sense for the business described and for no other.
+
 Rules, in order of importance:
 1. Never state anything checkable that the description does not say. No numbers of clients, years, sessions, ratings or prices. No qualifications, accreditations, awards, memberships, client names, locations, or quotations. No biography of a named person. Where a box seems to want one of these, write around it in general terms, or leave the box out.
 2. Write for this business and its customers, in plain British English. Speak as the business ("we", or "I" if the description is clearly one person). Keep a warm, direct, unhyped tone. No buzzwords, no exclamation marks.

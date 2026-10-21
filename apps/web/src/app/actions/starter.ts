@@ -6,7 +6,7 @@ import { isAdmin, getCurrentUser } from '@/lib/auth';
 import { REGISTRIES, getCopy } from '@/lib/copy';
 import { siteName } from '@/lib/seo';
 import { starterFields, acceptStarter, type StarterField } from '@/lib/copy/starter';
-import { loadDrafts, saveDraft } from '@altogether/ui/editor/store';
+import { loadDrafts, saveDraft, discardDrafts } from '@altogether/ui/editor/store';
 
 // ============= Starter wording, one page at a time =============
 //
@@ -23,7 +23,9 @@ export type StarterResult =
 /** Few enough boxes per request that the reply comes back whole. */
 const PER_REQUEST = 25;
 
-export async function draftStarterPage(page: string): Promise<StarterResult> {
+/** `replace` throws away what is already waiting on the page first, so a better brief, or better
+ *  instructions, can be tried again over the top. Only drafts: anything published stays put. */
+export async function draftStarterPage(page: string, replace = false): Promise<StarterResult> {
   if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
   const registry = REGISTRIES.find((r) => r.page === page);
   if (!registry) return { ok: false, error: `There is no page called "${page}".` };
@@ -32,6 +34,10 @@ export async function draftStarterPage(page: string): Promise<StarterResult> {
   if (!brief) return { ok: false, error: 'Describe the website first, and save it.' };
 
   const db = await createClient();
+  if (replace) {
+    const cleared = await discardDrafts(db, page);
+    if (!cleared.ok) return cleared;
+  }
   const { data: rows } = await db.from('site_copy').select('key').eq('page', page);
   const written = new Set(((rows ?? []) as { key: string }[]).map((r) => r.key));
   const drafted = new Set(Object.keys(await loadDrafts(db, page)));
