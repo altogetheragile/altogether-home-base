@@ -107,7 +107,7 @@ export function StarterRun({
           {total} starter drafts are waiting. Nothing has changed for visitors.{' '}
           {/* Preview turns the drafts on for you alone. Each page is then published, rewritten or
               thrown away from its own editor. */}
-          <a href="/api/preview?on=1&back=/" style={{ color: '#1A9090', fontWeight: 700, textDecoration: 'none' }}>
+          <a href="/api/preview?on=1&back=/" target="_blank" rel="noopener" style={{ color: '#1A9090', fontWeight: 700, textDecoration: 'none' }}>
             See the site with them
           </a>
           , then open the editor on each page: publish a whole page at once, or take, change or throw

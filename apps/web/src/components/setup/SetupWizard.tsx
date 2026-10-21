@@ -249,7 +249,7 @@ export function SetupWizard({
             {wordPages.map((w, i) => (
               <span key={w.page}>
                 {i > 0 && ', '}
-                <a href={w.href} style={{ color: '#1A9090', fontWeight: 700, textDecoration: 'none' }}>{w.label}</a>
+                <a href={w.href} target="_blank" rel="noopener" style={{ color: '#1A9090', fontWeight: 700, textDecoration: 'none' }}>{w.label}</a>
               </span>
             ))}
             .
