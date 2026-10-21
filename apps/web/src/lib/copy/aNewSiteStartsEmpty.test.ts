@@ -51,6 +51,12 @@ const BLANK_BY_DESIGN = [
   // Was written into the coaching page, so every site had this one's illustration and no way to
   // change it. A site that has not chosen one gets the approach words at full width.
   'coaching.approach.picture',
+  // Where the footer's legal links go. They went to this repository's own privacy notice, terms
+  // and cookie policy, naming its company number and registered office, on every site. A site
+  // links to its own once it has them; ours keeps its pages without a row (Footer.tsx).
+  'footer.privacy.href',
+  'footer.terms.href',
+  'footer.cookies.href',
   // Empty means "the order the code has them in", which is the right starting point and the
   // thing a saved order is a departure from.
   'home.sections',

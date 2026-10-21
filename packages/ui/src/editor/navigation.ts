@@ -128,7 +128,7 @@ export const navigationRegistry: CopyRegistry = {
     "nav.home": {
       "value": "Home",
       "label": "Home link",
-      "hint": "Shown in the footer's quick links",
+      "hint": "Shown in the footer's quick links, and as the first step of the trail search engines show above a page",
       "group": "The footer"
     },
     "footer.quicklinks": {
@@ -142,6 +142,60 @@ export const navigationRegistry: CopyRegistry = {
       "label": "Footer contact heading",
       "hint": "The heading above the email address and phone number in the footer",
       "group": "The footer"
+    },
+    "footer.privacy": {
+      "value": "Privacy Policy",
+      "label": "Privacy link",
+      "hint": "At the very bottom of every page. Only shown once the address below is filled in",
+      "group": "The legal links"
+    },
+    "footer.privacy.href": {
+      "value": "",
+      "label": "Privacy page address",
+      "hint": "Where your privacy notice lives, for example a page on your own site or a document you host elsewhere. Leave empty and the link is not shown.",
+      "group": "The legal links"
+    },
+    "footer.terms": {
+      "value": "Terms & Conditions",
+      "label": "Terms link",
+      "hint": "At the very bottom of every page. Only shown once the address below is filled in",
+      "group": "The legal links"
+    },
+    "footer.terms.href": {
+      "value": "",
+      "label": "Terms page address",
+      "hint": "Where your terms and conditions live. Leave empty and the link is not shown.",
+      "group": "The legal links"
+    },
+    "footer.cookies": {
+      "value": "Cookie Policy",
+      "label": "Cookies link",
+      "hint": "At the very bottom of every page. Only shown once the address below is filled in",
+      "group": "The legal links"
+    },
+    "footer.cookies.href": {
+      "value": "",
+      "label": "Cookies page address",
+      "hint": "Where your cookie policy lives. Leave empty and the link is not shown.",
+      "group": "The legal links"
+    },
+    "nav.signIn": {
+      "value": "Sign In",
+      "label": "Sign in button",
+      "hint": "The button at the right-hand end of the menu, for somebody who is not signed in",
+      "group": "Signing in"
+    },
+    "nav.dashboard": {
+      "value": "Dashboard",
+      "label": "Dashboard button",
+      "hint": "The same button, for somebody who is signed in. It takes them to their own dashboard",
+      "group": "Signing in"
+    },
+    "nav.greeting": {
+      "value": "Hi",
+      "label": "Greeting",
+      "hint": "Before somebody's name, beside the button, once they are signed in",
+      "group": "Signing in"
     }
   }
 } as CopyRegistry;

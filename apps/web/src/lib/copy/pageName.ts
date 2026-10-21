@@ -15,6 +15,7 @@ import { getCopy } from '.';
 /** Which menu label names each page. Only the pages the Site serves: the App's routes have no
  *  breadcrumb of their own. */
 const NAV_KEY: Record<string, string> = {
+  home: 'nav.home',
   about: 'nav.about',
   coaching: 'nav.coaching',
   contact: 'nav.contact',
@@ -42,7 +43,9 @@ export async function pageName(page: string, fallback: string): Promise<string> 
 /** The breadcrumb for a Site page: home, then this page under whatever it is called. */
 export async function pageCrumbs(page: string, path: string, fallback: string) {
   return [
-    { name: 'Home', path: '/' },
+    // The home page's own label too, which is in the footer and which a site may well call
+    // something else. It was the one crumb still written here.
+    { name: await pageName('home', 'Home'), path: '/' },
     { name: await pageName(page, fallback), path },
   ];
 }
