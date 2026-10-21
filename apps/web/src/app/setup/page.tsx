@@ -78,8 +78,10 @@ function CheckRow({ check }: { check: Check }) {
           </span>
         </div>
         <p style={{ color: p.body, fontSize: 14, lineHeight: 1.65, margin: '4px 0 0' }}>{check.detail}</p>
+        {/* Every way out of setup opens a new tab, here, in the wizard and after the starter run,
+            so the checklist is still where you left it when you come back. */}
         {check.where && (
-          <a href={check.where.href} style={{ display: 'inline-block', marginTop: 8, color: '#1A9090', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
+          <a href={check.where.href} target="_blank" rel="noopener" style={{ display: 'inline-block', marginTop: 8, color: '#1A9090', fontWeight: 700, fontSize: 13, textDecoration: 'none' }}>
             {check.where.label} →
           </a>
         )}
