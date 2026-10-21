@@ -1,8 +1,5 @@
 import { Link, useLocation, Outlet } from 'react-router-dom';
-import {
-  Settings, Calendar, Users, MapPin, BookOpen, User, Shield, Tag,
-  FolderOpen, BarChart3, Upload, Layers, LayoutDashboard, MessageSquare, Database, ExternalLink, FileText, ClipboardList, CalendarClock,
-  ChevronRight, Search, Inbox, Flag, } from 'lucide-react';
+import { User, Shield, Layers, ExternalLink, ChevronRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -16,94 +13,9 @@ import {
   SidebarProvider, SidebarTrigger,
 } from '@/components/ui/sidebar';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import type { LucideIcon } from 'lucide-react';
 import { useCompanyName } from '@/hooks/useCompanyName';
-
-/* ─── Navigation data ─── */
-
-interface NavChild {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-}
-
-export interface NavItem {
-  label: string;
-  icon: LucideIcon;
-  href: string;
-  exact?: boolean;
-  children?: NavChild[];
-  badge?: number;
-}
-
-interface NavGroup {
-  label?: string;
-  items: NavItem[];
-}
-
-const navigation: NavGroup[] = [
-  {
-    items: [
-      { label: 'Dashboard', icon: LayoutDashboard, href: '/admin', exact: true },
-    ],
-  },
-  {
-    label: 'Content',
-    items: [
-      { label: 'Blog', icon: FileText, href: '/admin/blog' },
-      {
-        label: 'Knowledge Base', icon: BookOpen, href: '/admin/knowledge',
-        children: [
-          { label: 'Knowledge Items', href: '/admin/knowledge/items', icon: BookOpen },
-          { label: 'Analytics', href: '/admin/knowledge/analytics', icon: BarChart3 },
-          { label: 'Taxonomy', href: '/admin/knowledge/taxonomy', icon: Layers },
-          { label: 'Imports', href: '/admin/knowledge/imports', icon: Upload },
-          { label: 'Pattern Feedback', href: '/admin/knowledge/pattern-feedback', icon: MessageSquare },
-        ],
-      },
-      { label: 'Assets', icon: Upload, href: '/admin/assets' },
-      { label: 'SEO', icon: Search, href: '/admin/seo' },
-    ],
-  },
-  {
-    label: 'Training',
-    items: [
-      {
-        label: 'Events', icon: Calendar, href: '/admin/events',
-        children: [
-          { label: 'Courses', href: '/admin/courses', icon: BookOpen },
-          { label: 'Events', href: '/admin/events', icon: Calendar },
-          { label: 'Instructors', href: '/admin/instructors', icon: Users },
-          { label: 'Locations', href: '/admin/locations', icon: MapPin },
-          { label: 'Categories', href: '/admin/event-categories', icon: FolderOpen },
-          { label: 'Types', href: '/admin/event-types', icon: Tag },
-          { label: 'Levels', href: '/admin/levels', icon: BarChart3 },
-          { label: 'Formats', href: '/admin/formats', icon: Settings },
-          { label: 'Certification Bodies', href: '/admin/certification-bodies', icon: Shield },
-        ],
-      },
-      { label: 'Bookings', icon: CalendarClock, href: '/admin/bookings' },
-      { label: 'Exams', icon: ClipboardList, href: '/admin/exams' },
-      { label: 'Self-paced Courses', icon: Layers, href: '/admin/self-paced-courses' },
-    ],
-  },
-  {
-    label: 'Community',
-    items: [
-      { label: 'Leads', icon: Inbox, href: '/admin/contacts' },
-      { label: 'Users', icon: Users, href: '/admin/users' },
-      { label: 'Feedback', icon: MessageSquare, href: '/admin/feedback' },
-      { label: 'Moderation', icon: Flag, href: '/admin/moderation' },
-    ],
-  },
-  {
-    label: 'Operations',
-    items: [
-      { label: 'Audit Log', icon: Shield, href: '/admin/logs/audit' },
-      { label: 'Backlog', icon: Database, href: '/admin/populate-backlog' },
-    ],
-  },
-];
+import { AppLink } from '@/components/AppLink';
+import { navigation, type NavItem } from './adminNavigation';
 
 /* ─── Sidebar nav item (with optional collapsible children) ─── */
 
@@ -119,7 +31,7 @@ export const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: st
     return (
       <SidebarMenuItem>
         <SidebarMenuButton asChild isActive={isItemActive}>
-          <Link to={item.href}>
+          <AppLink to={item.href}>
             <item.icon />
             <span>{item.label}</span>
             {item.badge ? (
@@ -127,7 +39,7 @@ export const SidebarNavItem = ({ item, pathname }: { item: NavItem; pathname: st
                 {item.badge}
               </span>
             ) : null}
-          </Link>
+          </AppLink>
         </SidebarMenuButton>
       </SidebarMenuItem>
     );

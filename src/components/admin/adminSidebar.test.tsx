@@ -3,7 +3,8 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { Calendar, BookOpen } from 'lucide-react';
 import { SidebarProvider, SidebarMenu } from '@/components/ui/sidebar';
-import { SidebarNavItem, type NavItem } from './AdminLayout';
+import { SidebarNavItem } from './AdminLayout';
+import type { NavItem } from './adminNavigation';
 
 // A sidebar group opens because you are inside it, and closes again when you leave.
 //
