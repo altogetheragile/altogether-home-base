@@ -5,11 +5,26 @@ import Link from 'next/link';
 import type { BlogPostRow } from '@/lib/blog';
 import { formatDate } from '@/lib/format';
 import { colors as c } from '@/lib/brand';
+import { Editable } from '@/components/edit/Editable';
+import registry from '@/lib/copy/blog.json';
+import { siteRegistry } from '@altogether/ui/editor/registries';
+
+export type ListWords = { all: string; noneInCategory: string; empty: string; minRead: string };
+
+// The page passes this site's words in; the fallback is the shipped wording, read from the
+// registries rather than written here a second time.
+const entries = registry.entries as Record<string, { value: string }>;
+const shipped: ListWords = {
+  all: entries['blog.list.all'].value,
+  noneInCategory: entries['blog.list.noneInCategory'].value,
+  empty: entries['blog.list.empty'].value,
+  minRead: siteRegistry.entries['site.words.minRead'].value,
+};
 
 
-function Card({ post }: { post: BlogPostRow }) {
+function Card({ post, minRead }: { post: BlogPostRow; minRead: string }) {
   const date = formatDate(post.published_at);
-  const reading = post.estimated_reading_time && post.estimated_reading_time > 0 ? `${post.estimated_reading_time} min read` : '';
+  const reading = post.estimated_reading_time && post.estimated_reading_time > 0 ? `${post.estimated_reading_time} ${minRead}` : '';
   return (
     <Link href={`/blog/${post.slug}`} className="blog-card" style={{ background: c.white, borderRadius: 14, overflow: 'hidden', border: '1px solid #E5E7EB', display: 'flex', flexDirection: 'column', textDecoration: 'none' }}>
       {post.featured_image_url ? (
@@ -36,7 +51,8 @@ function Card({ post }: { post: BlogPostRow }) {
   );
 }
 
-export function BlogList({ posts }: { posts: BlogPostRow[] }) {
+export function BlogList({ posts, words: given }: { posts: BlogPostRow[]; words?: Partial<ListWords> }) {
+  const words = { ...shipped, ...given };
   const categories = useMemo(() => {
     const map = new Map<string, { name: string; color: string | null }>();
     for (const p of posts) if (p.blog_categories) map.set(p.blog_categories.slug, { name: p.blog_categories.name, color: p.blog_categories.color });
@@ -46,19 +62,34 @@ export function BlogList({ posts }: { posts: BlogPostRow[] }) {
   const [active, setActive] = useState<string>('all');
   const shown = active === 'all' ? posts : posts.filter((p) => p.blog_categories && categoriesSlug(p) === active);
 
+  // No posts at all is not the same as an empty category, and used to say it was.
+  if (posts.length === 0) {
+    return (
+      <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 48px' }}>
+        <Editable k="blog.list.empty" label="this text" as="div" block>
+          <p style={{ color: c.muted, textAlign: 'center', margin: 0 }}>{words.empty}</p>
+        </Editable>
+      </div>
+    );
+  }
+
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto', padding: '32px 24px 48px' }}>
       {categories.length > 0 && (
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 28 }}>
-          <Chip label="All" activeChip={active === 'all'} onClick={() => setActive('all')} />
+          <Chip label={words.all} activeChip={active === 'all'} onClick={() => setActive('all')} />
           {categories.map((cat) => (
             <Chip key={cat.slug} label={cat.name} activeChip={active === cat.slug} onClick={() => setActive(cat.slug)} />
           ))}
         </div>
       )}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 24 }}>
-        {shown.map((p) => <Card key={p.slug} post={p} />)}
-        {shown.length === 0 && <p style={{ color: c.muted }}>No posts in this category yet.</p>}
+        {shown.map((p) => <Card key={p.slug} post={p} minRead={words.minRead} />)}
+        {shown.length === 0 && (
+          <Editable k="blog.list.noneInCategory" label="this text" as="div" block>
+            <p style={{ color: c.muted }}>{words.noneInCategory}</p>
+          </Editable>
+        )}
       </div>
       <style>{`.blog-card{transition:box-shadow .2s,transform .2s}.blog-card:hover{box-shadow:0 8px 24px rgba(0,77,77,.10);transform:translateY(-2px)}`}</style>
     </div>

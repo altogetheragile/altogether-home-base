@@ -13,7 +13,7 @@
     "testimonials.name.visible": {
       "value": "",
       "label": "Show who said it",
-      "hint": "Off, and every quote is anonymous.",
+      "hint": "Off, and every quote is anonymous: on this page, the home page, the coaching page, the about page and the course cards.",
       "type": "switch",
       "store": "column",
       "path": "show_testimonial_name",
@@ -22,7 +22,7 @@
     "testimonials.firstName.visible": {
       "value": "",
       "label": "First names only",
-      "hint": "On, and somebody who left their full name appears by their first name alone.",
+      "hint": "On, and somebody who left their full name appears by their first name alone, wherever they are quoted.",
       "type": "switch",
       "store": "column",
       "path": "show_testimonial_first_name_only",
@@ -31,7 +31,7 @@
     "testimonials.company.visible": {
       "value": "",
       "label": "Show where they work",
-      "hint": "The job title and company under the name.",
+      "hint": "Where they work, after their job title, wherever they are quoted.",
       "type": "switch",
       "store": "column",
       "path": "show_testimonial_company",
@@ -70,6 +70,76 @@
       "value": "reviews",
       "label": "Rating suffix",
       "hint": "The pale hero above the quotes. Reads \"from 24 reviews\"; the number comes from the database"
+    },
+    "testimonials.hero.from": {
+      "value": "from",
+      "label": "Before the number of reviews",
+      "hint": "The pale hero above the quotes. Reads \"from 24 reviews\""
+    },
+    "testimonials.hero.outOf": {
+      "value": "/10",
+      "label": "After a rating",
+      "hint": "Follows the average rating in the hero and the score on each quote, as in \"9.4/10\""
+    },
+    "testimonials.grid.search": {
+      "value": "Search testimonials...",
+      "label": "Search box",
+      "hint": "Shown faintly in the empty search box above the quotes",
+      "group": "The quotes"
+    },
+    "testimonials.grid.allCourses": {
+      "value": "All Courses",
+      "label": "Every course choice",
+      "hint": "The first choice in the course filter, which shows every quote",
+      "group": "The quotes"
+    },
+    "testimonials.grid.allRatings": {
+      "value": "All Ratings",
+      "label": "Every rating choice",
+      "hint": "The first choice in the rating filter, which shows every quote",
+      "group": "The quotes"
+    },
+    "testimonials.grid.starsSuffix": {
+      "value": "+ Stars",
+      "label": "After the number in the rating choices",
+      "hint": "Reads \"9+ Stars\". Keep the plus sign if you want it to say \"or more\"",
+      "group": "The quotes"
+    },
+    "testimonials.grid.featured": {
+      "value": "Featured",
+      "label": "Featured label",
+      "hint": "The small tag on a quote marked as featured",
+      "group": "The quotes"
+    },
+    "testimonials.grid.readMore": {
+      "value": "Read more",
+      "label": "Read more",
+      "hint": "After a long quote that has been shortened",
+      "group": "The quotes"
+    },
+    "testimonials.grid.showLess": {
+      "value": "Show less",
+      "label": "Show less",
+      "hint": "After a long quote once it has been opened up",
+      "group": "The quotes"
+    },
+    "testimonials.grid.viewOriginal": {
+      "value": "View original",
+      "label": "Link to the original",
+      "hint": "On a quote that came from somewhere else, such as LinkedIn",
+      "group": "The quotes"
+    },
+    "testimonials.grid.noMatch": {
+      "value": "No testimonials found matching your filters.",
+      "label": "Nothing matches",
+      "hint": "Shown when the search or filters leave no quotes",
+      "group": "The quotes"
+    },
+    "testimonials.grid.empty": {
+      "value": "Nobody has left a testimonial yet.",
+      "label": "No quotes yet",
+      "hint": "Shown in place of the quotes until the first one is approved",
+      "group": "The quotes"
     }
   }
 }

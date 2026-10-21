@@ -11,6 +11,8 @@ import { CoachingEnquiryForm } from './CoachingEnquiryForm';
 import { colors as p, fonts } from '@/lib/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
+import { siteWords } from '@/lib/copy/siteWords';
+import { creditRules } from '@/lib/quoteCredit';
 import { pageCrumbs } from '@/lib/copy/pageName';
 import { Icon } from '@/components/icons/Icon';
 import { tint } from '@altogether/ui/brand';
@@ -105,7 +107,8 @@ export default async function CoachingPage() {
   // slot to add one has somewhere to be; a visitor gets the words at full width instead.
   const approachColumn = Boolean(approachPicture) || admin;
   const tags = list(t('coaching.chemistry.tags'));
-  const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const quoteRules = creditRules(settings);
+  const words = await siteWords();
   const bookingUrl = bookingHref(settings.show_bookings);
 
   return (
@@ -275,7 +278,7 @@ export default async function CoachingPage() {
       )}
 
       {/* TESTIMONIALS */}
-      <HomeTestimonials items={testimonials} firstNameOnly={firstNameOnly} />
+      <HomeTestimonials items={testimonials} rules={quoteRules} heading={t('coaching.testimonials.heading')} headingKey="coaching.testimonials.heading" words={words} />
 
       {/* CHEMISTRY SESSION */}
       <div className="aa-coach-band" style={{ background: p.deepTeal }}>

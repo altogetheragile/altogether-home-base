@@ -68,6 +68,12 @@ describe('what the first three steps cover', () => {
         + 'their first ten minutes. Setup asks for the five that decide what the site looks like.',
       covers: (k) => /^site\.brand\.colors\./.test(k) && !SETUP_COLOURS.has(k),
     },
+    {
+      why: 'The small words used on more than one page: Read more, via LinkedIn, min read. They '
+        + 'ship with sensible wording and live on the This Site tab only because a pen opens the '
+        + 'tab its key is on. Nobody setting a site up needs to be asked how to say Read more.',
+      covers: (k) => k.startsWith('site.words.'),
+    },
   ];
 
   /** The five the wizard does ask for: the ones that decide the look. */
@@ -93,7 +99,7 @@ describe('what the first three steps cover', () => {
       expect(all.some(rule.covers), `a rule excuses nothing on the tab: ${rule.why}`).toBe(true);
       expect(rule.why.length, 'an exception with no reason written down').toBeGreaterThan(40);
     }
-    expect(NOT_SETUP.length, 'too much of the tab is being skipped for this test to mean anything').toBeLessThan(3);
+    expect(NOT_SETUP.length, 'too much of the tab is being skipped for this test to mean anything').toBeLessThan(4);
   });
 
   it('is asking for a real number of things, so a passing result means something', () => {

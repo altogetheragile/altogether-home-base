@@ -9,6 +9,8 @@ import { Editable, AddAPicture } from '@/components/edit/Editable';
 import { EmptySection } from '@/components/edit/EmptySection';
 import { getHomeCourseCards, getHomeTestimonials } from '@/lib/home';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
+import { siteWords } from '@/lib/copy/siteWords';
+import { creditRules } from '@/lib/quoteCredit';
 import { Prose } from '@/lib/copy/Prose';
 import { sectionNodes } from '@/components/Sections';
 import { orderedSections, HOME_SECTIONS } from '@altogether/ui/editor/sections';
@@ -56,7 +58,8 @@ export default async function HomePage() {
   const heroBg = picture(t('home.hero.background'));
   const order = orderedSections(t('home.sections'), HOME_SECTIONS);
   const showKnowledge = !!settings.show_knowledge;
-  const firstNameOnly = settings.show_testimonial_first_name_only ?? false;
+  const quoteRules = creditRules(settings);
+  const words = await siteWords();
   const bookingUrl = bookingHref(settings.show_bookings);
   // Where the two main buttons point. Chosen in the editor, and resolved against what this site
   // has switched on, so neither can end up addressing a page that answers Not Found.
@@ -198,7 +201,7 @@ export default async function HomePage() {
     testimonials: (
       <>
         {/* TESTIMONIALS */}
-        <HomeTestimonials items={testimonials} firstNameOnly={firstNameOnly} />
+        <HomeTestimonials items={testimonials} rules={quoteRules} heading={t('home.testimonials.heading')} headingKey="home.testimonials.heading" words={words} />
       </>
     ),
     courses: (

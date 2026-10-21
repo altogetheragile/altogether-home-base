@@ -4,6 +4,17 @@ import { useEffect, useMemo, useState } from 'react';
 import type { HomeTestimonial } from '@/lib/home';
 import { colors as p } from '@/lib/brand';
 import { EmptySection } from '@/components/edit/EmptySection';
+import { Editable } from '@/components/edit/Editable';
+import { siteRegistry } from '@altogether/ui/editor/registries';
+import { credit, type CreditRules } from '@/lib/quoteCredit';
+
+/** The small words in the strip. They come from the This Site tab, because the strip is on more
+ *  than one page; the fallback is the shipped wording, read from that registry rather than
+ *  written here a second time. */
+export type StripWords = { readMore: string; readLess: string; viaLinkedIn: string; of: string };
+const shipped = Object.fromEntries(
+  (['readMore', 'readLess', 'viaLinkedIn', 'of'] as const).map((w) => [w, siteRegistry.entries[`site.words.${w}`].value]),
+) as StripWords;
 
 
 function Stars({ rating, size = 12 }: { rating: number; size?: number }) {
@@ -25,7 +36,7 @@ const LinkedInIcon = () => (
   </svg>
 );
 
-function ReadMore({ text, limit }: { text: string; limit: number }) {
+function ReadMore({ text, limit, words }: { text: string; limit: number; words: StripWords }) {
   const [expanded, setExpanded] = useState(false);
   const needs = text.length > limit;
   const preview = needs ? text.slice(0, limit).trimEnd() + '...' : text;
@@ -34,22 +45,28 @@ function ReadMore({ text, limit }: { text: string; limit: number }) {
       <span style={{ fontStyle: 'italic' }}>&ldquo;{expanded ? text : preview}&rdquo;</span>
       {needs && (
         <button onClick={() => setExpanded(!expanded)} style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: p.orange, fontSize: 'inherit', fontWeight: 600, marginLeft: 4 }}>
-          {expanded ? 'Read less' : 'Read more'}
+          {expanded ? words.readLess : words.readMore}
         </button>
       )}
     </div>
   );
 }
 
-const displayName = (t: HomeTestimonial, firstNameOnly: boolean) =>
-  firstNameOnly ? t.first_name : `${t.first_name} ${t.last_name}`.trim();
-
 const navBtnStyle: React.CSSProperties = {
   background: 'none', border: '2px solid rgba(255,255,255,0.4)', borderRadius: '50%', width: 44, height: 44,
   display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: p.white, fontSize: 22, flexShrink: 0,
 };
 
-export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimonial[]; firstNameOnly: boolean }) {
+export function HomeTestimonials({ items, rules, heading, headingKey, words: given }: {
+  items: HomeTestimonial[];
+  /** How each quote is credited, from the switches on the Testimonials tab. */
+  rules: CreditRules;
+  heading: string;
+  /** The page's own key for the heading, so its pen opens the tab that page is on. */
+  headingKey: string;
+  words?: Partial<StripWords>;
+}) {
+  const words = { ...shipped, ...given };
   const [startIndex, setStartIndex] = useState(0);
   const [visibleCount, setVisibleCount] = useState(1);
 
@@ -81,31 +98,38 @@ export function HomeTestimonials({ items, firstNameOnly }: { items: HomeTestimon
   return (
     <div style={{ background: `var(--aa-band-bg, ${p.heroTeal})`, padding: 'calc(var(--aa-space, 1) * 56px) 48px' }}>
       <div style={{ textAlign: 'center', marginBottom: 24 }}>
-        <h2 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0 }}>What practitioners say</h2>
+        {heading.trim() && (
+          <Editable k={headingKey} label="this heading" as="div" block>
+            <h2 style={{ color: '#fff', fontSize: 28, fontWeight: 800, margin: 0 }}>{heading}</h2>
+          </Editable>
+        )}
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 20, maxWidth: 1100, margin: '0 auto' }}>
         <button onClick={handlePrev} aria-label="Previous testimonials" style={navBtnStyle}>{'‹'}</button>
         <div style={{ display: 'flex', gap: 24, flex: 1 }}>
-          {visibleItems.map((t, i) => (
+          {visibleItems.map((t, i) => {
+            const { name, role } = credit(t, rules);
+            return (
             <div key={startIndex + i} style={{ flex: 1, background: 'rgba(255,255,255,0.08)', borderRadius: 16, padding: '28px 32px', display: 'flex', flexDirection: 'column', gap: 12 }}>
               <Stars rating={t.rating} size={12} />
-              <ReadMore text={t.comment} limit={200} />
+              <ReadMore text={t.comment} limit={200} words={words} />
               <div>
-                <div style={{ color: p.white, fontWeight: 700, fontSize: 14 }}>{displayName(t, firstNameOnly)}</div>
-                <div style={{ color: p.paleTeal, fontSize: 12 }}>{t.job_title}{t.job_title && t.company ? ' · ' : ''}{t.company}</div>
+                {name && <div style={{ color: p.white, fontWeight: 700, fontSize: 14 }}>{name}</div>}
+                {role && <div style={{ color: p.paleTeal, fontSize: 12 }}>{role}</div>}
                 {t.source === 'linkedin' && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: 4, color: p.paleTeal, fontSize: 11, marginTop: 4 }}>
-                    <LinkedInIcon /><span>via LinkedIn</span>
+                    <LinkedInIcon /><span>{words.viaLinkedIn}</span>
                   </div>
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
         <button onClick={handleNext} aria-label="Next testimonials" style={navBtnStyle}>{'›'}</button>
       </div>
       <div style={{ textAlign: 'center', marginTop: 20, color: p.paleTeal, fontSize: 12 }}>
-        {startIndex + 1}&ndash;{Math.min(startIndex + visibleCount, items.length)} of {items.length}
+        {startIndex + 1}&ndash;{Math.min(startIndex + visibleCount, items.length)} {words.of} {items.length}
       </div>
     </div>
   );
