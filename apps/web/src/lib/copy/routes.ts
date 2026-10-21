@@ -19,13 +19,18 @@ export const COPY_ROUTES: Record<string, string> = {
   '/exams': 'exams',
 };
 
-/** Pages with one address per thing, whose furniture is the same on all of them: every exam paper
- *  says Prev, Next and Finish whichever paper it is. Matched after the exact routes, and only one
- *  level down, so /exams itself is still the exams page.
+/** Pages that answer many addresses, one per row of something in the database, whose furniture is
+ *  the same on all of them: every course page has the same headings and form, every exam paper
+ *  says Prev, Next and Finish. One registry holds the words they share. What the course or paper
+ *  itself says is its row, edited in Admin, and is not offered here.
+ *
+ *  Keyed by the prefix, trailing slash included, and matched after the exact routes and only one
+ *  level down, so /exams and /training themselves are not caught.
  *
  *  Not /blog/: a post's words are the post, edited in Admin, and there is no furniture around it
  *  worth a registry of its own. */
-export const COPY_PREFIXES: Record<string, string> = {
+export const COPY_ROUTE_PREFIXES: Record<string, string> = {
+  '/training/': 'training',
   '/exams/': 'exam',
 };
 
@@ -33,8 +38,9 @@ export const COPY_PREFIXES: Record<string, string> = {
 export function copyPageFor(pathname: string): string | null {
   const clean = pathname.length > 1 ? pathname.replace(/\/+$/, '') : pathname;
   if (COPY_ROUTES[clean]) return COPY_ROUTES[clean];
-  const prefix = Object.keys(COPY_PREFIXES).find((p) => clean.startsWith(p) && !clean.slice(p.length).includes('/'));
-  return prefix ? COPY_PREFIXES[prefix] : null;
+  const prefix = Object.keys(COPY_ROUTE_PREFIXES)
+    .find((pre) => clean.startsWith(pre) && clean.length > pre.length && !clean.slice(pre.length).includes('/'));
+  return prefix ? COPY_ROUTE_PREFIXES[prefix] : null;
 }
 
 /** Always offered, on every page, because the menu and footer are on every page. */
