@@ -194,7 +194,7 @@ export const navigationRegistry: CopyRegistry = {
     "nav.greeting": {
       "value": "Hi",
       "label": "Greeting",
-      "hint": "Before somebody's name, beside the button, once they are signed in",
+      "hint": "Before somebody's name, beside the button, once they are signed in. The comma is added for you: Hi becomes Hi, Alun",
       "group": "Signing in"
     }
   }

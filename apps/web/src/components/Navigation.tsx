@@ -73,6 +73,9 @@ export function Navigation({
   // no settings row showed links to pages that answered 404.
   const flag = (key: string) => moduleIsOn(key.replace(/^show_/, ''), settings as Record<string, unknown>);
   const label = (key: string) => labels?.[key] || FALLBACK[key] || '';
+  // The comma before the name is added here, and nothing said so. Somebody wrote "Welcome," and
+  // the header read "Welcome,, Alun". So one typed at the end is dropped rather than doubled.
+  const greeting = `${label('nav.greeting').replace(/[\s,]+$/, '') || FALLBACK['nav.greeting']}, ${name}`;
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
 
   // A hidden page stays in an admin's menu, marked, because otherwise the only way back to it is
@@ -137,7 +140,7 @@ export function Navigation({
 
           {name && (
             <span className="ml-2 hidden text-sm text-muted-foreground lg:inline" data-testid="nav-greeting">
-              {label('nav.greeting')}, {name}
+              {greeting}
             </span>
           )}
           {/* A plain anchor, not <Link>: /auth and /dashboard are App-owned URLs this app does
@@ -180,7 +183,7 @@ export function Navigation({
             )}
             {name && (
               <span className="mt-2 px-3 text-sm text-muted-foreground" data-testid="nav-greeting-mobile">
-                {label('nav.greeting')}, {name}
+                {greeting}
               </span>
             )}
             <a href={authCta.href} className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>

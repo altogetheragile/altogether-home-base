@@ -27,6 +27,12 @@ describe('the header, signed in', () => {
     expect(screen.queryByRole('link', { name: 'Sign In' })).toBeNull();
   });
 
+  it('puts one comma before the name, even when the greeting brings its own', () => {
+    // "Welcome," was saved as the greeting, and the header read "Welcome,, Alun".
+    render(<Navigation settings={settings} signedIn name="Alun" labels={{ 'nav.greeting': 'Welcome, ' }} />);
+    expect(screen.getByTestId('nav-greeting')).toHaveTextContent(/^Welcome, Alun$/);
+  });
+
   it('still offers the dashboard when we hold no name for them', () => {
     render(<Navigation settings={settings} signedIn />);
     expect(screen.getAllByRole('link', { name: 'Dashboard' }).length).toBeGreaterThan(0);
