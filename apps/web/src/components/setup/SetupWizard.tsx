@@ -12,8 +12,9 @@ import { StarterRun } from './StarterRun';
 
 // ============= Being stepped through it =============
 //
-// One screen at a time, in the order of docs/NEW_SITE_SETUP.md: who the site belongs to, what it
-// looks like, whose it is, what it does, and the words.
+// One screen at a time, in the order of steps.ts: hiding it while you work, who the site belongs
+// to, what it looks like, whose it is, what it does, starter wording, the words and pictures of
+// each page, the menu, and the legal pages.
 //
 // It writes through savePageCopy, the same server action the editor drawer calls, which already
 // knows that a name is a column, a colour is a key inside the brand object and a heading is a
@@ -32,12 +33,15 @@ export function SetupWizard({
   modulePages,
   wordPages,
   starterPages,
+  menuKeys,
 }: {
   modulePages: { page: string; label: string; key: string }[];
   wordPages: { page: string; label: string; href: string; keys: string[] }[];
   /** What the starter writes for: every page that is on, the menu and footer, and the pages
    *  with one address per course or paper when their section is on. */
   starterPages: { page: string; label: string }[];
+  /** The menu links worth asking about: those for pages that are on. See menuKeysFor. */
+  menuKeys: string[];
 }) {
   const router = useRouter();
   const [at, setAt] = useState(0);
@@ -49,8 +53,8 @@ export function SetupWizard({
 
   const step = STEPS[at];
 
-  // Which registries this step needs. The first three are all the site registry; the last two
-  // span every page that is switched on.
+  // Which registries this step needs. Most name one; the modules and words steps span every page
+  // that is switched on.
   const pagesNeeded = useMemo(() => {
     // The modules step spans every page with a visibility switch, plus the site registry, which
     // holds the parts that have no page of their own.
@@ -94,8 +98,12 @@ export function SetupWizard({
         }))
         .filter((g) => g.fields.length);
     }
+    if (step.id === 'menu') {
+      const asked = fieldsForStep(step, loaded[step.page] ?? []).filter((f) => menuKeys.includes(f.key));
+      return [{ step, page: step.page, title: '', fields: asked }];
+    }
     return [{ step, page: step.page, title: '', fields: fieldsForStep(step, loaded[step.page] ?? []) }];
-  }, [step, loaded, modulePages, wordPages]);
+  }, [step, loaded, modulePages, wordPages, menuKeys]);
 
   const waiting = pagesNeeded.some((p) => !loaded[p]);
   const valueOf = (page: string, f: CopyField) => edits[page]?.[f.key] ?? f.value;
