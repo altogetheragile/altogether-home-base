@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import type { SiteSettings } from '@/lib/site-settings';
 
 vi.mock('next/navigation', () => ({ usePathname: () => '/about' }));
+vi.mock('@/app/actions/signOut', () => ({ signOut: vi.fn() }));
 
 const { Navigation } = await import('./Navigation');
 const settings = {} as SiteSettings;
@@ -16,6 +17,20 @@ describe('the header, signed out', () => {
     expect(screen.getAllByRole('link', { name: 'Sign In' }).length).toBeGreaterThan(0);
     expect(screen.queryByTestId('nav-greeting')).toBeNull();
     expect(screen.queryByRole('link', { name: 'Dashboard' })).toBeNull();
+  });
+
+  it('offers no Sign Out to somebody who is not signed in', () => {
+    render(<Navigation settings={settings} />);
+    expect(screen.queryByRole('button', { name: 'Sign Out' })).toBeNull();
+  });
+});
+
+describe('signing out', () => {
+  // It was only in the App's dashboard menu. Signed in as somebody else to try their site, there
+  // was no way out from the site itself.
+  it('is in the header for somebody signed in', () => {
+    render(<Navigation settings={settings} signedIn name="Fiona" />);
+    expect(screen.getAllByRole('button', { name: 'Sign Out' }).length).toBeGreaterThan(0);
   });
 });
 

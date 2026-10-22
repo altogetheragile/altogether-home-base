@@ -4,6 +4,7 @@ import { moduleIsOn } from '@altogether/ui/modules';
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { signOut } from '@/app/actions/signOut';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SiteLogo } from '@/components/SiteLogo';
@@ -40,7 +41,7 @@ const FALLBACK: Record<string, string> = {
   'nav.contact': 'Contact', 'nav.testimonials': 'Testimonials', 'nav.resources': 'Resources',
   'nav.knowledge': 'Knowledge Base', 'nav.blog': 'Blog', 'nav.exams': 'Practice Exams',
   'nav.ai_tools': 'AI Tools', 'nav.flow_game': 'Flow Game',
-  'nav.signIn': 'Sign In', 'nav.dashboard': 'Dashboard', 'nav.greeting': 'Hi',
+  'nav.signIn': 'Sign In', 'nav.dashboard': 'Dashboard', 'nav.greeting': 'Hi', 'nav.signOut': 'Sign Out',
 };
 
 export function Navigation({
@@ -151,6 +152,18 @@ export function Navigation({
               {authCta.label}
             </a>
           </Editable>
+          {/* Signing out was only in the App's dashboard menu, so the site itself had no way out:
+              somebody signed in as someone else to try it could not get back. A form, so it works
+              before the page's JavaScript has loaded. */}
+          {signedIn && (
+            <form action={signOut} className="flex items-center">
+              <Editable k="nav.signOut" label="this button" outside>
+                <button type="submit" className="ml-1 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground">
+                  {label('nav.signOut')}
+                </button>
+              </Editable>
+            </form>
+          )}
         </div>
 
         {/* Mobile toggle */}
@@ -186,6 +199,13 @@ export function Navigation({
             <a href={authCta.href} className="mt-2 rounded-md bg-primary px-3 py-2 text-center text-sm font-semibold text-primary-foreground" onClick={() => setMobileOpen(false)}>
               {authCta.label}
             </a>
+            {signedIn && (
+              <form action={signOut}>
+                <button type="submit" className="w-full rounded-md px-3 py-2 text-center text-sm font-medium text-muted-foreground hover:bg-accent">
+                  {label('nav.signOut')}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
