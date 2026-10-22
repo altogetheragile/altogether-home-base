@@ -13,7 +13,7 @@ import {
 } from '@/lib/setup/checks';
 import { SetupWizard } from '@/components/setup/SetupWizard';
 import { CopySheet } from '@/components/setup/CopySheet';
-import { headlineKeys } from '@/lib/setup/steps';
+import { STEPS, menuKeysFor, openingKeys } from '@/lib/setup/steps';
 
 // ============= Setting up this site =============
 //
@@ -170,8 +170,13 @@ export default async function SetupPage() {
     page,
     href,
     label,
-    keys: headlineKeys(page, Object.keys(REGISTRIES.find((r) => r.page === page)?.entries ?? {})),
+    keys: openingKeys(page, REGISTRIES.find((r) => r.page === page)?.entries ?? {}),
   }));
+
+  const menuStep = STEPS.find((s) => s.id === 'menu');
+  const menuKeys = menuStep
+    ? menuKeysFor(menuStep, pagesOn.map((on) => on.page), settings.show_resources !== false)
+    : [];
 
   // The starter writes for every page that is on, plus the two families of pages with one
   // address per course or paper, which belong to the section that lists them, and the menu and
@@ -195,12 +200,12 @@ export default async function SetupPage() {
           Setting up this site
         </h1>
         <p style={{ color: p.body, fontSize: 15, lineHeight: 1.75, margin: '0 0 8px' }}>
-          Eight steps, in the order that makes sense to answer them. Each one saves as you go, so
+          Nine steps, in the order that makes sense to answer them. Each one saves as you go, so
           you can stop anywhere and pick it up later, and nothing here is compulsory. Everything
           can also be changed from the page it appears on, for the rest of this site&rsquo;s life.
         </p>
 
-        <SetupWizard modulePages={modulePages} wordPages={wordPages} starterPages={starterPages} />
+        <SetupWizard modulePages={modulePages} wordPages={wordPages} starterPages={starterPages} menuKeys={menuKeys} />
 
         <CopySheet />
 

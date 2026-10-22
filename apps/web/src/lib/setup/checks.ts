@@ -189,7 +189,7 @@ export function wordChecks(
   });
 }
 
-// ============= Step five: the pages that are somebody else's =============
+// ============= The pages that are somebody else's =============
 
 export function legalChecks(s: SiteSettings, own: string[] = []): Check[] {
   // Written on This Site, under Legal pages, and shown at the usual addresses. Read first, because

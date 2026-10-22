@@ -1,13 +1,13 @@
 // ============= The order somebody is asked things in =============
 //
-// Five steps, as docs/NEW_SITE_SETUP.md specified. The wizard asks for them one screen at a time;
-// the same fields are also reachable from the editor on any page, because a site is set up once
-// and edited for years.
+// Five steps as docs/NEW_SITE_SETUP.md first specified, nine now. The wizard asks for them one
+// screen at a time; the same fields are also reachable from the editor on any page, because a
+// site is set up once and edited for years.
 //
 // Each step names the fields it wants by key. Pure data, so a test can check every key exists and
 // that nothing important was left out of every step.
 
-export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'starter' | 'words' | 'legal';
+export type StepId = 'notready' | 'identity' | 'brand' | 'founder' | 'modules' | 'starter' | 'words' | 'menu' | 'legal';
 
 export type Step = {
   id: StepId;
@@ -128,10 +128,22 @@ export const STEPS: Step[] = [
   {
     id: 'words',
     title: 'The words',
-    blurb: 'The opening of each page you have switched on. Everything else on a page is edited from the page itself, with the button in the corner.',
+    blurb: 'The opening of each page you have switched on, and its pictures. Everything else on a page is edited from the page itself, with the button in the corner.',
     page: '',
     keys: [],
-    footnote: 'There is much more copy on each page than this. These are the pieces somebody reads first.',
+    footnote: 'There is much more copy on each page than this. These are the pieces somebody reads first. The pictures inside a list, such as each service, are added on the page with the list.',
+  },
+  {
+    // The names in the menu are the site's vocabulary: a research business does not sell
+    // Coaching. They were only reachable from the editor, so a new site found out by reading its
+    // own menu. Only the links for pages that are on (menuKeysFor), and the Resources drop-down
+    // when it is shown.
+    id: 'menu',
+    title: 'The menu',
+    blurb: 'What each page is called in the menu at the top of every page. Call them what you would call them: the addresses stay the same whatever the menu says.',
+    page: 'navigation',
+    keys: ['nav.events', 'nav.coaching', 'nav.about', 'nav.contact', 'nav.testimonials', 'nav.resources'],
+    footnote: 'The links inside the Resources drop-down, the footer headings and the sign-in words are on the Menu and Footer tab of the editor.',
   },
   {
     // Last, because it is the one step nothing here can write for you, and the one that has to
@@ -152,14 +164,36 @@ export function fieldsForStep<T extends { key: string }>(step: Step, available: 
   return step.keys.map((k) => byKey.get(k)).filter((f): f is T => Boolean(f));
 }
 
+/** Which menu links to ask about: each top-level link whose page is on, and the Resources
+ *  drop-down when it is shown. A label for a page nobody can reach is a question with no answer. */
+export function menuKeysFor(step: Step, pagesOn: string[], resourcesShown: boolean): string[] {
+  return step.keys.filter((key) =>
+    key === 'nav.resources' ? resourcesShown : pagesOn.includes(key.slice('nav.'.length)));
+}
+
 /** The headline pieces of one page: what somebody reads first.
  *
  *  Chosen by shape rather than by a list per page, so a new page needs no edit here. A heading
  *  and the sentence under it are what a visitor sees before they decide to stay. */
 export function headlineKeys(page: string, keys: string[]): string[] {
-  const wanted = [`${page}.hero.heading`, `${page}.hero.eyebrow`, `${page}.hero.intro`, `${page}.meta.description`];
+  // The sentence under the heading is `intro` on most pages and `subtitle` on the home page.
+  const wanted = [
+    `${page}.hero.heading`, `${page}.hero.eyebrow`, `${page}.hero.intro`, `${page}.hero.subtitle`,
+    `${page}.meta.description`,
+  ];
   const found = wanted.filter((k) => keys.includes(k));
   if (found.length) return found;
   // A page with no hero: take its first two plain entries rather than showing nothing.
   return keys.filter((k) => !k.endsWith('.visible')).slice(0, 2);
+}
+
+/** What the words step asks for on one page: its headline pieces, and its pictures.
+ *
+ *  Every picture the page has of its own, not just the one at the top: setup asked for the logo
+ *  and the founder's photograph and for none of the pictures on the pages themselves, which were
+ *  found only by opening the editor on each page. Pictures inside a list are not here; the list
+ *  is built on its page. */
+export function openingKeys(page: string, entries: Record<string, { type?: string }>): string[] {
+  const keys = Object.keys(entries);
+  return [...headlineKeys(page, keys), ...keys.filter((k) => entries[k].type === 'image')];
 }

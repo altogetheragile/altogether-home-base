@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { STEPS, fieldsForStep, headlineKeys } from './steps';
+import { STEPS, fieldsForStep, headlineKeys, menuKeysFor, openingKeys } from './steps';
 import { REGISTRIES } from '@/lib/copy';
 
 // A wizard step names its fields by key. A key that is wrong does not throw: the box simply is
@@ -152,5 +152,44 @@ describe('the headline pieces of a page', () => {
       const picked = headlineKeys(registry.page, Object.keys(registry.entries));
       expect(picked.length, `${registry.page} would show an empty step`).toBeGreaterThan(0);
     }
+  });
+});
+
+// "Does the setup flow still match the site?" Three places it did not. The home page's sentence
+// under its headline is `subtitle` where every other page says `intro`, so setup never asked for
+// it. The menu's names were not asked for at all. Nor was any picture on a page.
+describe('setup matches the pages', () => {
+  it('asks for the sentence under every headline, whatever that page calls it', () => {
+    for (const registry of REGISTRIES) {
+      const keys = Object.keys(registry.entries);
+      if (!keys.includes(`${registry.page}.hero.heading`)) continue;
+      const picked = headlineKeys(registry.page, keys);
+      const under = picked.filter((k) => k.startsWith(`${registry.page}.hero.`)
+        && !k.endsWith('.heading') && !k.endsWith('.eyebrow'));
+      expect(under, `${registry.page}: only the headline is asked for, not what is under it`).not.toEqual([]);
+    }
+    expect(headlineKeys('home', Object.keys(entriesFor('home')))).toContain('home.hero.subtitle');
+  });
+
+  it('asks for the pictures on a page, beside its words', () => {
+    expect(openingKeys('home', entriesFor('home'))).toContain('home.hero.background');
+    expect(openingKeys('coaching', entriesFor('coaching'))).toContain('coaching.approach.picture');
+    // A list's pictures are built with the list, on its page.
+    expect(openingKeys('coaching', entriesFor('coaching'))).not.toContain('coaching.services');
+  });
+
+  it('asks what each page is called in the menu, for the pages that are on', () => {
+    const menu = STEPS.find((s) => s.id === 'menu')!;
+    expect(menuKeysFor(menu, ['coaching', 'about', 'contact', 'testimonials'], true))
+      .toEqual(['nav.coaching', 'nav.about', 'nav.contact', 'nav.testimonials', 'nav.resources']);
+    // A label for a page nobody can reach is a question with no answer.
+    expect(menuKeysFor(menu, ['about'], false)).toEqual(['nav.about']);
+  });
+
+  it('asks about every link in the top-level menu', () => {
+    const menu = STEPS.find((s) => s.id === 'menu')!;
+    const top = Object.entries(entriesFor('navigation'))
+      .filter(([, e]) => (e as { group?: string }).group === 'The top-level menu').map(([k]) => k);
+    for (const key of top) expect(menu.keys, `the menu step never asks for ${key}`).toContain(key);
   });
 });
