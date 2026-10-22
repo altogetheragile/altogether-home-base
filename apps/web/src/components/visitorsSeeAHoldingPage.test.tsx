@@ -64,7 +64,7 @@ describe('who sees it', () => {
     // An administrator always gets the real site: a site being finished has to be lookable at,
     // and that is also what makes this safe to leave on, since whoever can turn it off can
     // already see past it.
-    expect(layout).toMatch(/const holding = !!settings\.under_construction && !admin/);
+    expect(layout).toMatch(/const holding = !!settings\.under_construction && !signedInAsAdmin/);
   });
 
   it('keeps the editor mounted behind it, or there is no way to switch it off', () => {
