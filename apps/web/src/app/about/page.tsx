@@ -12,7 +12,7 @@ import { FounderPortrait } from '@/components/FounderPortrait';
 import { colors as p , founderOf, fonts } from '@/lib/brand';
 import { tint } from '@altogether/ui/brand';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 import { credit, creditRules } from '@/lib/quoteCredit';
 import { getCopy, lines, list, items, picture } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
@@ -113,7 +113,7 @@ function Stars({ rating }: { rating: number | null }) {
 
 export default async function AboutPage() {
   await requireModule('about');
-  const [settings, feedback, t, admin] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about'), isAdmin()]);
+  const [settings, feedback, t, admin] = await Promise.all([getSiteSettings(), getAllApprovedFeedback(), getCopy('about'), showsAdminView()]);
   const founder = founderOf(settings);
   // The portrait column, and the empty slot that stands in for it while nobody has chosen one.
   // Worked out here rather than in the markup because the band is one column or two, and an

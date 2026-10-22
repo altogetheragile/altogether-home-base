@@ -8,7 +8,7 @@ import { requireModule, moduleHidden } from '@/lib/module-gate';
 import { getCopy } from '@/lib/copy';
 import { pageName } from '@/lib/copy/pageName';
 import { siteWords } from '@/lib/copy/siteWords';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +35,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
   if (!post) notFound();
   // The breadcrumb names the pages as the menu does, so renaming Blog to Writing renames it here
   // too. A post has no tab of its own on the curtain, so its small words come from This Site.
-  const [nav, words, admin, blogName] = await Promise.all([getCopy('navigation'), siteWords(), isAdmin(), pageName('blog', 'Blog')]);
+  const [nav, words, admin, blogName] = await Promise.all([getCopy('navigation'), siteWords(), showsAdminView(), pageName('blog', 'Blog')]);
   const homeName = nav('nav.home').trim() || 'Home';
 
   const date = formatDate(post.published_at);

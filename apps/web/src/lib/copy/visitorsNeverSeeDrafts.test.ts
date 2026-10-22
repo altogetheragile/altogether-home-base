@@ -7,7 +7,9 @@ let previewing = false;
 let admin = false;
 
 vi.mock('next/headers', () => ({ draftMode: async () => ({ isEnabled: previewing }) }));
-vi.mock('@/lib/auth', () => ({ isAdmin: async () => admin }));
+// What the page shows is decided by the view, not the role: an admin looking at the visitor's
+// view is shown the visitor's words. lib/adminOrVisitorView.test.ts covers how the two relate.
+vi.mock('@/lib/auth', () => ({ showsAdminView: async () => admin }));
 vi.mock('@/lib/supabase/server', () => ({
   createClient: async () => ({
     from: (table: string) => ({

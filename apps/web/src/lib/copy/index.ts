@@ -1,6 +1,6 @@
 import { draftMode } from 'next/headers';
 import { createClient } from '@/lib/supabase/server';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 import homeJson from './home.json';
 import aboutJson from './about.json';
 import coachingJson from './coaching.json';
@@ -72,7 +72,7 @@ async function draftedOver(page: string): Promise<Record<string, string>> {
   try {
     const { isEnabled } = await draftMode();
     if (!isEnabled) return {};
-    if (!(await isAdmin())) return {};
+    if (!(await showsAdminView())) return {};
     const supabase = await createClient();
     const { data } = await supabase.from('site_copy_drafts').select('key, value').eq('page', page);
     return Object.fromEntries((data ?? []).map((r: { key: string; value: string }) => [r.key, r.value]));

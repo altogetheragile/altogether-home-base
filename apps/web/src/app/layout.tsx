@@ -7,8 +7,9 @@ import { Footer } from '@/components/Footer';
 import { brandCssVarsFor, brandImagesFor } from '@/lib/brand';
 import { getCurrentUser, displayName } from '@/lib/auth';
 import { getCopy, REGISTRIES } from '@/lib/copy';
-import { isAdmin } from '@/lib/auth';
+import { isAdmin, showsAdminView } from '@/lib/auth';
 import { EditThisPage } from '@/components/edit/EditThisPage';
+import { ViewSwitch } from '@/components/edit/ViewSwitch';
 import { HiddenFromVisitors } from '@/components/edit/HiddenFromVisitors';
 import { HoldingPage } from '@/components/HoldingPage';
 import { EditableArea } from '@/components/edit/Editable';
@@ -55,17 +56,20 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // the `aa-auth` presence cookie, which could only ever say that somebody was signed in.
   // The menu labels resolve here because getCopy needs a server client and Navigation is a
   // client component. Passing the resolved strings down costs one query the layout already waits on.
-  const [settings, user, t, admin, siteWords] = await Promise.all([
+  // `admin` is what the page shows, which is the visitor's site for an administrator who has asked
+  // for that (see lib/auth.ts). `signedInAsAdmin` is who they are, and only decides the switch.
+  const [settings, user, t, admin, signedInAsAdmin, siteWords] = await Promise.all([
     getSiteSettings(),
     getCurrentUser(),
     getCopy('navigation'),
+    showsAdminView(),
     isAdmin(),
     getCopy('site'),
   ]);
 
-  // Not ready yet. An administrator always gets the real site, because a site being finished has
-  // to be lookable at, and that is also what makes this safe to leave on: whoever can turn it off
-  // can already see past it.
+  // Not ready yet. An administrator gets the real site, because a site being finished has to be
+  // lookable at, and that is also what makes this safe to leave on: whoever can turn it off can
+  // already see past it. In the visitor's view they get the holding page, which is the point.
   const holding = !!settings.under_construction && !admin;
   // Which pages are switched off, worked out once here rather than by each page for itself.
   const hidden = Object.fromEntries(
@@ -113,6 +117,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               permission. Mounted even behind the holding page: it is how the site gets finished,
               and how the holding page itself is switched off. */}
           {admin && <EditThisPage previewing={previewing} />}
+          {/* In both views, because in the visitor's it is the only way back. Even on the holding
+              page, which is exactly what an admin in the visitor's view is shown. */}
+          {signedInAsAdmin && <ViewSwitch asVisitor={!admin} />}
         </div>
         {/* Nothing measured this app at all. The SPA has carried Vercel Analytics for a long
             time, and every public page moved out of it and into here, so the pages that exist to

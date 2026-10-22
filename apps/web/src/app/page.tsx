@@ -18,7 +18,7 @@ import { Icon } from '@/components/icons/Icon';
 import { buildMetadata, JsonLd, organizationJsonLd, SITE_URL } from '@/lib/seo';
 import { brandImagesFor , founderOf } from '@/lib/brand';
 import { logoOf } from '@altogether/ui/brand';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 import { HomeCarousel } from './HomeCarousel';
 import { HomeTestimonials } from './HomeTestimonials';
 import AboutSection from '@/components/AboutSection';
@@ -53,7 +53,7 @@ export default async function HomePage() {
     getHomeCourseCards(),
     getHomeTestimonials(),
     getCopy('home'),
-    isAdmin(),
+    showsAdminView(),
   ]);
   const founder = founderOf(settings);
   const heroBg = picture(t('home.hero.background'));

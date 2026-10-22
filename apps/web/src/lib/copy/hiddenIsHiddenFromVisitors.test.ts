@@ -42,11 +42,11 @@ describe('hidden is hidden from visitors', () => {
 
   it('lets an admin through rather than 404ing them', () => {
     const gate = readFileSync('src/lib/module-gate.ts', 'utf8');
-    expect(gate).toMatch(/isAdmin\(\)/);
-    // The order matters: shown first, then admin, then notFound. An isAdmin() call before the
+    expect(gate).toMatch(/showsAdminView\(\)/);
+    // The order matters: shown first, then admin, then notFound. An admin check before the
     // cheap check would hit auth on every page render of every page that is switched on.
     const shown = gate.indexOf('moduleIsShown(module, s)');
-    const admin = gate.indexOf('await isAdmin()');
+    const admin = gate.indexOf('await showsAdminView()');
     const gone = gate.indexOf('notFound()');
     expect(shown).toBeLessThan(admin);
     expect(admin).toBeLessThan(gone);
