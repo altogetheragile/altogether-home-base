@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { NotReadyYet } from './NotReadyYet';
@@ -18,6 +18,8 @@ vi.mock('@/hooks/useSiteSettings', () => ({
 vi.mock('@/hooks/useUserRole', () => ({
   useUserRole: () => ({ data: role.value, isLoading: role.loading }),
 }));
+const auth = vi.hoisted(() => ({ user: null as { email: string } | null, signOut: vi.fn() }));
+vi.mock('@/contexts/AuthContext', () => ({ useAuth: () => auth }));
 vi.mock('@/integrations/supabase/client', () => ({
   supabase: { from: () => ({ select: () => ({ eq: () => ({ in: async () => ({ data: [] }) }) }) }) },
 }));
@@ -37,6 +39,8 @@ describe('the whole site waits, not half of it', () => {
     settings.loading = false;
     role.value = null;
     role.loading = false;
+    auth.user = null;
+    auth.signOut.mockClear();
   });
 
   it('holds a visitor at the door, on a route this app serves', () => {
@@ -44,6 +48,20 @@ describe('the whole site waits, not half of it', () => {
     show();
     expect(screen.queryByText('the real app')).toBeNull();
     expect(screen.getByRole('heading')).toBeTruthy();
+  });
+
+  it('gives somebody signed in a way out, since it is the only page they get', () => {
+    // Signed in as a new user to try the site, there was no header, no dashboard and no Sign Out.
+    auth.user = { email: 'fiona@streamstrategy.co.uk' };
+    show('/dashboard');
+    expect(screen.getByText(/Signed in as fiona@streamstrategy\.co\.uk/)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Sign Out' }));
+    expect(auth.signOut).toHaveBeenCalled();
+  });
+
+  it('offers no Sign Out to a visitor', () => {
+    show();
+    expect(screen.queryByRole('button', { name: 'Sign Out' })).toBeNull();
   });
 
   it('lets an administrator through, as the Site does', () => {

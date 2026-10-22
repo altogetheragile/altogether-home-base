@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { render, screen } from '@testing-library/react';
 import { HoldingPage } from './HoldingPage';
+import { vi } from 'vitest';
+
+vi.mock('@/app/actions/signOut', () => ({ signOut: vi.fn() }));
 import type { SiteSettings } from '@/lib/site-settings';
 
 // A site is public the moment its domain resolves, long before anybody has written its words. The
@@ -29,6 +32,18 @@ describe('the holding page', () => {
     render(<HoldingPage settings={settings({ contact_email: 'fiona@streamstrategy.co.uk' })} heading="Soon" body="" />);
     const link = screen.getByRole('link', { name: 'fiona@streamstrategy.co.uk' });
     expect(link.getAttribute('href')).toBe('mailto:fiona@streamstrategy.co.uk');
+  });
+
+  it('gives somebody signed in a way out, since it is the only page they get', () => {
+    // Signed in as a new user to try the site, there was no header and no Sign Out anywhere.
+    render(<HoldingPage settings={settings()} heading="Soon" body="" signedIn name="Fiona" />);
+    expect(screen.getByText('Signed in as Fiona.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Sign Out' })).toBeTruthy();
+  });
+
+  it('offers no Sign Out to a visitor', () => {
+    render(<HoldingPage settings={settings()} heading="Soon" body="" />);
+    expect(screen.queryByRole('button', { name: 'Sign Out' })).toBeNull();
   });
 
   it('offers nothing rather than an empty mailto when no address is set', () => {
