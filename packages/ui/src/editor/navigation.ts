@@ -191,6 +191,12 @@ export const navigationRegistry: CopyRegistry = {
       "hint": "The same button, for somebody who is signed in. It takes them to their own dashboard",
       "group": "Signing in"
     },
+    "nav.signOut": {
+      "value": "Sign Out",
+      "label": "Sign out button",
+      "hint": "Beside the dashboard button, for somebody who is signed in",
+      "group": "Signing in"
+    },
     "nav.greeting": {
       "value": "Hi",
       "label": "Greeting",
