@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { colors as tokenColors, fonts } from './tokens';
 
 // ============= Not ready yet, in both apps =============
@@ -13,12 +14,15 @@ import { colors as tokenColors, fonts } from './tokens';
 export type HoldingLogo = { mode: 'image'; src: string } | { mode: 'wordmark'; text: string };
 
 export function HoldingPage({
-  logo, heading, body, email,
+  logo, heading, body, email, account,
 }: {
   logo: HoldingLogo;
   heading: string;
   body: string;
   email?: string | null;
+  /** For somebody signed in: who they are and a way to sign out. Each app supplies its own,
+   *  because each signs out its own way. */
+  account?: ReactNode;
 }) {
   const address = email?.trim();
   return (
@@ -75,6 +79,15 @@ export function HoldingPage({
         >
           {address}
         </a>
+      )}
+
+      {/* Somebody signed in who is not an admin gets this page and nothing else, so it has to
+          carry the way out. It had none: signed in as a new user to try it, there was no header,
+          no dashboard and no Sign Out anywhere on either app. */}
+      {account && (
+        <div style={{ color: `var(--aa-body, ${tokenColors.body})`, fontSize: 14, marginTop: 8 }}>
+          {account}
+        </div>
       )}
     </main>
   );

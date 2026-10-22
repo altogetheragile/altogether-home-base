@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useSiteSettings } from '@/hooks/useSiteSettings';
 import { useUserRole } from '@/hooks/useUserRole';
+import { useAuth } from '@/contexts/AuthContext';
 import { logoOf, wordmarkOf } from '@altogether/ui/brand';
 import { HoldingPage, type HoldingLogo } from '@altogether/ui/HoldingPage';
 import { siteRegistry } from '@altogether/ui/editor/registries';
@@ -54,6 +55,7 @@ export function NotReadyYet({ children }: { children: React.ReactNode }) {
   const { settings, isLoading } = useSiteSettings();
   const { data: role, isLoading: roleLoading } = useUserRole();
   const words = useConstructionWords();
+  const { user, signOut } = useAuth();
 
   const s = settings as { under_construction?: boolean | null; brand?: unknown; company_name?: string | null; contact_email?: string | null } | undefined;
 
@@ -71,5 +73,14 @@ export function NotReadyYet({ children }: { children: React.ReactNode }) {
     ? { mode: 'image', src: logo.src }
     : { mode: 'wordmark', text: mark.gap ? `${mark.first} ${mark.second}` : `${mark.first}${mark.second}` };
 
-  return <HoldingPage logo={shown} heading={words.heading} body={words.body} email={s.contact_email} />;
+  const account = user ? (
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span>Signed in as {user.email}.</span>
+      <button type="button" onClick={() => signOut()} style={{ background: 'none', border: 0, padding: 0, font: 'inherit', fontWeight: 600, color: 'inherit', textDecoration: 'underline', cursor: 'pointer' }}>
+        Sign Out
+      </button>
+    </span>
+  ) : undefined;
+
+  return <HoldingPage logo={shown} heading={words.heading} body={words.body} email={s.contact_email} account={account} />;
 }
