@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation';
 import { getSiteSettings, type SiteSettings } from '@/lib/site-settings';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 import { MODULE_DEFAULTS } from '@altogether/ui/modules';
 
 // ============= A module that is off is not reachable here either =============
@@ -54,7 +54,7 @@ export function moduleIsShown(module: GatedModule, settings: SiteSettings): bool
 export async function moduleHidden(module: GatedModule, settings?: SiteSettings): Promise<boolean> {
   const s = settings ?? (await getSiteSettings());
   if (moduleIsShown(module, s)) return false;
-  return !(await isAdmin());
+  return !(await showsAdminView());
 }
 
 /** 404s the page when its module is switched off, unless you are the person who switched it off.
@@ -62,7 +62,8 @@ export async function moduleHidden(module: GatedModule, settings?: SiteSettings)
 export async function requireModule(module: GatedModule, settings?: SiteSettings): Promise<void> {
   const s = settings ?? (await getSiteSettings());
   if (moduleIsShown(module, s)) return;
-  // An admin sees it, with the banner saying so. Anyone else gets the 404 they always got.
-  if (await isAdmin()) return;
+  // An admin sees it, with the banner saying so. Anyone else gets the 404 they always got, and
+  // so does an admin who has asked to see the site as a visitor does.
+  if (await showsAdminView()) return;
   notFound();
 }

@@ -1,5 +1,6 @@
 import { cache } from 'react';
 import { redirect, notFound } from 'next/navigation';
+import { cookies } from 'next/headers';
 import type { User } from '@supabase/supabase-js';
 import { createClient } from './supabase/server';
 
@@ -82,6 +83,33 @@ export const getUserRole = perRequest(async (): Promise<Role | null> => {
 export async function isAdmin(): Promise<boolean> {
   return (await getUserRole()) === 'admin';
 }
+
+// ============= Admin view, or what a visitor sees =============
+//
+// An administrator sees a different site: pens on every word, outlines where pictures are missing,
+// switched-off pages still there, drafts when previewing. Useful while working, and in the way of
+// the one question that matters before telling anybody to go and look: what will they see?
+//
+// So an administrator can ask to be shown the visitor's site. It is a cookie, and it only ever
+// takes away: `showsAdminView` is false for anyone who is not an admin, whatever the cookie says.
+// Permission is not touched. Every action and admin-only page still asks `isAdmin`, so an admin
+// in visitor view can still save, and nobody gains anything by setting the cookie by hand.
+
+export const VISITOR_VIEW_COOKIE = 'aa-visitor-view';
+
+/** Whether this admin has asked to see the site as a visitor would. */
+export async function viewingAsVisitor(): Promise<boolean> {
+  try {
+    return (await cookies()).get(VISITOR_VIEW_COOKIE)?.value === '1';
+  } catch {
+    return false;
+  }
+}
+
+/** For deciding what a page SHOWS. An admin who has not asked for the visitor's view. Never for
+ *  deciding what anyone may DO: that is `isAdmin`. */
+export const showsAdminView = perRequest(async (): Promise<boolean> =>
+  (await isAdmin()) && !(await viewingAsVisitor()));
 
 // ============= Second factor =============
 //

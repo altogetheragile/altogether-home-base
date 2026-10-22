@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, siteName } from '@/lib/seo';
 import { ExamPlayer, type ExamForPlayer, type Sibling } from './ExamPlayer';
 import { requireModule, moduleHidden } from '@/lib/module-gate';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 import { GuideEditor } from './GuideEditor';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
@@ -125,7 +125,7 @@ export default async function ExamDetailPage({
   };
   // Read from the real session on the server. A visitor never receives the editor's code, and
   // saving re-checks this anyway (see actions.ts).
-  const canEdit = await isAdmin();
+  const canEdit = await showsAdminView();
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">

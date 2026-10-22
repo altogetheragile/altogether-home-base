@@ -2,7 +2,7 @@ import { Fragment } from 'react';
 import { Editable, AddAPicture } from '@/components/edit/Editable';
 import type { Metadata } from 'next';
 import { getSiteSettings } from '@/lib/site-settings';
-import { isAdmin } from '@/lib/auth';
+import { showsAdminView } from '@/lib/auth';
 import { bookingHref } from '@/lib/booking';
 import { getHomeTestimonials } from '@/lib/home';
 import { buildMetadata, JsonLd, breadcrumbJsonLd, SITE_URL, siteName } from '@/lib/seo';
@@ -79,7 +79,7 @@ function Illustration({ src, alt, height }: { src: string; alt: string; height: 
 
 export default async function CoachingPage() {
   await requireModule('coaching');
-  const [settings, testimonials, t, admin] = await Promise.all([getSiteSettings(), getHomeTestimonials(), getCopy('coaching'), isAdmin()]);
+  const [settings, testimonials, t, admin] = await Promise.all([getSiteSettings(), getHomeTestimonials(), getCopy('coaching'), showsAdminView()]);
 
   // As many services as there are, in the order they are written. A service with no name is a
   // row somebody is part way through typing, and is left off rather than rendered half-built.
