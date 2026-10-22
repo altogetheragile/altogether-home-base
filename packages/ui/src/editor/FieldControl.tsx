@@ -21,6 +21,7 @@ export function FieldControl({
   onChange,
   upload,
   pictures,
+  ids,
 }: {
   field: CopyField;
   value: string;
@@ -31,6 +32,9 @@ export function FieldControl({
   upload: (file: File) => Promise<string>;
   /** What this site has already uploaded, where the host can list it. */
   pictures?: () => Promise<StoredPicture[]>;
+  /** Show the IDs of the boxes inside a list. The drawer does; the setup wizard, written for
+   *  somebody filling a site in for the first time, does not. */
+  ids?: boolean;
 }) {
   const set = (next: string) => onChange(next);
 
@@ -38,7 +42,7 @@ export function FieldControl({
     return <SectionOrder value={value} choices={SECTIONS_FOR_PAGE[page] ?? []} onChange={set} />;
   }
   if (field.type === 'items' && field.fields) {
-    return <ItemRows value={value} fields={field.fields} onChange={set} upload={upload} pictures={pictures} />;
+    return <ItemRows value={value} fields={field.fields} onChange={set} upload={upload} pictures={pictures} idPrefix={ids ? field.key : undefined} />;
   }
   if (field.type === 'image') {
     return <PictureBox value={value} onChange={set} upload={upload} pictures={pictures} />;

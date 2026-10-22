@@ -5,7 +5,7 @@ import { isAdmin, getCurrentUser } from '@/lib/auth';
 import { REGISTRIES } from '@/lib/copy';
 import { loadPage, saveDraft } from '@altogether/ui/editor/store';
 import { moduleIsOn } from '@altogether/ui/modules';
-import { toCsv, rowsFor, readSheet, byPage, isWords, whyNothing, type SheetReading } from '@/lib/copy/sheet';
+import { toCsv, rowsFor, readSheet, byPage, whyNothing, type Known, type SheetReading, type SheetRow } from '@/lib/copy/sheet';
 
 // ============= The words, out and back =============
 //
@@ -19,43 +19,44 @@ function moduleForPage(page: string): string | null {
   return entry?.path?.replace(/^show_/, '') ?? null;
 }
 
+/** Every row the site has, page by page, each saying whether it is in use. */
+async function allRows(): Promise<{ rows: SheetRow[]; pages: number }> {
+  const db = await createClient();
+  const { data } = await db.from('site_settings').select('*').limit(1).maybeSingle();
+  const settings = (data ?? {}) as Record<string, unknown>;
+
+  const rows: SheetRow[] = [];
+  let pages = 0;
+  for (const registry of REGISTRIES) {
+    // A page that is switched off is listed and says so, rather than being left out: "not in the
+    // file" and "not on the site" were otherwise impossible to tell apart.
+    const needs = moduleForPage(registry.page);
+    const pageOn = !needs || moduleIsOn(needs, settings);
+    const fields = await loadPage(db, REGISTRIES, registry.page);
+    const forPage = rowsFor(registry.page, registry.label, fields, pageOn);
+    if (forPage.length) pages++;
+    rows.push(...forPage);
+  }
+  return { rows, pages };
+}
+
 /** The whole site's words, as one file. */
 export async function exportCopySheet(): Promise<
   { ok: true; csv: string; rows: number; pages: number } | { ok: false; error: string }
 > {
   if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
-  const db = await createClient();
-
-  const { data } = await db.from('site_settings').select('*').limit(1).maybeSingle();
-  const settings = (data ?? {}) as Record<string, unknown>;
-
-  const rows = [];
-  let pages = 0;
-  for (const registry of REGISTRIES) {
-    // A page that is switched off is left out entirely, rather than being asked for and then
-    // never shown.
-    const needs = moduleForPage(registry.page);
-    if (needs && !moduleIsOn(needs, settings)) continue;
-    const fields = await loadPage(db, REGISTRIES, registry.page);
-    const forPage = rowsFor(registry.page, registry.label, fields);
-    if (forPage.length) pages++;
-    rows.push(...forPage);
-  }
+  const { rows, pages } = await allRows();
   return { ok: true, csv: toCsv(rows), rows: rows.length, pages };
 }
 
-/** What every field currently holds, for comparing a returned file against. */
-async function whatIsThereNow(): Promise<Map<string, { page: string; value: string }>> {
-  const db = await createClient();
-  const known = new Map<string, { page: string; value: string }>();
-  for (const registry of REGISTRIES) {
-    for (const field of await loadPage(db, REGISTRIES, registry.page)) {
-      // Only what could have gone out in the file, so a returned row naming a switch is unknown
-      // rather than a way to flip it.
-      if (isWords(field)) known.set(field.key, { page: registry.page, value: field.value ?? '' });
-    }
-  }
-  return known;
+/** What every row currently holds, for comparing a returned file against.
+ *
+ *  Built from the same rows the file is, so an ID means the same thing on the way back as on the
+ *  way out. Only what could have gone out in the file: a returned row naming a switch is unknown
+ *  rather than a way to flip it. */
+async function whatIsThereNow(): Promise<Map<string, Known>> {
+  const { rows } = await allRows();
+  return new Map(rows.map((r) => [r.key, { page: r.page, value: r.current, kind: r.kind, list: r.list }]));
 }
 
 /** What a returned file would change, without changing anything. */
@@ -76,7 +77,7 @@ export async function reviewCopySheet(csv: string): Promise<
  *  nobody can check after the fact. The site carries on showing what it showed, the drawer shows
  *  what is waiting on each page, and publishing stays a decision. */
 export async function applyCopySheet(csv: string): Promise<
-  { ok: true; written: number; pages: string[]; unknown: string[] } | { ok: false; error: string }
+  { ok: true; written: number; pages: string[]; unknown: string[]; skipped: number } | { ok: false; error: string }
 > {
   if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
 
@@ -97,5 +98,8 @@ export async function applyCopySheet(csv: string): Promise<
     }
     done.push(page);
   }
-  return { ok: true, written: reading.changes.length, pages: done, unknown: reading.unknown };
+  return {
+    ok: true, written: reading.changes.length, pages: done, unknown: reading.unknown,
+    skipped: reading.pictures.length + reading.refused.length,
+  };
 }

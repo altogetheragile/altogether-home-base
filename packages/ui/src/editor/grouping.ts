@@ -62,11 +62,14 @@ export function groupFields(fields: CopyField[]): FieldGroup[] {
 /** Does this field answer what somebody typed?
  *
  *  Label and hint, because that is the language on screen, and the key, because somebody who
- *  knows it is looking for exactly one thing. Not the value: searching your own words and landing
- *  on the box you are already reading is not finding anything. */
+ *  knows it is looking for exactly one thing, including the ID of a box inside a list. Not the
+ *  value: searching your own words and landing on the box you are already reading is not finding
+ *  anything. */
 export function matches(field: Pick<CopyField, 'key' | 'label' | 'hint'>, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
+  // The ID of something inside a list, `coaching.services.3.picture`, finds the list it is in.
+  if (q.startsWith(`${field.key.toLowerCase()}.`)) return true;
   return [field.label, field.hint, field.key].some((s) => s?.toLowerCase().includes(q));
 }
 

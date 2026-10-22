@@ -334,6 +334,11 @@ export function EditDrawer({ host }: { host: EditorHost }) {
                   </button>
                 )}
               </div>
+              {/* Its ID, so one box can be named in an email or found from a spreadsheet row and
+                  there is no doubt which. Selectable in one click, for copying. See ids.ts. */}
+              <code data-part="field-id" className="mb-1 block select-all font-mono text-[10.5px] text-muted-foreground/70">
+                {f.key}
+              </code>
               <p className="mb-1.5 text-xs text-muted-foreground">{f.hint}</p>
               {f.draft && (
                 <div className="mb-1.5 rounded border border-amber-300 bg-amber-50 px-2 py-1.5 text-xs text-amber-900">
@@ -402,6 +407,7 @@ export function EditDrawer({ host }: { host: EditorHost }) {
                 onChange={(next) => setField(f.key, next)}
                 upload={host.upload}
                 pictures={host.pictures}
+                ids
               />
             </div>
           );
