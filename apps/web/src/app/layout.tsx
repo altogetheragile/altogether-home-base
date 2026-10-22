@@ -69,8 +69,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
 
   // Not ready yet. An administrator gets the real site, because a site being finished has to be
   // lookable at, and that is also what makes this safe to leave on: whoever can turn it off can
-  // already see past it. In the visitor's view they get the holding page, which is the point.
-  const holding = !!settings.under_construction && !admin;
+  // already see past it.
+  //
+  // That holds in the visitor's view too. It first showed the holding page there, which is what a
+  // visitor sees today and the one thing an admin never needs shown: the visitor's view is for
+  // seeing the site visitors will get once it is switched on.
+  const holding = !!settings.under_construction && !signedInAsAdmin;
   // Which pages are switched off, worked out once here rather than by each page for itself.
   const hidden = Object.fromEntries(
     [...new Set(Object.values(MODULE_FOR_PATH))].map((m) => [m, !moduleIsShown(m as GatedModule, settings)]),
@@ -117,8 +121,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               permission. Mounted even behind the holding page: it is how the site gets finished,
               and how the holding page itself is switched off. */}
           {admin && <EditThisPage previewing={previewing} />}
-          {/* In both views, because in the visitor's it is the only way back. Even on the holding
-              page, which is exactly what an admin in the visitor's view is shown. */}
+          {/* In both views, because in the visitor's it is the only way back. */}
           {signedInAsAdmin && <ViewSwitch asVisitor={!admin} />}
         </div>
         {/* Nothing measured this app at all. The SPA has carried Vercel Analytics for a long

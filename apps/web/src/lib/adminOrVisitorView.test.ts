@@ -84,4 +84,12 @@ describe('who asks which', () => {
     expect(layout).toMatch(/signedInAsAdmin && <ViewSwitch asVisitor=\{!admin\} \/>/);
     expect(layout).toMatch(/showsAdminView\(\)/);
   });
+
+  it('takes an admin past the holding page in both views', () => {
+    // The visitor's view first showed the holding page, which is what visitors get today and the
+    // one thing an admin never needs shown: "A visitor view that doesn't bypass the under
+    // construction view is pointless". It is for seeing the site visitors will get.
+    const layout = readFileSync(join(SRC, 'app/layout.tsx'), 'utf8');
+    expect(layout).toMatch(/const holding = !!settings\.under_construction && !signedInAsAdmin;/);
+  });
 });
