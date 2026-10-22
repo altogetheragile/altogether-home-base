@@ -38,7 +38,7 @@ export function CopySheet() {
     a.download = `site-words-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    setNote(`${out.rows} things to write, across ${out.pages} ${out.pages === 1 ? 'page' : 'pages'}.`);
+    setNote(`${out.rows} rows, across ${out.pages} ${out.pages === 1 ? 'page' : 'pages'}.`);
   })(); });
 
   const choose = (f: File) => start(() => { void (async () => {
@@ -66,10 +66,12 @@ export function CopySheet() {
     <section style={{ background: p.white, borderRadius: 16, padding: '24px 28px', marginBottom: 20 }}>
       <h2 style={{ color: p.deepTeal, fontSize: 19, fontWeight: 800, margin: '0 0 6px' }}>Write the words somewhere else</h2>
       <p style={{ color: p.muted, fontSize: 13.5, lineHeight: 1.65, margin: '0 0 16px' }}>
-        Every piece of writing this site is waiting for, as one spreadsheet. Only the pages that
-        are switched on, and only the words: nothing in the file can change a colour, a picture or
-        a switch. Fill in the last column, bring it back, and it arrives as drafts for you to read
-        before anything goes live.
+        Every piece of writing on this site as one spreadsheet, including the words inside lists
+        like services. Each row has the ID the editor shows under that box, and a status column
+        saying whether it is on the site or switched off, so switched-off rows can be ignored.
+        Pictures are listed so you can see them, but are changed in the editor. Fill in the last
+        column, bring it back, and it arrives as drafts for you to read before anything goes
+        live.
       </p>
 
       <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center' }}>
@@ -105,6 +107,8 @@ export function CopySheet() {
           <p style={{ color: p.muted, fontSize: 13, margin: '0 0 10px' }}>
             {pending.reading.unchanged > 0 && `${pending.reading.unchanged} rows came back unchanged and are left alone. `}
             {pending.reading.unknown.length > 0 && `${pending.reading.unknown.length} rows name something this site does not have and are ignored: ${pending.reading.unknown.slice(0, 3).join(', ')}${pending.reading.unknown.length > 3 ? '…' : ''}. `}
+            {pending.reading.pictures.length > 0 && `${pending.reading.pictures.length} picture ${pending.reading.pictures.length === 1 ? 'row was' : 'rows were'} changed and ${pending.reading.pictures.length === 1 ? 'is' : 'are'} left alone: pictures are changed in the editor. `}
+            {pending.reading.refused.length > 0 && `${pending.reading.refused.length} ${pending.reading.refused.length === 1 ? 'row inside a list is' : 'rows inside lists are'} left alone because ${pending.reading.refused[0].why}: ${pending.reading.refused.slice(0, 3).map((r) => r.key).join(', ')}${pending.reading.refused.length > 3 ? '…' : ''}. `}
             Nothing goes live until you publish it.
           </p>
           <ul style={{ listStyle: 'none', margin: '0 0 12px', padding: 0, maxHeight: 220, overflowY: 'auto' }}>

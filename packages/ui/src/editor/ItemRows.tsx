@@ -3,6 +3,7 @@ import type { ItemField } from './fields';
 import { PictureBox, type StoredPicture } from './PictureBox';
 import { IconPicker } from './IconPicker';
 import { ColourBox } from './ColourBox';
+import { itemId, parseItems, writeItems } from './ids';
 
 // ============= A list of things, edited as a list of things =============
 //
@@ -14,18 +15,6 @@ import { ColourBox } from './ColourBox';
 // own text. A schema the editor can read makes all three of those somebody else's problem.
 
 type Row = Record<string, string>;
-
-/** Unparseable JSON is shown as nothing rather than throwing: the page does the same, and the
- *  raw value is still there to be repaired if it was hand-edited into a mess. */
-function parse(value: string): Row[] {
-  if (!value.trim()) return [];
-  try {
-    const out = JSON.parse(value);
-    return Array.isArray(out) ? out.filter((r) => r && typeof r === 'object' && !Array.isArray(r)) : [];
-  } catch {
-    return [];
-  }
-}
 
 /** Which required boxes this row has left empty. The page drops such a row rather than rendering
  *  it half-built, which is right, and used to happen in silence: a card was added, saved, shown in
@@ -42,6 +31,7 @@ export function ItemRows({
   onChange,
   upload,
   pictures,
+  idPrefix,
 }: {
   value: string;
   fields: ItemField[];
@@ -49,11 +39,12 @@ export function ItemRows({
   upload: (file: File) => Promise<string>;
   /** Passed through to any picture column, so a row can reuse a picture the site already has. */
   pictures?: () => Promise<StoredPicture[]>;
+  /** The list's own ID. Given, each box in each row shows its ID under it (see ids.ts). */
+  idPrefix?: string;
 }) {
-  const rows = parse(value);
+  const rows = parseItems(value);
   const missing = (row: Row) => emptyRequired(row, fields);
-  // Pretty-printed, because this lands in a database column somebody will read one day.
-  const write = (next: Row[]) => onChange(next.length ? JSON.stringify(next, null, 2) : '');
+  const write = (next: Row[]) => onChange(writeItems(next));
 
   const set = (i: number, key: string, v: string) =>
     write(rows.map((r, n) => (n === i ? { ...r, [key]: v } : r)));
@@ -117,6 +108,11 @@ export function ItemRows({
               <span className="mb-0.5 block text-xs text-muted-foreground">
                 {f.label}
                 {f.required && <span className="ml-1 text-amber-600" title="The page needs this">needed</span>}
+                {idPrefix && (
+                  <code data-part="field-id" className="ml-2 select-all font-mono text-[10.5px] text-muted-foreground/70">
+                    {itemId(idPrefix, i + 1, f.key)}
+                  </code>
+                )}
               </span>
               {f.type === 'image' ? (
                 <PictureBox value={row[f.key] ?? ''} onChange={(v) => set(i, f.key, v)} upload={upload} pictures={pictures} />

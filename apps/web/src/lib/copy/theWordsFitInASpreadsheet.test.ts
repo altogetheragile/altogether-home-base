@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { toCsv, parseCsv, readSheet, rowsFor, byPage, isWords, whyNothing, separatorOf, COLUMNS, type SheetRow } from './sheet';
+import { toCsv, parseCsv, readSheet, rowsFor, byPage, isWords, whyNothing, separatorOf, COLUMNS, STATUS, type SheetRow, type Known } from './sheet';
 import type { CopyField } from '@altogether/ui/editor/store';
 
 // Filling a site in the drawer is 204 boxes behind three tabs, one page at a time, signed in as an
@@ -10,9 +10,10 @@ const field = (over: Partial<CopyField> & { key: string }): CopyField =>
   ({ label: over.key, hint: '', value: '', shipped: '', ...over });
 
 describe('what goes in the file', () => {
-  it('takes the words and leaves everything else', () => {
+  it('lists words and pictures, and writes only words', () => {
     // A spreadsheet that can turn a module off is one that can take a site down by accident, and
-    // the mistake would arrive as two hundred quiet rows.
+    // the mistake would arrive as two hundred quiet rows. Pictures are listed so the file accounts
+    // for everything, marked so nobody expects an edit to one to land.
     const rows = rowsFor('home', 'Home', [
       field({ key: 'home.hero.heading' }),
       field({ key: 'home.hero.body', type: 'textarea' }),
@@ -20,21 +21,48 @@ describe('what goes in the file', () => {
       field({ key: 'home.visible', type: 'switch' }),
       field({ key: 'home.brand.colour', type: 'colour' }),
       field({ key: 'home.hero.picture', type: 'image' }),
-      field({ key: 'home.stats.items', type: 'items' }),
       field({ key: 'home.sections', type: 'sections' }),
       field({ key: 'home.hero.target', type: 'choice' }),
     ]);
-    expect(rows.map((r) => r.key)).toEqual(['home.hero.heading', 'home.hero.body', 'home.hero.tags']);
+    expect(rows.map((r) => [r.key, r.kind])).toEqual([
+      ['home.hero.heading', 'words'], ['home.hero.body', 'words'], ['home.hero.tags', 'words'],
+      ['home.hero.picture', 'picture'],
+    ]);
   });
 
-  it('leaves out a section this site does not render', () => {
-    // Asking somebody to write knowledge base copy for a site with no knowledge base is asking
-    // for work with no purpose.
+  it('lists what is switched off, and says so', () => {
+    // It used to leave these out, and "not in the file" could not be told from "not on the site".
     const rows = rowsFor('home', 'Home', [
       field({ key: 'home.hero.heading' }),
       field({ key: 'home.kb.heading', notShown: true }),
     ]);
-    expect(rows.map((r) => r.key)).toEqual(['home.hero.heading']);
+    expect(rows.map((r) => [r.key, r.status])).toEqual([
+      ['home.hero.heading', STATUS.on], ['home.kb.heading', STATUS.sectionOff],
+    ]);
+    expect(rowsFor('exams', 'Exams', [field({ key: 'exams.hero.heading' })], false)[0].status).toBe(STATUS.pageOff);
+  });
+
+  it('gives each box inside a list a row with its own ID', () => {
+    const services = field({
+      key: 'coaching.services', label: 'Service', type: 'items',
+      fields: [
+        { key: 'title', label: 'Title' },
+        { key: 'body', label: 'Body', type: 'textarea' },
+        { key: 'icon', label: 'Icon', type: 'icon' },
+        { key: 'picture', label: 'Picture', type: 'image' },
+      ],
+      value: JSON.stringify([{ title: 'Focus Groups', body: 'Small rooms.', icon: 'users', picture: '/a.webp' }, { title: 'Depth Interviews' }]),
+    });
+    const rows = rowsFor('coaching', 'Coaching', [services]);
+    expect(rows.map((r) => [r.key, r.kind, r.current])).toEqual([
+      ['coaching.services.1.title', 'words', 'Focus Groups'],
+      ['coaching.services.1.body', 'words', 'Small rooms.'],
+      ['coaching.services.1.picture', 'picture', '/a.webp'],
+      ['coaching.services.2.title', 'words', 'Depth Interviews'],
+      ['coaching.services.2.body', 'words', ''],
+      ['coaching.services.2.picture', 'picture', ''],
+    ]);
+    expect(rows[3].where).toBe('Coaching / Service 2');
   });
 
   it('says where each row lives, so it can be found again by hand', () => {
@@ -52,13 +80,13 @@ describe('what goes in the file', () => {
 
 describe('the file itself', () => {
   const row = (over: Partial<SheetRow>): SheetRow =>
-    ({ key: 'k', page: 'home', where: 'Home', label: 'L', hint: 'H', current: '', fresh: '', ...over });
+    ({ key: 'k', page: 'home', where: 'Home', label: 'L', kind: 'words', status: STATUS.on, hint: 'H', current: '', fresh: '', ...over });
 
   it('survives everything real copy contains', () => {
     // Commas, quotes, and a two-line heading, which is one cell containing a line break.
     const awkward = 'Work better together,\n"properly" this time';
     const [, back] = parseCsv(toCsv([row({ current: awkward })]));
-    expect(back[5]).toBe(awkward);
+    expect(back[COLUMNS.indexOf('current words')]).toBe(awkward);
   });
 
   it('round-trips every row without losing one', () => {
@@ -79,13 +107,13 @@ describe('the file itself', () => {
 });
 
 describe('reading one back', () => {
-  const known = new Map([
+  const known = new Map<string, Known>([
     ['home.hero.heading', { page: 'home', value: 'Old heading' }],
     ['about.story.p1', { page: 'about', value: 'Old story' }],
   ]);
   const sheet = (rows: string[][]) =>
     toCsv(rows.map(([key, current, fresh]) => ({
-      key, page: '', where: '', label: '', hint: '', current, fresh,
+      key, page: '', where: '', label: '', kind: 'words' as const, status: STATUS.on, hint: '', current, fresh,
     })));
 
   it('takes only what was actually written', () => {
@@ -134,10 +162,12 @@ describe('reading one back', () => {
 // different situations, three of which are a file that did not work rather than a file with no
 // edits. Somebody who has just spent ten minutes typing deserves better than that.
 describe('why nothing happened', () => {
-  const known = new Map([['home.hero.heading', { page: 'home', value: 'Old heading' }]]);
+  const known = new Map<string, Known>([['home.hero.heading', { page: 'home', value: 'Old heading' }]]);
+  const one = (over: Partial<SheetRow>): SheetRow =>
+    ({ key: 'home.hero.heading', page: 'home', where: '', label: '', kind: 'words', status: STATUS.on, hint: '', current: 'Old heading', fresh: '', ...over });
   const read = (text: string) => readSheet(text, known);
 
-  it('spots a spreadsheet that wrote semicolons', () => {
+  it('spots a spreadsheet that wrote semicolons, in a file from before the status column', () => {
     // Excel does this wherever the system list separator is one. The file still says .csv and
     // still opens correctly for whoever saved it.
     const semi = '"key";"page";"where";"label";"hint";"current words";"new words"\r\n'
@@ -153,24 +183,82 @@ describe('why nothing happened', () => {
   });
 
   it('says so when nothing in the file names anything here', () => {
-    const wrong = toCsv([{ key: 'not.a.key', page: '', where: '', label: '', hint: '', current: '', fresh: 'x' }]);
+    const wrong = toCsv([one({ key: 'not.a.key', current: '', fresh: 'x' })]);
     expect(whyNothing(read(wrong))).toMatch(/names anything this site has/i);
   });
 
   it('says so when the last column was never filled in', () => {
     // The commonest mistake: typing into "current words", which is what the site says now.
-    const untouched = toCsv([{ key: 'home.hero.heading', page: 'home', where: '', label: '', hint: '', current: 'Old heading', fresh: '' }]);
+    const untouched = toCsv([one({})]);
     expect(whyNothing(read(untouched))).toMatch(/last column/i);
     expect(whyNothing(read(untouched))).toMatch(/new words/);
   });
 
   it('says so when the words came back the same', () => {
-    const same = toCsv([{ key: 'home.hero.heading', page: 'home', where: '', label: '', hint: '', current: 'Old heading', fresh: 'Old heading' }]);
+    const same = toCsv([one({ fresh: 'Old heading' })]);
     expect(whyNothing(read(same))).toMatch(/same words/i);
   });
 
   it('says nothing at all when there is something to save', () => {
-    const good = toCsv([{ key: 'home.hero.heading', page: 'home', where: '', label: '', hint: '', current: 'Old heading', fresh: 'New' }]);
+    const good = toCsv([one({ fresh: 'New' })]);
     expect(whyNothing(read(good))).toBeNull();
+  });
+});
+
+// Pictures listed, read-only. List contents writable, by position, and only while the position
+// still means the same card.
+describe('pictures and lists coming back', () => {
+  const LIST = JSON.stringify([{ title: 'Focus Groups', body: 'Small rooms.' }, { title: 'Depth Interviews', body: '' }], null, 2);
+  const place = (n: number, sub: string, drafted = false) =>
+    ({ key: 'coaching.services', n, sub, value: LIST, drafted });
+  const known = (drafted = false) => new Map<string, Known>([
+    ['home.hero.picture', { page: 'home', value: '/old.webp', kind: 'picture' }],
+    ['coaching.services.1.title', { page: 'coaching', value: 'Focus Groups', list: place(1, 'title', drafted) }],
+    ['coaching.services.2.body', { page: 'coaching', value: '', list: place(2, 'body', drafted) }],
+  ]);
+  const row = (key: string, current: string, fresh: string, kind: 'words' | 'picture' = 'words'): SheetRow =>
+    ({ key, page: '', where: '', label: '', kind, status: STATUS.on, hint: '', current, fresh });
+
+  it('leaves a picture alone and says so', () => {
+    const read = readSheet(toCsv([row('home.hero.picture', '/old.webp', '/new.webp', 'picture')]), known());
+    expect(read.changes).toEqual([]);
+    expect(read.pictures).toEqual(['home.hero.picture']);
+    expect(whyNothing(read)).toMatch(/pictures are changed on the page/i);
+  });
+
+  it('writes the words inside a list into that list, all at once', () => {
+    const read = readSheet(toCsv([
+      row('coaching.services.1.title', 'Focus Groups', 'Group Discussions'),
+      row('coaching.services.2.body', '', 'One person, one hour.'),
+    ]), known());
+    expect(read.refused).toEqual([]);
+    const written = byPage(read.changes);
+    expect(Object.keys(written)).toEqual(['coaching']);
+    expect(JSON.parse(written.coaching['coaching.services'])).toEqual([
+      { title: 'Group Discussions', body: 'Small rooms.' },
+      { title: 'Depth Interviews', body: 'One person, one hour.' },
+    ]);
+  });
+
+  it('refuses a list row whose card has moved since the file went out', () => {
+    // The file says the first service was "Depth Interviews"; the site now says "Focus Groups".
+    // Writing it would put the new words on the wrong card.
+    const read = readSheet(toCsv([row('coaching.services.1.title', 'Depth Interviews', 'Interviews')]), known());
+    expect(read.changes).toEqual([]);
+    expect(read.refused[0].key).toBe('coaching.services.1.title');
+    expect(whyNothing(read)).toMatch(/changed since the file was downloaded/);
+  });
+
+  it('refuses a list row while that list has unpublished changes', () => {
+    // Writing into the live list would quietly replace whatever is waiting.
+    const read = readSheet(toCsv([row('coaching.services.1.title', 'Focus Groups', 'Groups')]), known(true));
+    expect(read.changes).toEqual([]);
+    expect(read.refused[0].why).toMatch(/unpublished/);
+  });
+
+  it('reads its columns by name, so one moved in a spreadsheet still reads', () => {
+    const moved = '"new words","id","current words"\r\n"Group Discussions","coaching.services.1.title","Focus Groups"\r\n';
+    const read = readSheet(moved, known());
+    expect(read.changes.map((c) => [c.key, c.to])).toEqual([['coaching.services.1.title', 'Group Discussions']]);
   });
 });
