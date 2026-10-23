@@ -278,13 +278,18 @@ const BookingPage = () => {
                   <p className="font-medium">{dateIn(daySlots[0].startsAt, tz)}</p>
                   <p className="text-xs text-muted-foreground">Times shown in {tz}</p>
                 </div>
-                <ul className="grid gap-2">
+                {/* A compact grid, about as tall as the calendar beside it. One full-width button
+                    per time ran a day of half-hours off the bottom of the page, so the later times
+                    were below the fold and the form under them further still. Scrolls inside
+                    itself on a day with more times than that. */}
+                <ul className="grid max-h-80 grid-cols-4 gap-1.5 overflow-y-auto" data-testid="booking-times">
                   {daySlots.map((slot) => (
                     <li key={slot.startsAt}>
                       <Button
                         type="button"
+                        size="sm"
                         variant={selectedSlot?.startsAt === slot.startsAt ? 'default' : 'outline'}
-                        className="w-full justify-center"
+                        className="h-8 w-full justify-center px-0 tabular-nums"
                         onClick={() => setSelectedSlot(slot)}
                       >
                         {timeIn(slot.startsAt, tz)}
