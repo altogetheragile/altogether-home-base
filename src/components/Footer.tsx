@@ -8,6 +8,8 @@ import LogoFull from '@/components/LogoFull';
 import { AppLink } from '@/components/AppLink';
 import { isOurSite, siteNameOr } from '@/config/ourSite';
 import { useOwnLegal } from '@/components/legal/legalText';
+import { moduleIsOn } from '@altogether/ui/modules';
+import { useNavigationWords } from '@/hooks/useNavigationWords';
 
 const Footer = () => {
   const { settings } = useSiteSettings();
@@ -30,18 +32,22 @@ const Footer = () => {
     { icon: Github, url: settings?.social_github, label: 'GitHub' },
   ].filter(link => link.url);
 
-  // Dynamic navigation links matching Navigation component logic
+  // The Site footer's list, in its order, under the names this site gave them. It had its own
+  // names and its own idea of what is on by default, so /auth's footer listed Coaching and Events
+  // on a site that calls the one Services and has switched the other off.
+  const t = useNavigationWords();
+  const on = (name: string) => moduleIsOn(name, settings as Record<string, unknown> | undefined);
   const navLinks = [
-    { label: 'Home', url: '/', show: true },
-    { label: 'Events', url: '/events', show: settings?.show_events ?? true },
-    { label: 'Knowledge Base', url: '/knowledge', show: settings?.show_knowledge ?? false },
-    { label: 'Coaching', url: '/coaching', show: settings?.show_coaching ?? true },
-    { label: 'About', url: '/about', show: settings?.show_about ?? true },
-    { label: 'Blog', url: '/blog', show: settings?.show_blog ?? true },
-    { label: 'Contact', url: '/contact', show: settings?.show_contact ?? true },
-    { label: 'Testimonials', url: '/testimonials', show: settings?.show_testimonials ?? true },
-    { label: 'AI Tools', url: '/ai-tools', show: settings?.show_ai_tools ?? false },
-    { label: 'Dashboard', url: '/dashboard', show: (settings?.show_dashboard ?? true) && !!user },
+    { label: t('nav.home'), url: '/', show: true },
+    { label: t('nav.events'), url: '/events', show: on('events') },
+    { label: t('nav.coaching'), url: '/coaching', show: on('coaching') },
+    { label: t('nav.about'), url: '/about', show: on('about') },
+    { label: t('nav.blog'), url: '/blog', show: on('blog') },
+    { label: t('nav.exams'), url: '/exams', show: on('exams') },
+    { label: t('nav.contact'), url: '/contact', show: on('contact') },
+    { label: t('nav.testimonials'), url: '/testimonials', show: on('testimonials') },
+    // This app's own, for somebody signed in. The Site leaves them out; it has no dashboard.
+    { label: t('nav.dashboard'), url: '/dashboard', show: on('dashboard') && !!user },
     { label: 'Admin Panel', url: '/admin', show: !!user && userRole === 'admin' },
   ];
 
@@ -61,7 +67,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Quick Links</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">{t('footer.quicklinks')}</h3>
             <ul className="space-y-2">
               {quickLinks.map((link, index) => (
                 <li key={index}>
@@ -82,7 +88,7 @@ const Footer = () => {
           </div>
           
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-4">Contact</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-4">{t('footer.contact')}</h3>
             <div className="space-y-2">
               {settings?.contact_email && (
                 <a href={`mailto:${settings.contact_email}`} className="flex items-center gap-2 text-muted-foreground hover:text-primary transition-colors">

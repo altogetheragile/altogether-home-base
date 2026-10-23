@@ -55,7 +55,10 @@ describe('the way out', () => {
     // honestly show: that the entry is there, and that its default is off.
     const src = await import('node:fs').then((fs) => fs.readFileSync('src/components/Navigation.tsx', 'utf8'));
     expect(src, 'the zoo is in no menu at all').toContain("to: '/zoo-game'");
-    expect(src, 'it went live without being asked for').toMatch(/show_zoo_game:\s*false/);
+    // The default is the shared list's now (packages/ui/src/modules.ts), which the menu reads.
+    const modules = await import('node:fs').then((fs) => fs.readFileSync('packages/ui/src/modules.ts', 'utf8'));
+    expect(src, 'the menu has its own defaults again').toContain('moduleIsOn(');
+    expect(modules, 'it went live without being asked for').toMatch(/zoo_game:\s*false/);
   });
 
   it('still leaves the board its glyph', () => {
