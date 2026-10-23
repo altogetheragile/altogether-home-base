@@ -24,19 +24,25 @@ export const useUpdateUserRole = () => {
 
       if (profileError) throw profileError;
 
-      // Update user_roles table - first delete existing role, then insert new one
+      // The new role goes in before the old ones come out. The other way round, an admin editing
+      // their own row deleted their own admin role first, and the insert after it was then refused,
+      // because they were no longer an admin: they kept the badge and lost the rights.
+      const { error: insertError } = await supabase
+        .from('user_roles')
+        .upsert(
+          { user_id: userId, role: newRole as Database['public']['Enums']['app_role'] },
+          { onConflict: 'user_id,role', ignoreDuplicates: true },
+        );
+
+      if (insertError) throw insertError;
+
       const { error: deleteError } = await supabase
         .from('user_roles')
         .delete()
-        .eq('user_id', userId);
+        .eq('user_id', userId)
+        .neq('role', newRole as Database['public']['Enums']['app_role']);
 
       if (deleteError) throw deleteError;
-
-      const { error: insertError } = await supabase
-        .from('user_roles')
-        .insert({ user_id: userId, role: newRole as Database['public']['Enums']['app_role'] });
-
-      if (insertError) throw insertError;
 
       // Log the action
       await auditLogger.update('user_roles', userId, {
