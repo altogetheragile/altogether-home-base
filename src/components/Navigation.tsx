@@ -7,45 +7,33 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { AppLink } from '@/components/AppLink';
+import { moduleIsOn } from '@altogether/ui/modules';
+import { useNavigationWords } from '@/hooks/useNavigationWords';
 
 /* Top-level nav links (Resources items excluded — they go in the dropdown) */
 const TOP_LINKS = [
-  { label: 'Events', to: '/events', flag: 'show_events' as const },
-  { label: 'Coaching', to: '/coaching', flag: 'show_coaching' as const },
-  { label: 'About', to: '/about', flag: 'show_about' as const },
-  { label: 'Contact', to: '/contact', flag: 'show_contact' as const },
-  { label: 'Testimonials', to: '/testimonials', flag: 'show_testimonials' as const },
+  { key: 'nav.events', label: 'Events', to: '/events', flag: 'show_events' as const },
+  { key: 'nav.coaching', label: 'Coaching', to: '/coaching', flag: 'show_coaching' as const },
+  { key: 'nav.about', label: 'About', to: '/about', flag: 'show_about' as const },
+  { key: 'nav.contact', label: 'Contact', to: '/contact', flag: 'show_contact' as const },
+  { key: 'nav.testimonials', label: 'Testimonials', to: '/testimonials', flag: 'show_testimonials' as const },
 ];
 
 /* Items inside the Resources dropdown */
 const RESOURCE_LINKS = [
-  { label: 'Knowledge Base', to: '/knowledge-base', flag: 'show_knowledge' as const },
-  { label: 'Blog', to: '/blog', flag: 'show_blog' as const },
-  { label: 'Practice Exams', to: '/exams', flag: 'show_exams' as const },
-  { label: 'AI Tools', to: '/ai-tools', flag: 'show_ai_tools' as const },
-  { label: 'Flow Game', to: '/flow-game', flag: 'show_flow_game' as const },
+  { key: 'nav.knowledge', label: 'Knowledge Base', to: '/knowledge-base', flag: 'show_knowledge' as const },
+  { key: 'nav.blog', label: 'Blog', to: '/blog', flag: 'show_blog' as const },
+  { key: 'nav.exams', label: 'Practice Exams', to: '/exams', flag: 'show_exams' as const },
+  { key: 'nav.ai_tools', label: 'AI Tools', to: '/ai-tools', flag: 'show_ai_tools' as const },
+  { key: 'nav.flow_game', label: 'Flow Game', to: '/flow-game', flag: 'show_flow_game' as const },
   { label: 'Zoo Game', to: '/zoo-game', flag: 'show_zoo_game' as const },
   { label: 'Scrum Game', to: '/scrum-game', flag: 'show_scrum_game' as const },
 ];
 
-const FLAG_DEFAULTS: Record<string, boolean> = {
-  show_events: true,
-  show_knowledge: false,
-  show_coaching: true,
-  show_about: true,
-  show_blog: true,
-  show_contact: true,
-  show_testimonials: true,
-  show_ai_tools: false,
-  show_resources: true,
-  show_exams: true,
-  show_flow_game: true,
-  // Off until asked for, and now switchable: both have a column on `site_settings` and a switch on
-  // the admin settings page, so publishing either is a toggle rather than a deploy.
-  show_zoo_game: false,
-  show_scrum_game: false,
-  show_bookings: false,
-};
+// The shared list of what a site has on by default (packages/ui/src/modules.ts), not this file's
+// own. It had one, and it disagreed: Practice Exams and the Flow Game were on here and off
+// everywhere else, so a new site with nothing saved showed them in this menu and nowhere else.
+// Resources is not a module; it is shown unless switched off, as on the Site.
 
 const ChevronDown = () => (
   <svg width="10" height="10" viewBox="0 0 256 256" fill="currentColor" aria-hidden="true">
@@ -140,7 +128,11 @@ const Navigation = () => {
 
   const showAdminLinks = !roleLoading && userRole === 'admin';
 
-  const isFlag = (flag: string) => settings?.[flag as keyof typeof settings] as boolean | null ?? FLAG_DEFAULTS[flag] ?? true;
+  const isFlag = (flag: string) => flag === 'show_resources'
+    ? (settings as Record<string, unknown> | undefined)?.show_resources !== false
+    : moduleIsOn(flag.replace(/^show_/, ''), settings as Record<string, unknown> | undefined);
+  const t = useNavigationWords();
+  const said = (link: { key?: string; label: string }) => (link.key && t(link.key)) || link.label;
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
 
   const visibleTopLinks = TOP_LINKS.filter((l) => isFlag(l.flag));
@@ -245,7 +237,7 @@ const Navigation = () => {
           <div className="aa-nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 6 }} role="menubar">
             {visibleTopLinks.map((link) => (
               <AppLink key={link.to} to={link.to} style={linkStyle(isActive(link.to))} role="menuitem" aria-current={isActive(link.to) ? 'page' : undefined}>
-                {link.label}
+                {said(link)}
               </AppLink>
             ))}
 
@@ -278,7 +270,7 @@ const Navigation = () => {
                     backgroundColor: resourcesActive ? p.skyTeal : 'transparent',
                   }}
                 >
-                  Resources <ChevronDown />
+                  {t('nav.resources')} <ChevronDown />
                 </button>
 
                 {isResourcesOpen && (
@@ -302,7 +294,7 @@ const Navigation = () => {
                         onBlur={(e) => { if (!isActive(item.to)) e.currentTarget.style.background = 'transparent'; }}
                         onClick={() => setIsResourcesOpen(false)}
                       >
-                        {item.label}
+                        {said(item)}
                       </AppLink>
                     ))}
                   </div>
@@ -341,7 +333,7 @@ const Navigation = () => {
                       gap: 6,
                     }}
                   >
-                    Dashboard <ChevronDown />
+                    {t('nav.dashboard')} <ChevronDown />
                   </button>
 
                   {isDashOpen && (
@@ -411,7 +403,7 @@ const Navigation = () => {
                         onFocus={(e) => (e.currentTarget.style.background = p.skyTeal)}
                         onBlur={(e) => (e.currentTarget.style.background = 'transparent')}
                       >
-                        Sign out
+                        {t('nav.signOut')}
                       </button>
                     </div>
                   )}
@@ -429,7 +421,7 @@ const Navigation = () => {
                     textDecoration: 'none',
                   }}
                 >
-                  Sign In
+                  {t('nav.signIn')}
                 </Link>
               )}
             </div>
@@ -485,7 +477,7 @@ const Navigation = () => {
                   background: isActive(link.to) ? p.skyTeal : 'transparent',
                 }}
               >
-                {link.label}
+                {said(link)}
               </AppLink>
             ))}
 
@@ -493,7 +485,7 @@ const Navigation = () => {
             {visibleResourceLinks.length > 0 && (
               <>
                 <div style={{ padding: '12px 24px 4px', color: p.muted, fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em' }} role="separator">
-                  Resources
+                  {t('nav.resources')}
                 </div>
                 {visibleResourceLinks.map((link) => (
                   <AppLink
@@ -512,7 +504,7 @@ const Navigation = () => {
                       background: isActive(link.to) ? p.skyTeal : 'transparent',
                     }}
                   >
-                    {link.label}
+                    {said(link)}
                   </AppLink>
                 ))}
               </>
@@ -571,7 +563,7 @@ const Navigation = () => {
                       cursor: 'pointer',
                     }}
                   >
-                    Sign Out
+                    {t('nav.signOut')}
                   </button>
                 </>
               ) : (
@@ -581,7 +573,7 @@ const Navigation = () => {
                   onClick={() => setIsMenuOpen(false)}
                   style={{ display: 'block', padding: '12px 24px', color: p.midTeal, fontSize: 15, fontWeight: 700, textDecoration: 'none' }}
                 >
-                  Sign In
+                  {t('nav.signIn')}
                 </Link>
               )}
             </div>
