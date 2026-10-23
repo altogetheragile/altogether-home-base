@@ -71,6 +71,13 @@ jobs:
             exit 1
           }
 
+          # A trigger on auth.users is outside the public schema, so a dump of public drops it and
+          # every check above still passes. That is how a second site came to have sign-ups with no
+          # profile and no role: Admin -> Users was empty and nobody could be made an admin.
+          SIGNUP_TRIGGER=$(q "select count(*) from pg_trigger where tgrelid='auth.users'::regclass and tgfoid='public.handle_new_user'::regproc and not tgisinternal")
+          echo "sign-up-triggers=$SIGNUP_TRIGGER"
+          [ "$SIGNUP_TRIGGER" -eq 1 ] || { echo "::error::signing up does not make a profile: no trigger on auth.users runs handle_new_user"; exit 1; }
+
       - name: Stop
         if: always()
         run: supabase stop --no-backup || true
