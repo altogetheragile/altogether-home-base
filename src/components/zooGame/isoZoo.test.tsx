@@ -960,12 +960,13 @@ describe('the kind of tree you chose', () => {
     // picture, wrong on a tree that is all bark. A bare oak came out aubergine.
     const { container } = render(<IsoZoo state={planted('bare')} height={460} />);
     const el = container.querySelector('[data-item="p"]')!;
-    expect(el.closest('g[filter]'), 'the bare tree is wearing a foliage tint').toBeNull();
+    // Every drawing is inked through a filter of its own now (art/ink.tsx); the question is the TINT.
+    expect(el.closest('g[filter]:not([filter*="zoo-ink"])'), 'the bare tree is wearing a foliage tint').toBeNull();
   });
 
   it('still paints the ones that have foliage', () => {
     const { container } = render(<IsoZoo state={planted('pine')} height={460} />);
-    expect(container.querySelector('[data-item="p"]')!.closest('g[filter]'),
+    expect(container.querySelector('[data-item="p"]')!.closest('g[filter]:not([filter*="zoo-ink"])'),
       'a conifer lost its colour with the bare tree').toBeTruthy();
   });
 });
