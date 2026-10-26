@@ -332,26 +332,32 @@
    else with it.
    ========================================================================= */
 .zoo-theme {
-  --background: 180 17% 98%;      /* #f8fafa - the ground the cards sit on */
-  --foreground: var(--aa-body-hsl);      /* body text, not pure black */
-  --card: 0 0% 100%;
-  --card-foreground: var(--aa-body-hsl);
-  --popover: 0 0% 100%;
-  --popover-foreground: var(--aa-body-hsl);
+  /* Paper and ink (26 Oct 2026): the planning-map mock-up Al chose for the whole game - cream
+     grid paper, a dark brown ink for lines and words, warm tans for quiet panels. Orange stays the
+     one thing you are being asked to do. The old teal frame is in git history. */
+  --zoo-ink: 25 37% 12%;          /* #2b1d14 - the line everything is drawn in */
+  --zoo-paper: 44 64% 92%;        /* #f7f0dd */
+  --zoo-grid: 41 42% 83%;         /* #e6dcc4 */
+  --background: var(--zoo-paper);
+  --foreground: var(--zoo-ink);
+  --card: 40 100% 97%;            /* #fffaf0 - a sheet laid on the paper */
+  --card-foreground: var(--zoo-ink);
+  --popover: 40 100% 97%;
+  --popover-foreground: var(--zoo-ink);
   --primary: var(--aa-orange-hsl);       /* the next thing to do, and only that */
   --primary-foreground: var(--aa-white-hsl);
-  --secondary: var(--aa-sky-teal-hsl);   /* a tinted panel */
-  --secondary-foreground: var(--aa-deep-teal-hsl);
-  --muted: var(--aa-sky-teal-hsl);
-  --muted-foreground: var(--aa-muted-hsl);
-  --accent: var(--aa-pale-teal-hsl);
-  --accent-foreground: var(--aa-deep-teal-hsl);
-  --border: 220 13% 91%;          /* #e5e7eb */
-  --input: 220 13% 91%;
-  --ring: var(--aa-mid-teal-hsl);
+  --secondary: 42 52% 88%;        /* a tinted panel */
+  --secondary-foreground: var(--zoo-ink);
+  --muted: 42 52% 88%;            /* #efe4c9 */
+  --muted-foreground: 28 20% 36%; /* #6b5a4a */
+  --accent: 44 70% 84%;
+  --accent-foreground: var(--zoo-ink);
+  --border: 38 28% 72%;           /* #cdbf9f - dividers and inputs; panels take the ink */
+  --input: 38 28% 66%;
+  --ring: var(--zoo-ink);
   /* The band itself, and the chips on it. */
-  --zoo-band: var(--aa-deep-teal-hsl);
-  --zoo-chip: var(--aa-mid-teal-hsl);
+  --zoo-band: var(--zoo-ink);
+  --zoo-chip: 26 28% 28%;
 
   /* ...and the text, said here rather than left to be inherited.
      Every token above is a BACKGROUND or a border. The colour of the words was
@@ -365,6 +371,31 @@
      included, rather than half of it. */
   color: hsl(var(--foreground));
 }
+
+/* The paper itself: a faint grid under everything, as on the planning map. On the game's root
+   frames only - a popover is a sheet of card, not another page of paper. */
+.zoo-paper {
+  background-color: hsl(var(--zoo-paper));
+  background-image:
+    linear-gradient(hsl(var(--zoo-grid)) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--zoo-grid)) 1px, transparent 1px);
+  background-size: 22px 22px;
+}
+/* Headings are lettered, not typed: one slab face for every question, title and name. */
+.zoo-theme h1, .zoo-theme h2, .zoo-theme h3, .zoo-theme .zoo-slab {
+  font-family: 'Arvo', Rockwell, 'American Typewriter', Georgia, serif;
+  letter-spacing: 0;
+}
+
+/* The work itself is drawn in ink, as on the planning map: an inked card with a hard shadow.
+   Only inside the zoo - the same card shell is the Product Backlog tool's, which keeps its own look.
+   Doing keeps its orange line and Done its green; locked stays a dashed outline, not yet a thing. */
+.zoo-theme .pbi-card:not([data-pbi-state="locked"]) {
+  border-width: 2px;
+  box-shadow: 3px 3px 0 hsl(var(--zoo-ink));
+}
+.zoo-theme .pbi-card[data-pbi-state="backlog"],
+.zoo-theme .pbi-card[data-pbi-state="forecast"] { border-color: hsl(var(--zoo-ink)); }
 
 /* A new thing said catches the eye for a moment and then stops asking. Notes used to arrive in
    silence - the strip simply changed, and a learner watching the board never knew the team had

@@ -426,7 +426,7 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
   return (
     // Fixed viewport height so the game frame never scrolls - the shell scrolls internally.
     // The marketing footer is omitted here to reclaim the full screen for the game.
-    <div className="flex h-dvh flex-col overflow-hidden">
+    <div className="zoo-theme zoo-paper flex h-dvh flex-col overflow-hidden">
       {/* Only on `?record=1`, and it says so: every press is being kept, and there is one button to
           hand the result over at the end. */}
       <RecordingChip />

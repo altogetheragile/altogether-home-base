@@ -138,8 +138,9 @@ export const RADIUS = {
  *  places that already draw their own box.
  */
 export const SURFACE = {
-  /** A panel that holds its own against the page. */
-  card: 'rounded-lg border border-border bg-card',
+  /** A panel that holds its own against the page: a sheet of card, inked round, with a hard
+   *  shadow - the planning map's boxes. */
+  card: 'rounded-md border-2 border-[hsl(var(--zoo-ink))] bg-card shadow-[3px_3px_0_hsl(var(--zoo-ink))]',
   /** A panel that recedes into it. */
   quiet: 'rounded-lg border border-border bg-muted/30',
   /** A box nested inside another box. */
