@@ -133,10 +133,10 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
   return (
     <button type="button" onClick={onOpen} data-part="board-card"
       title={`${item.name} - open it`}
-      className={cn(FOCUS, 'w-full rounded-lg border-2 bg-card px-3 py-2 text-left transition-colors hover:border-primary/70',
+      className={cn(FOCUS, 'w-full rounded-md border-2 bg-card px-3 py-2 text-left shadow-[3px_3px_0_hsl(var(--zoo-ink))] transition-colors hover:border-primary/70',
         tone === 'doing' ? 'border-primary/70'
           : tone === 'done' ? 'border-emerald-500/60'
-            : tone === 'live' ? 'border-emerald-600/70 bg-emerald-500/[0.06]' : 'border-border')}>
+            : tone === 'live' ? 'border-emerald-600/70 bg-emerald-500/[0.06]' : 'border-[hsl(var(--zoo-ink))]')}>
       <div className="flex items-start gap-2">
         <CategoryIcon item={item} className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="min-w-0 flex-1 truncate text-sm font-semibold">{item.name}</span>

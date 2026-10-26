@@ -351,7 +351,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
 
   return (
     <GameNotesProvider notes={notes} onReading={onReading}>
-    <div className="zoo-theme flex h-full flex-col bg-background">
+    <div className="zoo-theme zoo-paper flex h-full flex-col">
       {/* Where you are, on one dark band; the artifacts themselves are the white below it. */}
       <header className="shrink-0 border-b border-border px-2 pt-1.5 sm:px-3">
         {/* The strip, in the order the learner needs it.

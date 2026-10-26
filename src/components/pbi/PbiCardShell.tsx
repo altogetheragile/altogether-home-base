@@ -70,7 +70,9 @@ export function PbiCardShell({
       role={onClick ? 'button' : undefined}
       aria-label={onClick ? label : undefined}
       onClick={onClick}
-      className={cn(RADIUS.panel, 'border text-sm transition-colors', s.shell,
+      // Hooks for a theme to draw on: the zoo inks its cards (index.css, `.zoo-theme .pbi-card`).
+      data-pbi-state={state}
+      className={cn('pbi-card', RADIUS.panel, 'border text-sm transition-colors', s.shell,
         card ? 'p-2' : line ? 'px-2 py-1.5' : 'px-2 py-1.5', onClick && 'cursor-pointer', className)}>
       {/* A board column is a third of half a screen. Everything on one line meant the name wrapped
           to two and pushed the chips onto a third, so four cards no longer fitted a column that
