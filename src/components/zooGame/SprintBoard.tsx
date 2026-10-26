@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer, ChatKind } from './types';
-import { enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress, stillBuilding } from './engine';
+import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress, stillBuilding } from './engine';
 import { NewHere } from './NewHere';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -353,7 +353,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
     if (o === 'start') {
       const it = todo.find((x) => x.id === id);
       if (!it) return;
-      if (!enclosureReady(state, it)) { refuse(id, `${enclosureOf(state, it)?.name ?? 'Its enclosure'} has to be built first - the animal goes in once its habitat is ready.`); return; }
+      if (!enclosureReady(state, it)) { refuse(id, waitingForHabitat(state, it) ?? ''); return; }
       if (atWipLimit) { refuse(id, `Work in progress is limited to ${activeWipLimit(state)}. Finish something in Doing before starting this.`); return; }
       setRefusedMove(null);
       onStartItem(id);
@@ -641,7 +641,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                         data-part="card-slot"
                         className="relative cursor-grab touch-none active:cursor-grabbing">
                       {cameBack(it.id)}
-                      <BoardCard item={it} state={state} note={needsEnc ? `Needs ${encName} built first` : blocked ? why : undefined}
+                      <BoardCard item={it} state={state} note={needsEnc ? `Waits for ${encName} to be Done` : blocked ? why : undefined}
                         onOpen={() => setCardId(it.id)} />
                       {/* What to pick up next, in the Developers' own order.
                           The Sprint Backlog is the Developers' plan, and the order of what is not

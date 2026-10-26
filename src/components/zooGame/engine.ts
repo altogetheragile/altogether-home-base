@@ -1825,6 +1825,20 @@ export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean 
   return !!home && (home.status === 'done' || home.status === 'open');
 }
 
+/** Why an animal cannot be started yet, in words that match what the player can see - or null if
+ *  it can. An animal goes in once its habitat is DONE, not once it looks built, and "has to be built
+ *  first" said beside a habitat standing finished on the park read as the game being wrong. Reported
+ *  from playing it (26 Oct 2026): "The lion enclosure is built. I cannot pull the lion PBI as the game
+ *  thinks the enclosure is not built." So it says Done, and what the habitat is still waiting on. */
+export function waitingForHabitat(state: ZooGameState, item: BacklogItem): string | null {
+  if (enclosureReady(state, item)) return null;
+  const home = enclosureOf(state, item);
+  if (!home) return 'Its habitat is not on the Product Backlog yet - an animal goes in once its habitat is Done.';
+  if (home.status !== 'committed') return `${home.name} is not in this Sprint - an animal goes in once its habitat is Done.`;
+  const left = whatIsLeft(state, home).replace(/^Next: /, '');
+  return `${home.name} is not Done yet (${left}) - an animal goes in once its habitat is Done.`;
+}
+
 /** Start work on a committed item: it moves from To Do into Doing (the studio opens).
  *  Blocked once the WIP limit is reached - finish something before starting more - and,
  *  for an animal, until its enclosure is built (you build the habitat first). */

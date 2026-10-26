@@ -869,8 +869,12 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         onPointerMove={(e) => {
           const w = worldAt(e);
           if (!w) return;
-          if (placing) { setGhost(verdict(placing.id, placing, w)); return; }
-          if (tool === 'path' && runFrom) setRunTo(w);
+          // The pen wins on the move as it does on the press. A thing still waiting to be put down
+          // used to take every move, so with the pen out its ghost followed the pointer about the
+          // park - "the path through Big Cats runs here" - and the run being drawn never showed
+          // where it was going (26 Oct 2026).
+          if (tool === 'path') { setGhost(null); if (runFrom) setRunTo(w); return; }
+          if (placing) setGhost(verdict(placing.id, placing, w));
         }}
         onPointerLeave={() => { setGhost(null); setRunTo(null); }}
         onPointerDown={(e) => {
