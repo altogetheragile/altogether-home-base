@@ -1,3 +1,4 @@
+import { InkPoly, InkDefs, InkRows, InkHatch, INK } from './art/ink';
 import { useEffect, useId, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { BacklogItem, ZooGameState, ZooConnector, ConnectorEnd } from './types';
 import { shade, barrierOf, speciesBody, speciesColors, landscapePalette, floraDefaultColors, isLandscapeType, enclosureFlora, enclosureWater, enclosureShapePoints, pieceByKey, isTank, tankWater } from './design';
@@ -906,9 +907,12 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       <svg key={key} x={at.x - w / 2} y={top} width={w} height={h} viewBox={p.viewBox} overflow="visible"
         {...tag} dangerouslySetInnerHTML={{ __html: body }} />
     );
-    push(depth(wx, wy), paint
-      ? <g key={key} filter={tintRef(grassClip, paint)}>{drawing}</g>
-      : drawing);
+    // Inked like everything drawn: an outline round the artwork, outside any tint.
+    push(depth(wx, wy), (
+      <g key={key} filter="url(#zoo-ink-art)">
+        {paint ? <g filter={tintRef(grassClip, paint)}>{drawing}</g> : drawing}
+      </g>
+    ));
     // Where the top of the drawing came out, for anything that has to sit clear of it.
     return { x: at.x, top };
   };
@@ -930,33 +934,34 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
   const copies: { id: string; index: number; x: number; y: number; z: number;
     over: { x: number; y: number } | null }[] = [];
   const EDGE = 13;
-  const grass = '#8cc063';
-  const tarmac = '#9a9ea3';
+  // Style C's palette (26 Oct 2026): muted, so the ink carries the drawing rather than the colour.
+  const grass = '#bcd297';
+  const tarmac = '#aaa69c';
   // The same front the plan paints and the routing walks - one definition, in parkLayout.
   const promY = PROMENADE_Y;
-  const meadow = '#bcc98e';
+  const meadow = '#dcd8ad';
   const grassPath = outlinePath(parkOutline().map((pt) => P(pt.x, pt.y)));
   const cFL = P(0, worldH), cFR = P(CANVAS_W, worldH), cR = P(CANVAS_W, 0);
   nodes.push(
-    <polygon key="edge-l" points={`${P(0, worldH).x},${P(0, worldH).y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cFL.x},${cFL.y + EDGE}`} fill={shade(tarmac, -40)} />,
-    <polygon key="edge-r" points={`${cR.x},${cR.y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cR.x},${cR.y + EDGE}`} fill={shade(meadow, -52)} />,
+    <InkPoly key="edge-l" points={`${P(0, worldH).x},${P(0, worldH).y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cFL.x},${cFL.y + EDGE}`} fill={shade(tarmac, -40)} />,
+    <InkPoly key="edge-r" points={`${cR.x},${cR.y} ${cFR.x},${cFR.y} ${cFR.x},${cFR.y + EDGE} ${cR.x},${cR.y + EDGE}`} fill={shade(meadow, -52)} />,
     // The countryside the park sits in, and then the park's own ground on top of it - the same
     // wandering boundary the plan draws, put through the same projection as everything else, so the
     // two views are one park seen twice rather than two parks that nearly agree.
-    <polygon key="field" data-land="field" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={meadow} />,
+    <InkPoly key="field" data-land="field" points={ground(0, 0, CANVAS_W, PLAY_H)} fill={meadow} />,
     <path key="grass" data-land="grass" d={grassPath}
-      fill={grass} stroke={shade(grass, -34)} strokeWidth={2} />,
+      fill={grass} stroke={INK} strokeWidth={1.3} vectorEffect="non-scaling-stroke" />,
     // Landscape is cut to this, so a river stops at its bank instead of hanging over the meadow.
     <clipPath key="grass-clip" id={grassClip}><path d={grassPath} /></clipPath>,
-    <polygon key="prom" points={ground(0, promY, CANVAS_W, PLAY_H)} fill="#e7d6a8" />,
-    <polygon key="apron" data-land="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
+    <InkPoly key="prom" points={ground(0, promY, CANVAS_W, PLAY_H)} fill="#eddfba" />,
+    <InkPoly key="apron" data-land="apron" points={ground(0, PLAY_H, CANVAS_W, worldH)} fill={tarmac} />,
   );
 
   // The river, drawn on the land rather than standing on it - terrain, the same course the plan
   // draws, put through this view's own projection.
   nodes.push(
     <path key="river" data-part="river" d={outlinePath(riverOutline().map((pt) => P(pt.x, pt.y)))}
-      fill="#6db6d8" stroke="#4f9cbf" strokeWidth={1.5} clipPath={`url(#${grassClip})`} />,
+      fill="#9cc5cb" stroke={INK} strokeWidth={1.1} vectorEffect="non-scaling-stroke" clipPath={`url(#${grassClip})`} />,
   );
 
   // The ground each area of the zoo owns, tinted on the grass. The same plots the plan marks out:
@@ -992,7 +997,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       fill="none" stroke="#f2f4f5" strokeWidth={Math.max(0.6, u * 1.4)} strokeLinejoin="round" />);
   }
   // The footway from the lay-by up to the gate, which is where the guests actually walk in.
-  nodes.push(<polygon key="walkway" points={ground(lot.walkway.x, lot.walkway.y, lot.walkway.x + lot.walkway.w, lot.walkway.y + lot.walkway.h)} fill="#c9cdd1" />);
+  nodes.push(<InkPoly key="walkway" points={ground(lot.walkway.x, lot.walkway.y, lot.walkway.x + lot.walkway.w, lot.walkway.y + lot.walkway.h)} fill="#c9cdd1" />);
 
   // Where a guest may put their feet. Collected as the park is drawn, because the park is what
   // decides it: the paths are the ones actually laid, and the water is the water actually there.
@@ -1107,9 +1112,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       const f = boxFaces(px - 3, py - 3, px + 3, py + 3, Math.max(2.5, u * 9), u);
       push(depth(px, py), (
         <g key={`post-${id}-${i}`}>
-          <polygon points={shift(f.left)} fill="#b45309" />
-          <polygon points={shift(f.right)} fill="#d97706" />
-          <polygon points={shift(f.top)} fill="#fbbf24" />
+          <InkPoly ink={0.6} points={shift(f.left)} fill="#b45309" />
+          <InkPoly ink={0.6} points={shift(f.right)} fill="#d97706" />
+          <InkPoly ink={0.6} points={shift(f.top)} fill="#fbbf24" />
         </g>
       ));
     }
@@ -1145,7 +1150,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           return <polygon key={i} points={pts([cap[i], cap[j], foot[j], foot[i]])}
             fill={shade(hex, -14 - Math.round(20 * (0.5 + 0.5 * face)))} />;
         })}
-        <polygon points={pts(cap)} fill={shade(hex, 16)} />
+        <InkPoly points={pts(cap)} fill={shade(hex, 16)} />
       </g>
     );
   };
@@ -1188,13 +1193,13 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       .map(([px, py]: [number, number]) => ({ x: x0 + px, y: y0 + py }));
     // Tagged with what it is, so a touch on the park can say which part was touched. The bench has
     // always told you to touch a part of it; in this view there was nothing to touch.
-    nodes.push(<polygon key={`floor-${e.id}`} fill={floor} data-item={e.id} data-part="ground"
+    nodes.push(<InkPoly key={`floor-${e.id}`} fill={floor} data-item={e.id} data-part="ground"
       points={outline.map((q) => { const p = P(q.x, q.y); return `${p.x.toFixed(1)},${p.y.toFixed(1)}`; }).join(' ')} />);
 
     // Water lies on the floor, in its own corner of the habitat - held as fractions of the box, so
     // it stays where it was put whatever size the habitat is.
     for (const [i, wf] of enclosureWater(d).entries()) {
-      nodes.push(<polygon key={`water-${e.id}-${i}`} data-item={e.id} data-part="water"
+      nodes.push(<InkPoly key={`water-${e.id}-${i}`} data-item={e.id} data-part="water"
         points={ground(x0 + wf.x * size.w, y0 + wf.y * size.h, x0 + (wf.x + wf.w) * size.w, y0 + (wf.y + wf.h) * size.h)}
         fill={d?.colors.water ?? '#5aa9c8'} />);
     }
@@ -1244,7 +1249,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         <g key={`fence-${e.id}-${i}`} data-item={e.id} data-part="fence" data-holds={held.key}>
           {/* What you see through - a wash, not a wall. A tank's is glass: one pane, no mesh, with
               the water behind it and a bright edge where the light catches the top. */}
-          <polygon points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
+          <InkPoly points={[a, b, topB, topA].map((q) => `${q.x.toFixed(1)},${q.y.toFixed(1)}`).join(' ')}
             fill={tank ? tankWater(d) : barrierPaint}
             fillOpacity={tank ? 0.5 : solid ? 0.92 : held.key === 'glass' ? 0.22 : 0.14} />
           {tank || held.key === 'glass'
@@ -1272,7 +1277,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       const surfaceH = fenceH * 0.82;
       push(depth(c.x, y1), (
         <g key={`tank-${e.id}`} data-item={e.id} data-part="water">
-          <polygon points={outline.map((q) => { const p = P(q.x, q.y); return `${(p.x).toFixed(1)},${(p.y - surfaceH).toFixed(1)}`; }).join(' ')}
+          <InkPoly points={outline.map((q) => { const p = P(q.x, q.y); return `${(p.x).toFixed(1)},${(p.y - surfaceH).toFixed(1)}`; }).join(' ')}
             fill={tankWater(d)} fillOpacity={0.42} />
           {/* The light on it. A flat wash of blue is a lid; a paler edge is a surface. */}
           <polygon points={outline.map((q) => { const p = P(q.x, q.y); return `${(p.x).toFixed(1)},${(p.y - surfaceH).toFixed(1)}`; }).join(' ')}
@@ -1382,7 +1387,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
                 <animateMotion dur={`${beat.secs}s`} repeatCount="indefinite" begin={`${beat.begin}s`}
                   path={beat.path} />
               )}
-              <g transform={`translate(${at.x.toFixed(1)},${at.y.toFixed(1)})`}>
+              {/* Inked on the group that places it, so the drawing keeps its turn as its parent. */}
+              <g transform={`translate(${at.x.toFixed(1)},${at.y.toFixed(1)})`} filter="url(#zoo-ink-art)">
                 <g transform={`scale(${mirror ? -1 : 1} 1)`}>
                   {/* Facing the way it is going. Half the beat out and half of it back, so the turn
                       lands where the animal turns rather than somewhere in the middle of a stride. */}
@@ -1456,9 +1462,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     });
     push(depth((x0 + x1) / 2, (y0 + y1) / 2), (
       <g key={`bridge-${id}`} data-item={id}>
-        <polygon points={shift(f.left)} fill={shade(wood, -34)} />
-        <polygon points={shift(f.right)} fill={shade(wood, -18)} />
-        <polygon points={shift(f.top)} fill={wood} />
+        <InkPoly points={shift(f.left)} fill={shade(wood, -34)} />
+        <InkPoly points={shift(f.right)} fill={shade(wood, -18)} />
+        <InkPoly points={shift(f.top)} fill={wood} />
         {planks}
         {rails}
       </g>
@@ -1491,9 +1497,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       .map((q) => { const [px, py] = q.split(',').map(Number); return `${px},${(py - by).toFixed(1)}`; }).join(' ');
     const face = (f: { left: string; right: string; top: string }, fill: string, by = 0) => (
       <>
-        <polygon points={shift(lift(f.left, by))} fill={shade(fill, -32)} />
-        <polygon points={shift(lift(f.right, by))} fill={shade(fill, -16)} />
-        <polygon points={shift(lift(f.top, by))} fill={fill} />
+        <InkPoly points={shift(lift(f.left, by))} fill={shade(fill, -32)} />
+        <InkPoly points={shift(lift(f.right, by))} fill={shade(fill, -16)} />
+        <InkPoly points={shift(lift(f.top, by))} fill={fill} />
       </>
     );
     const left = boxFaces(x0, my0, x0 + pier, my1, pierH, u);
@@ -1522,7 +1528,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     const size = Math.max(5, u * 9);
     push(depth((x0 + x1) / 2, (y0 + y1) / 2), (
       <g key={`gate-${id}`} data-part="gateway" data-item={id}>
-        <polygon points={court} fill={stone} opacity={0.95} />
+        <InkPoly points={court} fill={stone} opacity={0.95} />
         {face(left, post)}
         {face(right, post)}
         {stripes}
@@ -1609,9 +1615,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       const X0 = x0 - over, X1 = x1 + over, Y0 = y0 - over, Y1 = y1 + over, top = base + thick;
       return (
         <g key={key}>
-          <polygon points={quad([at(X0, Y1, top), at(X1, Y1, top), at(X1, Y1, base), at(X0, Y1, base)])} fill={t.left} />
-          <polygon points={quad([at(X1, Y1, top), at(X1, Y0, top), at(X1, Y0, base), at(X1, Y1, base)])} fill={t.right} />
-          <polygon points={quad([at(X0, Y0, top), at(X1, Y0, top), at(X1, Y1, top), at(X0, Y1, top)])} fill={t.top} />
+          <InkPoly points={quad([at(X0, Y1, top), at(X1, Y1, top), at(X1, Y1, base), at(X0, Y1, base)])} fill={t.left} />
+          <InkPoly points={quad([at(X1, Y1, top), at(X1, Y0, top), at(X1, Y0, base), at(X1, Y1, base)])} fill={t.right} />
+          <InkPoly points={quad([at(X0, Y0, top), at(X1, Y0, top), at(X1, Y1, top), at(X0, Y1, top)])} fill={t.top} />
         </g>
       );
     };
@@ -1623,7 +1629,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         {Array.from({ length: bands }, (_, i) => {
           const a = front(i / bands), z = front((i + 1) / bands);
           const ao = front(i / bands, out), zo = front((i + 1) / bands, out);
-          return <polygon key={i} fill={i % 2 ? '#f7f4ee' : sign}
+          return <InkPoly ink={0.6} key={i} fill={i % 2 ? '#f7f4ee' : sign}
             points={quad([at(a.x, a.y, h), at(z.x, z.y, h), at(zo.x, zo.y, h - drop), at(ao.x, ao.y, h - drop)])} />;
         })}
       </g>
@@ -1649,9 +1655,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
           {/* Edged, so it separates from whatever is behind it. A cafe's board sat against a roof
               of nearly its own colour and vanished, which is a hard thing to see in a screenshot
               and an easy one to see in a game. */}
-          <polygon points={band(p0, p1, lo, hi)} fill={shade(sign, -34)} />
-          <polygon points={band(t0 + 0.012, t1 - 0.012, lo + (hi - lo) * 0.1, hi - (hi - lo) * 0.1)} fill={sign} />
-          <polygon points={band(i0, i1, lo + (hi - lo) * 0.26, hi - (hi - lo) * 0.26)} fill={shade(sign, 28)} />
+          <InkPoly ink={0.6} points={band(p0, p1, lo, hi)} fill={shade(sign, -34)} />
+          <InkPoly ink={0.6} points={band(t0 + 0.012, t1 - 0.012, lo + (hi - lo) * 0.1, hi - (hi - lo) * 0.1)} fill={sign} />
+          <InkPoly ink={0.6} points={band(i0, i1, lo + (hi - lo) * 0.26, hi - (hi - lo) * 0.26)} fill={shade(sign, 28)} />
         </g>
       );
     };
@@ -1672,15 +1678,17 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
 
     const box = boxFacesOf(x0, y0, x1, y1, wallH, u);
     const walled = [
-      <polygon key="wl" points={shift(box.left)} fill={tone.left} />,
-      <polygon key="wr" points={shift(box.right)} fill={tone.right} />,
+      <InkPoly key="wl" points={shift(box.left)} fill={tone.left} />,
+      <InkPoly key="wr" points={shift(box.right)} fill={tone.right} />,
+      <InkHatch key="wh" points={shift(box.right)} />,
     ];
     const pitched = (rise: number) => {
       const r = roofFacesOf(x0, y0, x1, y1, wallH, Math.max(3, u * rise), Math.min(fw, fh) * 0.1, u);
       return [
-        <polygon key="rf" points={shift(r.far)} fill={rt.left} />,
-        <polygon key="rn" points={shift(r.near)} fill={rt.right} />,
-        <polygon key="rg" points={shift(r.gable)} fill={rt.top} />,
+        <InkPoly key="rf" points={shift(r.far)} fill={rt.left} />,
+        <InkPoly key="rn" points={shift(r.near)} fill={rt.right} />,
+        <InkRows key="rr" points={shift(r.near)} />,
+        <InkPoly key="rg" points={shift(r.gable)} fill={rt.top} />,
       ];
     };
 
@@ -1691,10 +1699,10 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // front under parasols. Sign above, awning below - the way a cafe front is actually stacked.
         parts = [
           ...walled,
-          <polygon key="w1" points={face(0.08, 0.32, wallH * 0.24, wallH * 0.56)} fill={GLASS} />,
-          <polygon key="dr" points={face(0.42, 0.60, 0, wallH * 0.56)} fill={shade(door, -6)} />,
-          <polygon key="w2" points={face(0.70, 0.94, wallH * 0.24, wallH * 0.56)} fill={GLASS} />,
-          <polygon key="fk" points={flank(0.24, 0.70, wallH * 0.28, wallH * 0.62)} fill={shade(GLASS, -12)} />,
+          <InkPoly ink={0.6} key="w1" points={face(0.08, 0.32, wallH * 0.24, wallH * 0.56)} fill={GLASS} />,
+          <InkPoly ink={0.6} key="dr" points={face(0.42, 0.60, 0, wallH * 0.56)} fill={shade(door, -6)} />,
+          <InkPoly ink={0.6} key="w2" points={face(0.70, 0.94, wallH * 0.24, wallH * 0.56)} fill={GLASS} />,
+          <InkPoly ink={0.6} key="fk" points={flank(0.24, 0.70, wallH * 0.28, wallH * 0.62)} fill={shade(GLASS, -12)} />,
           ...pitched(17),
           ...(signed ? [board()] : []),
           awning('aw', wallH * 0.68, Math.min(fh * 0.40, 13), Math.max(1.5, u * 5), 6),
@@ -1709,9 +1717,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // overhangs just enough to shade it. It swallowed the whole building at 30%.
         parts = [
           ...walled,
-          <polygon key="ht" points={face(0.14, 0.86, wallH * 0.26, wallH * 0.62)} fill="#3b3a36" />,
-          <polygon key="gd" points={face(0.20, 0.80, wallH * 0.30, wallH * 0.44)} fill={shade(sign, 12)} />,
-          <polygon key="cs" points={face(0.10, 0.90, wallH * 0.22, wallH * 0.28)} fill={shade(walls, -10)} />,
+          <InkPoly ink={0.6} key="ht" points={face(0.14, 0.86, wallH * 0.26, wallH * 0.62)} fill="#3b3a36" />,
+          <InkPoly ink={0.6} key="gd" points={face(0.20, 0.80, wallH * 0.30, wallH * 0.44)} fill={shade(sign, 12)} />,
+          <InkPoly ink={0.6} key="cs" points={face(0.10, 0.90, wallH * 0.22, wallH * 0.28)} fill={shade(walls, -10)} />,
           slab('rf', Math.min(fw, fh) * 0.13, wallH, Math.max(1.5, u * 4), roof),
           ...(signed ? [board(0.12, 0.88)] : []),
         ];
@@ -1721,10 +1729,10 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // across the top. Which is what a shop is, from the pavement.
         parts = [
           ...walled,
-          <polygon key="gl" points={face(0.06, 0.66, wallH * 0.10, wallH * 0.66)} fill={GLASS} />,
-          <polygon key="ml" points={face(0.35, 0.375, wallH * 0.10, wallH * 0.66)} fill={shade(walls, -22)} />,
-          <polygon key="dr" points={face(0.72, 0.92, 0, wallH * 0.62)} fill={shade(door, -6)} />,
-          <polygon key="fk" points={flank(0.24, 0.74, wallH * 0.28, wallH * 0.62)} fill={shade(GLASS, -14)} />,
+          <InkPoly ink={0.6} key="gl" points={face(0.06, 0.66, wallH * 0.10, wallH * 0.66)} fill={GLASS} />,
+          <InkPoly ink={0.6} key="ml" points={face(0.35, 0.375, wallH * 0.10, wallH * 0.66)} fill={shade(walls, -22)} />,
+          <InkPoly ink={0.6} key="dr" points={face(0.72, 0.92, 0, wallH * 0.62)} fill={shade(door, -6)} />,
+          <InkPoly ink={0.6} key="fk" points={flank(0.24, 0.74, wallH * 0.28, wallH * 0.62)} fill={shade(GLASS, -14)} />,
           ...pitched(16),
           ...(signed ? [board(0.06, 0.94)] : []),
         ];
@@ -1733,9 +1741,9 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // A stall has no walls: a counter, four posts, and a striped canopy over it. It was being
         // drawn as a park bench, which is a different thing to sit on entirely.
         parts = [
-          <polygon key="ct" points={shift(boxFacesOf(x0, y1 - Math.max(3, fh * 0.3), x1, y1, wallH * 0.46, u).left)} fill={tone.left} />,
-          <polygon key="cr" points={shift(boxFacesOf(x0, y1 - Math.max(3, fh * 0.3), x1, y1, wallH * 0.46, u).right)} fill={tone.right} />,
-          <polygon key="cw" points={face(0.06, 0.94, wallH * 0.46, wallH * 0.52)} fill={shade(walls, 14)} />,
+          <InkPoly ink={0.6} key="ct" points={shift(boxFacesOf(x0, y1 - Math.max(3, fh * 0.3), x1, y1, wallH * 0.46, u).left)} fill={tone.left} />,
+          <InkPoly ink={0.6} key="cr" points={shift(boxFacesOf(x0, y1 - Math.max(3, fh * 0.3), x1, y1, wallH * 0.46, u).right)} fill={tone.right} />,
+          <InkPoly ink={0.6} key="cw" points={face(0.06, 0.94, wallH * 0.46, wallH * 0.52)} fill={shade(walls, 14)} />,
           ...[[x0, y0], [x1, y0], [x0, y1], [x1, y1]].map(([px, py], i) => (
             <line key={`ps${i}`} x1={at(px, py, 0).x} y1={at(px, py, 0).y} x2={at(px, py, wallH).x} y2={at(px, py, wallH).y}
               stroke={shade(walls, -34)} strokeWidth={Math.max(0.7, u * 1.3)} />
@@ -1750,8 +1758,8 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // the dullest building in the zoo, because that is what it is.
         parts = [
           ...walled,
-          <polygon key="d1" points={face(0.12, 0.40, 0, wallH * 0.64)} fill={shade(door, -6)} />,
-          <polygon key="d2" points={face(0.60, 0.88, 0, wallH * 0.64)} fill={shade(door, -6)} />,
+          <InkPoly ink={0.6} key="d1" points={face(0.12, 0.40, 0, wallH * 0.64)} fill={shade(door, -6)} />,
+          <InkPoly ink={0.6} key="d2" points={face(0.60, 0.88, 0, wallH * 0.64)} fill={shade(door, -6)} />,
           slab('rf', Math.min(fw, fh) * 0.1, wallH, Math.max(1.5, u * 4), roof),
           ...(signed ? [board(0.3, 0.7)] : []),
         ];
@@ -1812,7 +1820,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         // river reaching both banks at any angle without swinging out over the car park.
         const lie = clipTo(swing(c.x, c.y, size.w, size.h, spin), 0, 0, CANVAS_W, PLAY_H);
         if (!lie.length) continue;
-        nodes.push(<polygon key={`land-${it.id}`} data-item={it.id} points={drawPoly(lie)} fill={primary} opacity={0.92}
+        nodes.push(<InkPoly key={`land-${it.id}`} data-item={it.id} points={drawPoly(lie)} fill={primary} opacity={0.92}
           clipPath={`url(#${grassClip})`} />);
       } else {
         // How big the plants grew, the same choice the plan draws. Without it the strip said large,
@@ -1911,8 +1919,12 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     const pr = prop(name);
     if (!pr) return null;
     const w = pr.w * k, h = pr.h * k;
-    return <svg key={key} x={-w / 2} y={-h + w * 0.29} width={w} height={h} viewBox={pr.viewBox}
-      overflow="visible" dangerouslySetInnerHTML={{ __html: pr.body }} />;
+    return (
+      <g key={key} filter="url(#zoo-ink-art)">
+        <svg x={-w / 2} y={-h + w * 0.29} width={w} height={h} viewBox={pr.viewBox}
+          overflow="visible" dangerouslySetInnerHTML={{ __html: pr.body }} />
+      </g>
+    );
   };
 
   // People WALK. They were placed at a fixed point along their route - a hash, so the same point
@@ -2025,6 +2037,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     nodes: [
       ...(paths.length ? [<defs key="walks">{paths}</defs>] : []),
       <TintDefs key="tints" where={grassClip} tints={tints.values()} />,
+      <defs key="ink"><InkDefs radius={Math.max(0.45, u * 2.6)} /></defs>,
       ...nodes.filter(Boolean), ...pieces.map((p) => p.el),
     ],
     label: `The zoo from above: ${encs.length} habitat${encs.length === 1 ? '' : 's'}, ${live.filter((i) => i.category === 'exhibit').length} exhibits, ${visitors} visitors`,
@@ -2135,8 +2148,10 @@ function vehicle(spot: CarSpot, i: number, u: number, P: (x: number, y: number) 
   const foot = P(spot.x + (across ? hw : hh), spot.y + (across ? hh : hw));
   return [depth(spot.x, spot.y), (
     <g key={`car-${i}`} transform={across ? undefined : `translate(${(at.x * 2).toFixed(1)},0) scale(-1,1)`}>
-      <svg x={at.x - w / 2} y={foot.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
-        dangerouslySetInnerHTML={{ __html: art.body }} />
+      <g filter="url(#zoo-ink-art)">
+        <svg x={at.x - w / 2} y={foot.y - h} width={w} height={h} viewBox={art.viewBox} overflow="visible"
+          dangerouslySetInnerHTML={{ __html: art.body }} />
+      </g>
     </g>
   )];
 }
