@@ -84,7 +84,7 @@ describe('a card on the board', () => {
       .find((c) => new RegExp(`^\\s*${animal.name}\\s*\\d`).test(c.textContent ?? ''))!);
     const start = screen.getByRole('button', { name: /Start it/ });
     expect(start.hasAttribute('disabled'), 'an animal could be started before its habitat').toBe(true);
-    expect(screen.getByRole('dialog').textContent).toMatch(/has to be built first/);
+    expect(screen.getByRole('dialog').textContent).toMatch(/is not Done yet \(.+\) - an animal goes in once its habitat is Done/);
   });
 
   it('tells the truth about what the park has checked', () => {

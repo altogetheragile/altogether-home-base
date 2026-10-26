@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
-import { isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, enclosureOf, activeWipLimit, acSettled, outgrown } from './engine';
+import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, activeWipLimit, acSettled, outgrown } from './engine';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 import { AlertCircle, Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
 
@@ -36,7 +36,7 @@ const glyphFor = (label: string) => GLYPHS.find((g) => g.rx.test(label))?.icon ?
 /** Why this cannot be taken into Doing yet, or null when it can. */
 function whyNotStart(state: ZooGameState, item: BacklogItem): string | null {
   if (!enclosureReady(state, item)) {
-    return `${enclosureOf(state, item)?.name ?? 'Its habitat'} has to be built first - an animal goes in once its habitat is ready.`;
+    return waitingForHabitat(state, item) ?? '';
   }
   const limit = activeWipLimit(state);
   const doing = state.backlog.filter((it) => it.status === 'committed' && it.started
