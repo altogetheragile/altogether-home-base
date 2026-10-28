@@ -150,7 +150,9 @@ export function seatLines(state: ZooGameState): SeatLine[] {
     const on = started.find((it) => (it.assignedDevs ?? []).includes(id));
     if (on) return `building ${shortName(on.name)}`;
     if (!sprint) return state.phase === 'planning' ? 'choosing work' : state.phase === 'refine' ? 'sizing' : 'available';
-    return started.length ? 'choosing work' : 'nothing in hand';
+    // Not "choosing work": nobody beside a solo player chooses anything, and a colleague shown as
+    // about to pick something up all Sprint is a promise the board never keeps.
+    return 'nothing in hand';
   };
 
   const poDoing = (): string => {

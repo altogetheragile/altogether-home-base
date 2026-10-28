@@ -619,6 +619,10 @@ export function standUp(state: ZooGameState): ZooGameState {
   let said = state;
   let raised = false;
   for (const dev of otherDevs(state)) {
+    // Nobody speaks for a pair of hands that has done nothing and holds nothing. Playing alone you
+    // are all of the Developers, and a colleague you never gave a card would otherwise stand up
+    // every morning to say they were "picking up the next thing" - which nobody ever was.
+    if (!finishedYesterday(said, dev.id).length && !inHandOf(said, dev.id).length) continue;
     const lines = standUpLines(said, dev, raised);
     if (!/In my way: nothing\.$/.test(lines)) raised = true;
     said = say(said, { who: 'developer', from: dev.name, text: lines, kind: 'stand-up' });
@@ -634,7 +638,8 @@ export function standUp(state: ZooGameState): ZooGameState {
   // `todaysDecision` against whole days - and a flag that appeared only when both said so left the
   // huddle opening on a risk nobody in the room had mentioned.
   if (goalAtRisk(said)) {
-    const who = otherDevs(said)[0] ?? yourDev(said);
+    // Somebody who has been working says it - not a colleague who holds nothing and was never in it.
+    const who = otherDevs(said).find((d) => inHandOf(said, d.id).length || finishedYesterday(said, d.id).length) ?? yourDev(said);
     const risk = todaysDecision(said);
     if (who) {
       said = say(said, { who: 'developer', from: who.name, itemId: risk?.candidate.id, kind: 'stand-up',
