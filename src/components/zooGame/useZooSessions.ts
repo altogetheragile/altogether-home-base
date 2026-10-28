@@ -268,8 +268,17 @@ export function useZooSessions(sessionId: string | null) {
     if (sessionId) await refresh(sessionId);
   }, [me, seats, sessionId, refresh]);
 
+  /** Make somebody the trainer, or stop. The host's alone to grant - the database refuses anybody
+   *  else - and never implied by hosting, so a learner who opened the session cannot play cards
+   *  into their own team's Sprint. */
+  const setFacilitates = useCallback(async (participantId: string, on: boolean) => {
+    const { error: e } = await supabase.from('zoo_session_participants').update({ can_facilitate: on }).eq('id', participantId);
+    if (e) { setError('Only the host can choose the trainer.'); return; }
+    if (sessionId) await refresh(sessionId);
+  }, [sessionId, refresh]);
+
   return {
-    session, participants, seats, gameId, me, busy, error, present,
+    session, participants, seats, gameId, me, busy, error, present, setFacilitates,
     isHost: !!user && session?.host_user_id === user.id,
     createSession, joinByCode, startGame, claimSeat, leaveSeat, fillWithAi, setRole, refresh,
   };

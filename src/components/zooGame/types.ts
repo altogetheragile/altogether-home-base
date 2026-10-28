@@ -98,6 +98,9 @@ export interface Impediment {
  *  charges each one honestly and the Retrospective reads the pattern back. */
 export type ImpedimentAnswer = 'team' | 'remove' | 'around' | 'escalate';
 
+/** The cards a trainer can play into a Sprint. See `TRAINER_CARDS`. */
+export type TrainerCardId = 'materials' | 'sick' | 'inspection';
+
 /** backlog -> committed (into a Sprint) -> done (meets AC + DoD) -> open (released
  *  to visitors). Release is decoupled from the Review: a Done item can be opened at
  *  any time during the Sprint. */
@@ -135,7 +138,7 @@ export interface SprintBet {
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back' | 'question';
+  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back' | 'question' | 'trainer';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -725,6 +728,12 @@ export interface ZooGameState {
   scrumSecondsLeft: number;
   /** The impediment surfaced at the current Daily Scrum, awaiting the team's call. */
   pendingImpediment: Impediment | null;
+  /** A trainer is running the drama. While it is on, nothing turns up by chance: what gets in the
+   *  team's way is what the trainer plays, when they judge it will teach something. */
+  trainerLed?: boolean;
+  /** The card a trainer has played, waiting for the next Daily Scrum - which is where anything in
+   *  the team's way surfaces. */
+  trainerCard?: Impediment | null;
   /** A missed impediment carried into the current building day (skipped Daily
    *  Scrum), shown as a banner with its coaching tip. */
   carriedImpediment: Impediment | null;
@@ -930,6 +939,8 @@ export type ZooAction =
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
+  | { type: 'SET_TRAINER_LED'; on: boolean }
+  | { type: 'PLAY_TRAINER_CARD'; cardId: TrainerCardId }
   | { type: 'SKIP_DAILY_SCRUM'; by?: string }
   | { type: 'START_DAY' }
   | { type: 'REVIEW_SPRINT' }

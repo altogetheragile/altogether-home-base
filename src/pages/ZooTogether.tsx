@@ -2,6 +2,7 @@ import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { ZooGameScreens } from './ZooGame';
+import { TrainerDeck } from '@/components/zooGame/TrainerDeck';
 import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
 import { otherDevs } from '@/components/zooGame/engine';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
@@ -31,6 +32,8 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   const ctx: SeatContext = {
     seat: mySeat?.seat ?? null,
     observer: lobby.me?.role === 'observer',
+    // A trainer: granted by the host, never implied by hosting. See `TRAINER_ONLY`.
+    facilitator: !!lobby.me?.can_facilitate,
     // Seats with nobody in them - which includes a seat whose holder has shut their laptop. It used
     // to mean "no participant and no AI", so a held-but-absent seat read as staffed and its work
     // fell to nobody: the Sprint waited on somebody who had gone home, and nothing said so.
@@ -131,6 +134,9 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
         // Every accountability with somebody in it - a person or an AI - has to agree the
         // Sprint Goal. Empty seats cannot agree, so they are not waited on.
         mustAgree={mustAgree} />
+
+      {/* The trainer's hand, for the trainer only. */}
+      {ctx.facilitator && <TrainerDeck state={state} onPlay={session.playTrainerCard} onSetLed={session.setTrainerLed} />}
 
       <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground">
         <span>

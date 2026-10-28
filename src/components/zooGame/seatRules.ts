@@ -108,13 +108,25 @@ export interface SeatContext {
   seat: SeatName | null;
   /** True for a participant watching rather than playing. */
   observer?: boolean;
+  /** Granted `can_facilitate` by the host: a trainer, who acts ON the session rather than in it. */
+  facilitator?: boolean;
   /** Seats nobody has taken and no AI is playing. Their work falls to the whole team rather
    *  than to nobody, or a group of two could not finish a Sprint. */
   emptySeats?: SeatName[];
 }
 
 /** May this player take this action? */
+/** What only a trainer may do. Not a Scrum accountability - nobody in the Scrum Team plays the
+ *  drama into their own Sprint, which is why `can_facilitate` is granted and never implied. */
+const TRAINER_ONLY: ReadonlySet<ZooAction['type']> = new Set(['PLAY_TRAINER_CARD', 'SET_TRAINER_LED']);
+
 export function mayTake(type: ZooAction['type'], ctx: SeatContext): Verdict {
+  // Checked before the observer rule: a trainer usually watches, and watching is exactly the seat
+  // to play a card from.
+  if (TRAINER_ONLY.has(type)) {
+    return ctx.facilitator ? ALLOWED
+      : { allowed: false, because: 'Only the trainer running this session plays cards into the Sprint.' };
+  }
   // Watching means acting on nothing. That is the whole of what an observer is, and it is
   // how a trainer sits with a team without becoming a sixth Developer.
   if (ctx.observer) {
