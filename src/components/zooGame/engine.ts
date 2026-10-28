@@ -1,4 +1,5 @@
-import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember, ProposedMove, TrainerCardId } from './types';
+import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember, ProposedMove } from './types';
+import type { PlayedCard } from './trainerCards';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -3841,19 +3842,7 @@ export function landImpediment(state: ZooGameState, imp: Impediment | null): Imp
 // Each card sets a situation and leaves the decision where Scrum puts it. These three land on the
 // Developers and the Scrum Master, so they arrive the way anything in the team's way arrives - at
 // the Daily Scrum, where the team decides what to do about it - and use the same four answers.
-
-/** What a trainer can play, and what each one is there to teach. */
-export const TRAINER_CARDS: { id: TrainerCardId; kind: 'block' | 'impediment'; title: string; detail: string; landsOn: string; lesson: string }[] = [
-  { id: 'materials', kind: 'block', title: 'The materials are delayed',
-    detail: 'The timber for this one has not arrived, and the work on it has stopped.',
-    landsOn: 'Developers', lesson: 'A block on one item. Can the Developers clear it themselves, and does it threaten the Sprint Goal?' },
-  { id: 'sick', kind: 'impediment', title: 'A Developer is off sick',
-    detail: 'One pair of hands fewer today, so the build is slower than planned.',
-    landsOn: 'Developers and Scrum Master', lesson: 'Capacity drops. The Developers re-plan at the Daily Scrum, and the Scrum Master asks what help they need.' },
-  { id: 'inspection', kind: 'block', title: 'The safety inspector is coming',
-    detail: 'This one cannot open until the inspector has signed it off.',
-    landsOn: 'Developers', lesson: 'Quality is not optional. Does the work meet the Definition of Done, or was it nearly Done?' },
-];
+// The deck itself is in `trainerCards.ts`, where an admin can reword and extend it.
 
 /** Run the drama by hand, or hand it back to chance. */
 export function setTrainerLed(state: ZooGameState, on: boolean): ZooGameState {
@@ -3862,9 +3851,8 @@ export function setTrainerLed(state: ZooGameState, on: boolean): ZooGameState {
 
 /** A trainer plays a card. It lands at the Daily Scrum: now, if one is open with nothing on it,
  *  otherwise at the next one. Playing a card is running the drama, so it switches the roll off. */
-export function playTrainerCard(state: ZooGameState, cardId: TrainerCardId): ZooGameState {
-  const card = TRAINER_CARDS.find((c) => c.id === cardId);
-  if (!card || state.phase !== 'sprint') return state;
+export function playTrainerCard(state: ZooGameState, card: PlayedCard): ZooGameState {
+  if (!card?.title || state.phase !== 'sprint') return state;
   const imp: Impediment = { id: `card-${card.id}-${state.sprintNumber}-${state.dayNumber}`,
     title: card.title, detail: card.detail, kind: card.kind };
   const led = { ...state, trainerLed: true };

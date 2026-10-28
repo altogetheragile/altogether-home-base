@@ -13,6 +13,7 @@ const db = supabase as unknown as {
 };
 import { applyCopyOverrides } from './copy';
 import { applyTuning } from './tuning';
+import { applyDeck } from './trainerCards';
 
 // Saved wording and saved numbers, laid over what the game shipped with.
 //
@@ -45,6 +46,8 @@ export function useZooCopy() {
       // The same table and the same fetch: the numbers a trainer has turned are saved as rows like
       // any other override, keyed `tune.*`. One query, one load, and the same silence if it fails.
       applyTuning(map);
+      // ...and the trainer's deck, saved as one row under `deck.trainer`.
+      applyDeck(map);
       setOverrides(map);
       setReady(true);
     })();
