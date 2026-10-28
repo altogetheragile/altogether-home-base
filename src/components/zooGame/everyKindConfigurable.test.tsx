@@ -81,7 +81,8 @@ describe('what you can change about each kind of thing', () => {
     expect(names, 'sizing is not called Size').toContain('Size');
     expect(names).toContain('Shape');
     expect(swatches(openGroup('ground')).some((l) => /^Surface /.test(l)), 'a habitat has no surface colour').toBe(true);
-    expect(swatches(openGroup('fence')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
+    // The fence colour is in Perimeter, with what the fence is: one menu for the one edge.
+    expect(swatches(openGroup('barrier')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
     expect(openGroup('inside').body.textContent, 'there is no way in').toMatch(/Look inside/);
   });
 

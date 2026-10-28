@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, screen } from '@testing-library/react';
 import { ParkPlan } from './ParkPlan';
 import { IsoZoo } from './IsoZoo';
 import { ParkOptions } from './ParkOptions';
@@ -165,16 +165,25 @@ describe('the pen and the menu it lives in', () => {
     );
   };
 
-  it('puts the pen away when the menu it lives in is closed', () => {
-    // The pen is a mode: while it is out, every press on the park draws instead of selecting. It
-    // used to be a chip on a flat strip that was always on screen, so you could see it was out.
-    // Behind a menu, closing the menu left it out invisibly - which is the trap Look Inside was
-    // fixed for, walked into again from the other side.
+  it('gets out of the way when the pen comes out, and leaves it out', () => {
+    // Al, 28 Oct 2026: "The paths menu gets in the way when drawing paths." The menu stood over
+    // the park being drawn on, because shutting it was the only way the pen was put away.
     const onDrawing = vi.fn();
-    strip(true, onDrawing);
+    const { container } = strip(false, onDrawing);
+    openGroup('path');
+    fireEvent.click(screen.getByText('Draw a path to it'));
+    expect(onDrawing).toHaveBeenCalledWith(true);
+    expect(container.ownerDocument.querySelector('[data-part="panel-path"]'), 'the menu is still over the park').toBeNull();
+  });
+
+  it('is put away by Done, beside the button, and not by shutting the menu', () => {
+    const onDrawing = vi.fn();
+    const { container } = strip(true, onDrawing);
     const panel = openGroup('path');
     fireEvent.keyDown(panel.querySelector('[data-part="panel-path"]')!, { key: 'Escape' });
-    expect(onDrawing, 'closing the menu left the pen out').toHaveBeenCalledWith(false);
+    expect(onDrawing, 'shutting the menu put the pen away').not.toHaveBeenCalledWith(false);
+    fireEvent.click(container.querySelector('[data-part="pen-done"]')!);
+    expect(onDrawing).toHaveBeenCalledWith(false);
   });
 
   it('says the pen is out, on the button, where the menu is shut', () => {

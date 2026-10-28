@@ -78,7 +78,9 @@ describe('the same act is called the same thing', () => {
     // It was Fence on a habitat, Colours on a building and Look on an animal and a plant: one act
     // in three words. Some of those looks are load-bearing - a building with no name board cannot
     // be told apart from a shed - which is a reason to name it well, not to name it three ways.
-    for (const [category, id] of [['enclosure', 'fence'], ['amenity', 'colours'],
+    // A habitat is the exception: its look is its fence, and the fence is in Perimeter with what the
+    // fence is. "Why is the fence colour a separate menu from the boundary type?"
+    for (const [category, id] of [['amenity', 'colours'],
       ['exhibit', 'look'], ['flora', 'planting']] as const) {
       const item = real(category);
       const look = groupsFor(item).find((g) => g.id === id)!;

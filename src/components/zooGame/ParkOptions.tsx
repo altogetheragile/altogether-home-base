@@ -144,10 +144,9 @@ function Menu({ group, icon, label, lit, busy, open, onOpenChange, onClosed, chi
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" data-part={`panel-${group.id}`} className="zoo-theme w-[19rem] p-2"
-        // The park is the drawing surface, so a press on it must not shut the menu the pen lives
-        // in: closing is what puts the pen away, and a menu that closed on the first press would
-        // put it away before the first point landed.
-        onInteractOutside={busy ? (e) => e.preventDefault() : undefined}>
+        // A press on the park shuts it and the pen carries on. Closing used to put the pen away, so
+        // the menu had to stay open over the surface being drawn on; now Done does that.
+        >
         {/* The word, where it teaches.
             It used to be on the button, and inside the panel the row's own label was blanked when
             it repeated it - "Interior: Interior" is a word doing no work. With a picture on the
@@ -413,6 +412,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
       // criterion says so in the words of the animal that would get out.
       case 'barrier':
         return (
+          <>
           <Row label={L('Perimeter')}>
             {/* Asked WITH the animals in it, which is how the criterion asks. Without them, an
                 unchosen barrier shows as a low hedge while the card says "a 4m fence, holds them" -
@@ -434,15 +434,17 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               );
             })}
           </Row>
-        );
-      case 'fence':
-        return (
-          <Row label={L('Fence')}>
+          {/* ...and what colour it is, in the same menu. It was a menu of its own called Look, so
+              the edge of a habitat was two menus: "why is the fence colour a separate menu from the
+              boundary type?" It is one thing, the boundary, and you choose what it is and then what
+              it looks like. */}
+          <Row label="Colour">
             {FENCE_COLOURS.map((c) => (
               <Swatch key={c} hex={c} label="Fence" on={design.colors?.fence === c}
                 onClick={() => set({ colors: { ...design.colors, fence: c } })} />
             ))}
           </Row>
+          </>
         );
       case 'inside': {
         // What is actually in there, how many of each, and a way to put one in or take one out.
@@ -695,7 +697,10 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
           <>
             {onDrawing && (
               <Row label={L(subject.category === 'path' ? 'Draw' : 'Path to it')}>
-                <Chip on={!!drawing} onClick={() => onDrawing?.(!drawing)}>
+                {/* Out of the way the moment the pen is out. The menu stood over the park you were
+                    drawing on: "The paths menu gets in the way when drawing paths." The pen stays out
+                    with the menu shut, and the strip says so with a Done beside the button. */}
+                <Chip on={!!drawing} onClick={() => { const on = !drawing; onDrawing?.(on); if (on) setOpenMenu(null); }}>
                   {drawing ? 'Drawing\u2026' : subject.category === 'path' ? 'Draw a run' : 'Draw a path to it'}
                 </Chip>
                 {/* How the pen works, behind a question mark like everything else that explains.
@@ -889,11 +894,19 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               // to be a chip on a flat strip that was always on screen; behind a menu, closing the
               // menu left it out invisibly and every press on the park drew instead of selecting.
               // The same trap Look Inside was fixed for, from the other side.
-              busy={g.id === 'path' && !!drawing}
-              onClosed={g.id === 'path' && drawing ? () => onDrawing?.(false) : undefined}>
+              busy={g.id === 'path' && !!drawing}>
               {body(g.id, labelOf(g, subject))}
             </Menu>
           ))}
+          {/* The pen is a mode, and with its menu shut this is where the mode is said and ended. It
+              used to be ended by shutting the menu - which meant keeping the menu open, over the
+              park, for as long as you were drawing. Escape on the park still puts it away too. */}
+          {drawing && onDrawing && shown.some((g) => g.id === 'path') && (
+            <button type="button" data-part="pen-done" onClick={() => onDrawing(false)}
+              className={cn(FOCUS, 'flex h-9 shrink-0 items-center gap-1.5 rounded-md border border-primary bg-primary px-2.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90')}>
+              Drawing a path <span className="rounded bg-primary-foreground/20 px-1.5 py-0.5">Done</span>
+            </button>
+          )}
           {/* The bar every item has to clear, on the screen where the building happens.
               It was on the Increment tab and in the Learn drawer and nowhere here - so the game's
               own strapline, "build to your Definition of Done", asked for something you could not
