@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { ZooGameState, TrainerCardId } from './types';
-import { TRAINER_CARDS } from './engine';
+import type { ZooGameState } from './types';
+import { playableCards, asPlayed, type PlayedCard } from './trainerCards';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { SURFACE, PADDING, TEXT, EYEBROW, TONE, FOCUS } from './ui/tokens';
@@ -16,7 +16,7 @@ import { SURFACE, PADDING, TEXT, EYEBROW, TONE, FOCUS } from './ui/tokens';
 
 export function TrainerDeck({ state, onPlay, onSetLed, className }: {
   state: ZooGameState;
-  onPlay: (cardId: TrainerCardId) => void;
+  onPlay: (card: PlayedCard) => void;
   onSetLed: (on: boolean) => void;
   className?: string;
 }) {
@@ -56,14 +56,14 @@ export function TrainerDeck({ state, onPlay, onSetLed, className }: {
             </p>
           )}
           <ul className="space-y-1.5">
-            {TRAINER_CARDS.map((c) => (
+            {playableCards().map((c) => (
               <li key={c.id} data-card={c.id} className={cn(SURFACE.inset, 'px-2.5 py-2')}>
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className={cn(TEXT.small, 'font-semibold')}>{c.title}</p>
                     <p className={cn(TEXT.micro, 'text-muted-foreground')}>Lands on the {c.landsOn}</p>
                   </div>
-                  <Button size="sm" variant="outline" disabled={!inSprint} onClick={() => onPlay(c.id)}>Play</Button>
+                  <Button size="sm" variant="outline" disabled={!inSprint} onClick={() => onPlay(asPlayed(c))}>Play</Button>
                 </div>
                 <p className={cn(TEXT.micro, 'mt-1')}>{c.lesson}</p>
               </li>
