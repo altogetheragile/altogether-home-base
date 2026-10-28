@@ -41,19 +41,20 @@ describe('you are one of the three', () => {
     // so "Ada" + "you" reads as "Adayou" and a word boundary finds nothing.
     const yours = [...c.querySelectorAll('[data-part="seat-you"]')]
       .map((n) => n.closest('[data-part="seat"]')!);
-    expect(yours.length, 'nothing on the band says which of them you are').toBe(1);
-    expect(yours[0].textContent, 'the wrong person is marked as you').toContain(yourDev(s)!.name);
+    // Your Developer and the Scrum Master: alone you are both, and only the Product Owner is played.
+    expect(yours.length, 'the band does not say which of them you are').toBe(2);
+    expect(yours[0].textContent + yours[1].textContent, 'your Developer is not marked as you').toContain(yourDev(s)!.name);
+    expect(yours.map((y) => y.textContent).join(' '), 'the Scrum Master is not marked as you').toMatch(/^SM/m);
   });
 
-  it('and it is a Developer, not the Product Owner', () => {
+  it('and never the Product Owner', () => {
     // Priya is played by the game in a solo match. Marking her as you would be the opposite of
     // what the seat band is for.
     const s = sprint();
     const c = render(<MemoryRouter><SeatBand state={s} /></MemoryRouter>).container;
-    const yours = c.querySelector('[data-part="seat-you"]')!.closest('[data-part="seat"]')!;
-    expect(yours.textContent, 'the Product Owner is marked as you').not.toMatch(/\bPO\b/);
-    expect(yours.textContent, 'the Scrum Master is marked as you').not.toMatch(/\bSM\b/);
-    expect(yours.textContent).toContain(yourDev(s)!.name);
+    for (const n of c.querySelectorAll('[data-part="seat-you"]')) {
+      expect(n.closest('[data-part="seat"]')!.textContent, 'the Product Owner is marked as you').not.toMatch(/\bPO\b/);
+    }
   });
 
   it('and in a shared game it is still the seat you took', () => {

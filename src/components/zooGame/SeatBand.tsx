@@ -31,12 +31,17 @@ const colourOf = (role: string): string =>
  *  Developer and the game plays the other two beside you, which is the whole shape of the Sprint
  *  and was nowhere on the screen. "Three Devs are mentioned. Which is the human player?" - the band
  *  said "Ada - building Bridge" exactly as it said "Ben - building Lion Enclosure", so there was
- *  no way to know. */
+ *  no way to know.
+ *
+ *  ...and the Scrum Master. Alone you are the Scrum Master and the Developers; only the Product
+ *  Owner is played by the game (Al, 28 Oct 2026: "keep the PO as AI. Solo player is the SM and
+ *  Devs"). The blockers at the Daily Scrum were already yours to answer, and the band said Sam was
+ *  somebody else. */
 const isMine = (
   s: { role: string; id: string },
   seat: SeatName | null | undefined,
   you: ScrumTeamMember | undefined,
-): boolean => (seat ? s.role === seat : s.id === you?.id);
+): boolean => (seat ? s.role === seat : s.id === you?.id || s.role === 'scrum_master');
 
 /** Your own name, changed where it is written.
  *
@@ -164,7 +169,8 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}
                   {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
-                  {yours && onRename && <RenameMe id={s.id} name={s.name} onRename={onRename} />}
+                  {/* One name is yours to change: alone, that is your Developer's, not Sam's as well. */}
+                  {yours && onRename && (mine || s.role === 'developer') && <RenameMe id={s.id} name={s.name} onRename={onRename} />}
                   {/* One word, because the band is one line and this is the whole news. Said in
                       words as well as in colour: a faded chip is not a message, and dimming was all
                       this had. */}
