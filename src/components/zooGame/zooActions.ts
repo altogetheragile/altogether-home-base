@@ -1,4 +1,5 @@
-import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure, HuddleAnswer, ChatKind, TrainerCardId } from './types';
+import type { ZooGameState, ZooAction, ZooPhase, PbiDraft, SprintTask, PoDecisions, ZooConnector, ZooBrief, GoalShape, GoalMeasure, HuddleAnswer, ChatKind } from './types';
+import type { PlayedCard } from './trainerCards';
 import type { ItemDesign } from './design';
 import { bothLists, forgetTaught, readTaught } from './whatYouHaveRead';
 
@@ -127,7 +128,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     setClockPaused: (paused: boolean) => send({ type: 'SET_CLOCK_PAUSED', paused }),
     answerImpediment: (how: 'team' | 'remove' | 'around' | 'escalate') => send({ type: 'ANSWER_IMPEDIMENT', how }),
     setTrainerLed: (on: boolean) => send({ type: 'SET_TRAINER_LED', on }),
-    playTrainerCard: (cardId: TrainerCardId) => send({ type: 'PLAY_TRAINER_CARD', cardId }),
+    playTrainerCard: (card: PlayedCard) => send({ type: 'PLAY_TRAINER_CARD', card }),
     skipDailyScrum: () => send({ type: 'SKIP_DAILY_SCRUM' }),
     beginDay: () => send({ type: 'START_DAY' }),
     cancelSprint: () => send({ type: 'CANCEL_SPRINT' }),

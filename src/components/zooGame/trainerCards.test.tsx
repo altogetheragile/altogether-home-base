@@ -2,7 +2,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { reducer } from './useZooGame';
 import { initialZooState } from './config';
-import { TRAINER_CARDS, endDay, generateImpediment } from './engine';
+import { endDay, generateImpediment } from './engine';
+import { SHIPPED_TRAINER_CARDS, asPlayed } from './trainerCards';
+
+const TRAINER_CARDS = SHIPPED_TRAINER_CARDS;
+const card = (id: string) => asPlayed(SHIPPED_TRAINER_CARDS.find((c) => c.id === id)!);
 import { mayTake } from './seatRules';
 import { TrainerDeck } from './TrainerDeck';
 import type { ZooGameState } from './types';
@@ -31,7 +35,7 @@ const rollyDay = (s: ZooGameState) => {
 
 describe('a trainer plays the drama', () => {
   it('lands a card at the next Daily Scrum, and only there', () => {
-    const played = reducer(building(), { type: 'PLAY_TRAINER_CARD', cardId: 'materials' });
+    const played = reducer(building(), { type: 'PLAY_TRAINER_CARD', card: card('materials') });
     expect(played.pendingImpediment, 'a card interrupted the build instead of waiting for the Daily Scrum').toBeNull();
     expect(played.trainerCard?.title).toBe('The materials are delayed');
     const scrum = endDay(played);
@@ -42,7 +46,7 @@ describe('a trainer plays the drama', () => {
   });
 
   it('lands at once when a Daily Scrum is open with nothing on it', () => {
-    const s = reducer(building({ dayStage: 'dailyScrum' }), { type: 'PLAY_TRAINER_CARD', cardId: 'sick' });
+    const s = reducer(building({ dayStage: 'dailyScrum' }), { type: 'PLAY_TRAINER_CARD', card: card('sick') });
     expect(s.pendingImpediment?.title).toBe('A Developer is off sick');
     expect(s.pendingImpediment?.kind).toBe('impediment');
   });
@@ -52,18 +56,18 @@ describe('a trainer plays the drama', () => {
     expect(endDay(s).pendingImpediment, 'this seed should roll something').toBeTruthy();
     const led = reducer(s, { type: 'SET_TRAINER_LED', on: true });
     expect(endDay(led).pendingImpediment, 'chance still rolled with a trainer running it').toBeNull();
-    const played = reducer(s, { type: 'PLAY_TRAINER_CARD', cardId: 'inspection' });
+    const played = reducer(s, { type: 'PLAY_TRAINER_CARD', card: card('inspection') });
     expect(played.trainerLed, 'playing a card did not take over from chance').toBe(true);
   });
 
   it('goes in the decision log, so the debrief can read it back', () => {
-    const s = reducer(building(), { type: 'PLAY_TRAINER_CARD', cardId: 'sick' });
+    const s = reducer(building(), { type: 'PLAY_TRAINER_CARD', card: card('sick') });
     expect((s.decisions ?? []).slice(-1)[0]).toMatchObject({ kind: 'trainer', by: 'trainer' });
   });
 
   it('cannot be played outside a Sprint', () => {
     const s = building({ phase: 'planning' });
-    const after = reducer(s, { type: 'PLAY_TRAINER_CARD', cardId: 'sick' });
+    const after = reducer(s, { type: 'PLAY_TRAINER_CARD', card: card('sick') });
     expect(after.trainerCard ?? null).toBeNull();
     expect(after.trainerLed ?? false).toBe(false);
     expect((after.decisions ?? []).some((d) => d.kind === 'trainer')).toBe(false);
@@ -88,13 +92,13 @@ describe('only the trainer holds the deck', () => {
 describe('the deck', () => {
   it('offers every card in a Sprint, and says what is waiting', () => {
     const onPlay = vi.fn();
-    const s = reducer(building(), { type: 'PLAY_TRAINER_CARD', cardId: 'materials' });
+    const s = reducer(building(), { type: 'PLAY_TRAINER_CARD', card: card('materials') });
     const { container } = render(<TrainerDeck state={s} onPlay={onPlay} onSetLed={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /Cards to play/ }));
     expect(container.querySelectorAll('[data-card]').length).toBe(TRAINER_CARDS.length);
     expect(container.querySelector('[data-part="trainer-queued"]')?.textContent).toMatch(/materials are delayed/);
     fireEvent.click(screen.getAllByRole('button', { name: 'Play' })[1]);
-    expect(onPlay).toHaveBeenCalledWith(TRAINER_CARDS[1].id);
+    expect(onPlay).toHaveBeenCalledWith(asPlayed(TRAINER_CARDS[1]));
   });
   it('holds its cards outside a Sprint', () => {
     render(<TrainerDeck state={building({ phase: 'planning' })} onPlay={vi.fn()} onSetLed={vi.fn()} />);

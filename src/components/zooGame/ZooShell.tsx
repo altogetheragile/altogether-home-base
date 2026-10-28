@@ -16,6 +16,7 @@ import { zonePlots } from './parkZones';
 import { DOCKED_BAR_H, DOCK_GUTTER } from './ActionBar';
 import { CopyEditor } from './CopyEditor';
 import { DialEditor } from './DialEditor';
+import { DeckEditor } from './DeckEditor';
 import { TrailButton } from './TrailButton';
 import { ExplainButton } from './Explain';
 import { LearnDrawer, type Section as LearnSection } from './LearnDrawer';
@@ -464,6 +465,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {copy && <CopyEditor phase={state.phase} overrides={copy.overrides} onChanged={copy.onChanged} />}
             {/* The numbers, beside the words, for the same person for the same reason. */}
             {copy && <DialEditor overrides={copy.overrides} onChanged={copy.onChanged} />}
+            {/* ...and the trainer's cards, which are the course's as much as the words are. */}
+            {copy && <DeckEditor overrides={copy.overrides} onChanged={copy.onChanged} />}
             {/* ...and what has just been pressed, for when something goes wrong and describing it
                 from memory is the slow way round. Alongside the other tools an admin gets, and gated
                 the same way: they all ask who is signed in, and a screen rendered without that is a

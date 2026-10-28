@@ -345,7 +345,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'SET_TRAINER_LED':
       return setTrainerLed(state, action.on);
     case 'PLAY_TRAINER_CARD':
-      return playTrainerCard(state, action.cardId);
+      return playTrainerCard(state, action.card);
     case 'SKIP_DAILY_SCRUM':
       return skipDailyScrum(state, action.by);
     case 'START_DAY':

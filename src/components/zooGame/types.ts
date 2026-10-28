@@ -5,6 +5,7 @@
 // docs/ZOO_GAME.md. This slice is the reducer core: later slices add the timed
 // days and Daily Scrum, the design-and-build mechanic, the park view and the coach.
 
+import type { PlayedCard } from './trainerCards';
 import type { SegmentId, SimulationResult, Signal } from './simulation/types';
 import type { ItemDesign } from './design';
 
@@ -97,9 +98,6 @@ export interface Impediment {
 /** What the Scrum Master did about what surfaced. Four answers, none of them forbidden: the game
  *  charges each one honestly and the Retrospective reads the pattern back. */
 export type ImpedimentAnswer = 'team' | 'remove' | 'around' | 'escalate';
-
-/** The cards a trainer can play into a Sprint. See `TRAINER_CARDS`. */
-export type TrainerCardId = 'materials' | 'sick' | 'inspection';
 
 /** backlog -> committed (into a Sprint) -> done (meets AC + DoD) -> open (released
  *  to visitors). Release is decoupled from the Review: a Done item can be opened at
@@ -940,7 +938,7 @@ export type ZooAction =
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
   | { type: 'SET_TRAINER_LED'; on: boolean }
-  | { type: 'PLAY_TRAINER_CARD'; cardId: TrainerCardId }
+  | { type: 'PLAY_TRAINER_CARD'; card: PlayedCard }
   | { type: 'SKIP_DAILY_SCRUM'; by?: string }
   | { type: 'START_DAY' }
   | { type: 'REVIEW_SPRINT' }
