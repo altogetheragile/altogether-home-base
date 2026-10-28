@@ -485,6 +485,8 @@ export interface GameQuestion {
    *  Optional because a game saved before the distinction existed has neither; those are read by
    *  their id, which is where the difference already lived. */
   developersMayAnswer?: boolean;
+  /** For a trainer's card: the card itself, so the answer can do what it says. */
+  card?: PlayedCard;
 }
 /** The one Scrum Team: a single Product Owner (accountable for value), a single Scrum Master
  *  (a true leader who serves the team, causes impediments to be removed, coaches

@@ -61,7 +61,9 @@ export function TrainerDeck({ state, onPlay, onSetLed, className }: {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className={cn(TEXT.small, 'font-semibold')}>{c.title}</p>
-                    <p className={cn(TEXT.micro, 'text-muted-foreground')}>Lands on the {c.landsOn}</p>
+                    <p className={cn(TEXT.micro, 'text-muted-foreground')}>
+                      {c.kind === 'decision' ? 'Goes to the Product Owner now' : `Lands on the ${c.landsOn}, at the next Daily Scrum`}
+                    </p>
                   </div>
                   <Button size="sm" variant="outline" disabled={!inSprint} onClick={() => onPlay(asPlayed(c))}>Play</Button>
                 </div>
@@ -70,7 +72,7 @@ export function TrainerDeck({ state, onPlay, onSetLed, className }: {
             ))}
           </ul>
           {!inSprint && (
-            <p className={cn(TEXT.micro, 'text-muted-foreground')}>Cards are played during a Sprint. They surface at the Daily Scrum.</p>
+            <p className={cn(TEXT.micro, 'text-muted-foreground')}>Cards are played during a Sprint.</p>
           )}
         </div>
       )}

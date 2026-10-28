@@ -640,6 +640,15 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     }
   }
 
+  // A trainer's card, which lands on this seat: what happens to the Sprint is the Product Owner's.
+  // The card says what a Product Owner played by the game would choose, and the seat says why -
+  // the debrief has something to argue with.
+  const card = (state.questions ?? []).find((q) => q.id.startsWith('card-') && q.card);
+  if (card?.card) {
+    return { action: { type: 'ANSWER_QUESTION', id: card.id, choice: card.card.aiChoice ?? 'now', by: 'product_owner' },
+             says: card.card.aiSays || 'We deal with it this Sprint, and the Sprint Goal stands.' };
+  }
+
   // Coming to look at finished work. The sign-off is this seat's answer now, not something that
   // follows from the criteria on its own - so with nobody sitting here, work whose every criterion
   // is a fact would build itself and then wait for ever.

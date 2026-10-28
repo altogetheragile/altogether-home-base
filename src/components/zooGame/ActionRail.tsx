@@ -263,7 +263,9 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
         action ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground')}>
         {action ? action.actor.replace(/^The /, '') : 'Developers'}
       </span>
-      <span className="min-w-0 flex-1 text-sm">
+      {/* A floor under the words, so a long question with three answers wraps its buttons onto the
+          next line rather than squeezing itself into a column one word wide. */}
+      <span className="min-w-[min(100%,18rem)] flex-1 text-sm">
         {action ? action.text : quiet}
         {action?.note && (
           <span className="block text-[11px] leading-snug text-amber-700 dark:text-amber-300">{action.note}</span>
