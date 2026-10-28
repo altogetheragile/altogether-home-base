@@ -25,7 +25,7 @@ describe('a saved deck', () => {
     const own = [...SHIPPED_TRAINER_CARDS.map((c) => (c.id === 'sick' ? { ...c, off: true } : c)),
       { id: 'own-escape', kind: 'impediment', title: 'The keys are lost', detail: 'Nobody can get into the stores.', landsOn: 'Scrum Master', lesson: 'Who removes it?' }];
     applyDeck({ [DECK_KEY]: JSON.stringify(own) });
-    expect(trainerDeck().map((c) => c.id)).toEqual(['materials', 'sick', 'inspection', 'own-escape']);
+    expect(trainerDeck().map((c) => c.id)).toEqual([...SHIPPED_TRAINER_CARDS.map((c) => c.id), 'own-escape']);
     expect(playableCards().map((c) => c.id), 'a card taken out is still offered').not.toContain('sick');
   });
 

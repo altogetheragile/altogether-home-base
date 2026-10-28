@@ -407,7 +407,10 @@ export function useAiSeats(
         // chance. It waits the longest of anything here.
         const lead = next.move.weight ? WORK_BEAT_MS
           : next.move.action.type === 'RUN_DAILY_SCRUM' ? EVENT_BEAT_MS
-            : next.move.action.type === 'SET_PLANNING_TOPIC' ? TOPIC_BEAT_MS : 0;
+            : next.move.action.type === 'SET_PLANNING_TOPIC' ? TOPIC_BEAT_MS
+              // A trainer's card is a dilemma put to the room. Answered in a beat, nobody would have
+              // read it - so the Product Owner played by the game takes as long as an event does.
+              : next.move.action.type === 'ANSWER_QUESTION' && String((next.move.action as { id?: string }).id).startsWith('card-') ? EVENT_BEAT_MS : 0;
         const key = `${next.seat}:${next.move.action.type}:${'id' in next.move.action ? next.move.action.id : ''}`;
         if (lead && waitedFor !== key) {
           waitedFor = key;

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserRole } from '@/hooks/useUserRole';
 import { saveCopy } from './useZooCopy';
-import { DECK_KEY, LANDS_ON, SHIPPED_TRAINER_CARDS, applyDeck, trainerDeck, type TrainerCard } from './trainerCards';
+import { CARD_CHOICES, DECK_KEY, LANDS_ON, SHIPPED_TRAINER_CARDS, applyDeck, trainerDeck, type CardChoice, type TrainerCard } from './trainerCards';
 import { FOCUS } from './ui/tokens';
 
 // ============= The trainer's deck, from inside the game =============
@@ -52,20 +52,43 @@ function CardRow({ card, onChange, onRemove }: {
       <div className="flex flex-wrap gap-2">
         <label className="flex items-center gap-1 text-[11px]">
           Kind
-          <select value={card.kind} onChange={(e) => set('kind', e.target.value as TrainerCard['kind'])}
+          <select value={card.kind} onChange={(e) => {
+            const kind = e.target.value as TrainerCard['kind'];
+            // A decision is the Product Owner's by definition; the other two never are.
+            onChange({ ...card, kind, landsOn: kind === 'decision' ? 'Product Owner' : card.landsOn === 'Product Owner' ? 'Developers' : card.landsOn,
+              aiChoice: kind === 'decision' ? card.aiChoice ?? 'now' : card.aiChoice });
+          }}
             className={cn(FOCUS, 'rounded-md border border-border bg-background px-1 py-0.5 text-xs')}>
             <option value="block">A block: stops one item</option>
             <option value="impediment">An impediment: slows the whole team</option>
+            <option value="decision">A decision for the Product Owner</option>
           </select>
         </label>
-        <label className="flex items-center gap-1 text-[11px]">
-          Lands on the
-          <select value={card.landsOn} onChange={(e) => set('landsOn', e.target.value)}
-            className={cn(FOCUS, 'rounded-md border border-border bg-background px-1 py-0.5 text-xs')}>
-            {LANDS_ON.map((w) => <option key={w} value={w}>{w}</option>)}
-          </select>
-        </label>
+        {card.kind !== 'decision' && (
+          <label className="flex items-center gap-1 text-[11px]">
+            Lands on the
+            <select value={card.landsOn} onChange={(e) => set('landsOn', e.target.value)}
+              className={cn(FOCUS, 'rounded-md border border-border bg-background px-1 py-0.5 text-xs')}>
+              {LANDS_ON.filter((w) => w !== 'Product Owner').map((w) => <option key={w} value={w}>{w}</option>)}
+            </select>
+          </label>
+        )}
       </div>
+      {card.kind === 'decision' && (
+        <div data-part="deck-decision" className="space-y-1.5 rounded-md border border-dashed border-border px-2 py-1.5">
+          <input aria-label="The Product Backlog item it becomes" value={card.item ?? ''} onChange={(e) => set('item', e.target.value)}
+            placeholder="The Product Backlog item it becomes, if ordered in" className={FIELD} />
+          <label className="flex flex-wrap items-center gap-1 text-[11px]">
+            A Product Owner played by the game chooses
+            <select value={card.aiChoice ?? 'now'} onChange={(e) => set('aiChoice', e.target.value as CardChoice)}
+              className={cn(FOCUS, 'rounded-md border border-border bg-background px-1 py-0.5 text-xs')}>
+              {CARD_CHOICES.map((c) => <option key={c.key} value={c.key}>{c.label}</option>)}
+            </select>
+          </label>
+          <input aria-label="What they say" value={card.aiSays ?? ''} onChange={(e) => set('aiSays', e.target.value)}
+            placeholder="What they say about it, so the debrief has something to discuss" className={FIELD} />
+        </div>
+      )}
       <textarea aria-label="What it teaches" rows={2} value={card.lesson} onChange={(e) => set('lesson', e.target.value)}
         placeholder="What it is there to teach. Only the trainer sees this." className={FIELD} />
     </div>
@@ -145,7 +168,8 @@ export function DeckEditor({ overrides, onChanged }: {
             <p className="rounded-lg border border-dashed border-border px-3 py-2 text-[11px] leading-snug text-muted-foreground">
               A card is a situation, and the team answers it at the Daily Scrum like anything else in its way. A block
               stops one item: write &ldquo;this one&rdquo; and it becomes that item&rsquo;s name. An impediment slows the whole
-              team. What each costs is the game&rsquo;s, so a new card never changes the rules. The cards the game shipped
+              team. A decision goes to the Product Owner at once, with three answers: deal with it this Sprint, put it on
+              the Product Backlog, or cancel the Sprint. What each costs is the game&rsquo;s, so a new card never changes the rules. The cards the game shipped
               with can be taken out of the deck but not deleted.
             </p>
           </div>
@@ -158,7 +182,7 @@ export function DeckEditor({ overrides, onChanged }: {
             </Button>
             {changed && (
               <Button size="sm" variant="ghost" disabled={saving} onClick={() => void save(null)}
-                title="Back to the three cards the game shipped with">
+                title="Back to the cards the game shipped with">
                 <RotateCcw className="mr-1 h-3.5 w-3.5" /> Reset
               </Button>
             )}

@@ -1,5 +1,6 @@
 import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember, ProposedMove } from './types';
-import type { PlayedCard } from './trainerCards';
+import type { PlayedCard, CardChoice } from './trainerCards';
+import { CARD_CHOICES } from './trainerCards';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -1011,6 +1012,12 @@ export function answerQuestion(state: ZooGameState, id: string, choice: string, 
   if (!by) {
     state = say(state, { who: 'you', from: 'You', itemId: q.itemId,
       text: q.choices.find((c) => c.key === choice)?.label ?? choice });
+  }
+
+  // A trainer's card, which the Product Owner answers by deciding what happens to the Sprint.
+  if (q.id.startsWith('card-') && q.card) {
+    return answerCard({ ...state, questions: (state.questions ?? []).filter((x) => x.id !== id) },
+      q.card, choice as CardChoice, by ?? 'product_owner');
   }
 
   // A question the Product Owner answers by doing something. Accepting is the sign-off - every
@@ -3853,6 +3860,20 @@ export function setTrainerLed(state: ZooGameState, on: boolean): ZooGameState {
  *  otherwise at the next one. Playing a card is running the drama, so it switches the roll off. */
 export function playTrainerCard(state: ZooGameState, card: PlayedCard): ZooGameState {
   if (!card?.title || state.phase !== 'sprint') return state;
+  // A decision is the Product Owner's, and the Product Owner is not in the Daily Scrum: it goes to
+  // them at once, as a question on the rail, with the three answers Scrum gives that seat. It waits
+  // for them - nobody else may answer what happens to the Sprint - and it does not stop the clock.
+  if (card.kind === 'decision') {
+    const id = `card-${card.id}-${state.sprintNumber}-${state.dayNumber}`;
+    if ((state.questions ?? []).some((q) => q.id === id)) return state;
+    const asked: ZooGameState = { ...state, trainerLed: true, questions: [...(state.questions ?? []), {
+      id, of: 'product_owner', from: 'Trainer card', text: `${card.title}. ${card.detail} What do you want to do?`,
+      choices: CARD_CHOICES.map((c) => ({ key: c.key, label: c.label, note: c.note(card.item) })),
+      askedAt: state.daySecondsLeft, day: state.dayNumber, developersMayAnswer: false,
+      card,
+    }] };
+    return note(asked, { kind: 'trainer', by: 'trainer', what: `The trainer played "${card.title}", for the Product Owner.` });
+  }
   const imp: Impediment = { id: `card-${card.id}-${state.sprintNumber}-${state.dayNumber}`,
     title: card.title, detail: card.detail, kind: card.kind };
   const led = { ...state, trainerLed: true };
@@ -3862,6 +3883,39 @@ export function playTrainerCard(state: ZooGameState, card: PlayedCard): ZooGameS
     : { ...led, trainerCard: imp };
   return note(played, { kind: 'trainer', by: 'trainer',
     what: `The trainer played "${card.title}"${now ? '' : ', for the next Daily Scrum'}.` });
+}
+
+/** What the Product Owner decided about a trainer's card, and what it cost.
+ *
+ *  Three answers, each a real thing the Guide gives this seat. Absorbing it is spent today, out of
+ *  the build. Ordering it in is a Product Backlog item at the top, for the next Sprint. Cancelling
+ *  is the one place the Guide says "only", and it costs exactly what cancelling costs. */
+function answerCard(state: ZooGameState, card: PlayedCard, choice: CardChoice, by: string): ZooGameState {
+  if (choice === 'cancel') {
+    const logged = note(state, { kind: 'trainer', by, what: `"${card.title}": the Product Owner cancelled the Sprint.`,
+      cost: 'Everything unfinished went back to the Product Backlog. Only right if it made the Sprint Goal obsolete.' });
+    return cancelSprint(logged);
+  }
+  if (choice === 'backlog') {
+    const name = card.item || card.title;
+    const before = new Set(state.backlog.map((it) => it.id));
+    const added = addPbi(state, { name, category: 'amenity', zone: 'General', acceptance: [] });
+    const fresh = added.backlog.find((it) => !before.has(it.id));
+    // ...at the top, which is where the Product Owner put it: first among what is still to come.
+    const top = added.backlog.findIndex((it) => it.status === 'backlog');
+    const backlog = fresh && top >= 0
+      ? [...added.backlog.slice(0, top).filter((it) => it.id !== fresh.id), fresh,
+        ...added.backlog.slice(top).filter((it) => it.id !== fresh.id)]
+      : added.backlog;
+    return note({ ...added, backlog }, { kind: 'trainer', by,
+      what: `"${card.title}": the Product Owner put ${name} at the top of the Product Backlog.`,
+      cost: 'Nothing changed this Sprint. The Sprint Goal stands.' });
+  }
+  // Dealt with now: a quarter of today's build goes on it.
+  const cost = Math.round(dayTotalSeconds(state.dayTimeMult ?? 1) * 0.25);
+  return note({ ...state, daySecondsLeft: Math.max(1, state.daySecondsLeft - cost) }, { kind: 'trainer', by,
+    what: `"${card.title}": the Product Owner had it dealt with this Sprint.`,
+    cost: `${cost}s of today's build went on it.` });
 }
 
 /** What surfaces at a Daily Scrum: the trainer's card when a trainer is running it, the day's roll
