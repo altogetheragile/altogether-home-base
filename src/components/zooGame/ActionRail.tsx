@@ -31,7 +31,7 @@ type RailAction = {
   note?: string;
 };
 
-export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, onAgreeMove, onDeclineMove, className }: {
+export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, onAgreeMove, onDeclineMove, onAssignDev, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
   onAnswerPlacement?: (id: string, choice: string) => void;
@@ -49,6 +49,9 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   /** Agree to the card movement a colleague is holding up, or tell them not yet. */
   onAgreeMove?: () => void;
   onDeclineMove?: () => void;
+  /** Put a Developer on a card. Offered where the player is all of the Developers, so the second
+   *  pair of eyes the Definition of Done asks for is somebody they choose. */
+  onAssignDev?: (itemId: string, devId: string) => void;
   className?: string;
 }) {
   const [at, setAt] = useState(0);
@@ -123,6 +126,23 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
       id: `carried-${carried.id}`, actor: 'Developers',
       text: `Yesterday's blocker landed on you: ${carried.title}. ${carried.detail}${cut > 0 ? ` Today's build time is cut by about ${cut}%.` : ''}`,
       answers: [{ label: 'Got it', act: () => setSeen(carried.id) }],
+    });
+  }
+
+  // A second pair of eyes, which the Definition of Done asks for. Playing alone there is nobody
+  // beside you to give it - you are all of the Developers - so the rail asks which of them looks
+  // it over. Asked rather than done for you, because who reviews what is the Developers' own call.
+  const assign = onAssignDev;
+  for (const ask of assign ? asks.filter((a) => a.kind === 'review') : []) {
+    const item = state.backlog.find((it) => it.id === ask.itemId);
+    if (!item) continue;
+    const free = state.team.developers.filter((d) => !(item.assignedDevs ?? []).includes(d.id));
+    if (!free.length) continue;
+    actions.push({
+      id: ask.id, actor: 'Developers',
+      text: `${item.name} is built. Who gives it the second pair of eyes?`,
+      answers: free.map((d, i) => ({ label: d.name, primary: i === 0, act: () => assign?.(item.id, d.id) })),
+      note: 'Your Definition of Done asks for a review by another Developer. You are playing all of them, so choose who.',
     });
   }
 
