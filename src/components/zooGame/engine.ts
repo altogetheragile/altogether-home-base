@@ -1,4 +1,4 @@
-import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember, ProposedMove } from './types';
+import type { ChatMessage, ChatWho, DayStage, HuddleAnswer, GameQuestion, GoalShape, GoalMeasure, GoalMetric, ZooGameState, BacklogItem, Impediment, ImpedimentAnswer, PbiDraft, ItemCategory, SprintTask, PoDecisions, ZooConnector, ZooBrief, TeamDecision, SprintBet, Ledger, ScrumTeamMember, ProposedMove, TrainerCardId } from './types';
 import type { Signal, SimulationResult, SegmentResult } from './simulation/types';
 import type { ItemDesign } from './design';
 import { nearestFreeSpot, CANVAS_W, PLAY_H, PAD } from './parkLayout';
@@ -3831,6 +3831,56 @@ export function landImpediment(state: ZooGameState, imp: Impediment | null): Imp
   return { ...imp, itemId: on.id, detail };
 }
 
+// ============= Trainer cards =============
+//
+// The drama, on cue. Without a trainer, what gets in the team's way is a seeded roll each day. With
+// one, it is the trainer's hand: they play a card when they judge it will teach something, and the
+// roll stops. Al, 26 Oct 2026: "For a trainer led game they inject the drama by being able to play
+// certain cards e.g. materials are delayed, a lion has escaped or something."
+//
+// Each card sets a situation and leaves the decision where Scrum puts it. These three land on the
+// Developers and the Scrum Master, so they arrive the way anything in the team's way arrives - at
+// the Daily Scrum, where the team decides what to do about it - and use the same four answers.
+
+/** What a trainer can play, and what each one is there to teach. */
+export const TRAINER_CARDS: { id: TrainerCardId; kind: 'block' | 'impediment'; title: string; detail: string; landsOn: string; lesson: string }[] = [
+  { id: 'materials', kind: 'block', title: 'The materials are delayed',
+    detail: 'The timber for this one has not arrived, and the work on it has stopped.',
+    landsOn: 'Developers', lesson: 'A block on one item. Can the Developers clear it themselves, and does it threaten the Sprint Goal?' },
+  { id: 'sick', kind: 'impediment', title: 'A Developer is off sick',
+    detail: 'One pair of hands fewer today, so the build is slower than planned.',
+    landsOn: 'Developers and Scrum Master', lesson: 'Capacity drops. The Developers re-plan at the Daily Scrum, and the Scrum Master asks what help they need.' },
+  { id: 'inspection', kind: 'block', title: 'The safety inspector is coming',
+    detail: 'This one cannot open until the inspector has signed it off.',
+    landsOn: 'Developers', lesson: 'Quality is not optional. Does the work meet the Definition of Done, or was it nearly Done?' },
+];
+
+/** Run the drama by hand, or hand it back to chance. */
+export function setTrainerLed(state: ZooGameState, on: boolean): ZooGameState {
+  return { ...state, trainerLed: on, trainerCard: on ? state.trainerCard ?? null : null };
+}
+
+/** A trainer plays a card. It lands at the Daily Scrum: now, if one is open with nothing on it,
+ *  otherwise at the next one. Playing a card is running the drama, so it switches the roll off. */
+export function playTrainerCard(state: ZooGameState, cardId: TrainerCardId): ZooGameState {
+  const card = TRAINER_CARDS.find((c) => c.id === cardId);
+  if (!card || state.phase !== 'sprint') return state;
+  const imp: Impediment = { id: `card-${card.id}-${state.sprintNumber}-${state.dayNumber}`,
+    title: card.title, detail: card.detail, kind: card.kind };
+  const led = { ...state, trainerLed: true };
+  const now = state.dayStage === 'dailyScrum' && !state.pendingImpediment;
+  const played = now
+    ? { ...led, pendingImpediment: landImpediment(led, imp), trainerCard: null }
+    : { ...led, trainerCard: imp };
+  return note(played, { kind: 'trainer', by: 'trainer',
+    what: `The trainer played "${card.title}"${now ? '' : ', for the next Daily Scrum'}.` });
+}
+
+/** What surfaces at a Daily Scrum: the trainer's card when a trainer is running it, the day's roll
+ *  when nobody is. */
+const whatSurfaces = (state: ZooGameState, day: number): Impediment | null =>
+  (state.trainerLed ? state.trainerCard ?? null : generateImpediment(state.gameSeed, state.sprintNumber, day));
+
 /** Whether what has surfaced is in the way of the Sprint Goal.
  *
  *  The paper's own test, and the one the game can actually answer: "use a Sprint Goal. If something
@@ -3867,11 +3917,11 @@ export function endDay(state: ZooGameState): ZooGameState {
     // The room is already talking when you walk in. Posted here rather than by the AI beat,
     // because an event whose first six seconds are spent watching people arrive has spent six
     // seconds of a thirty-second timebox on nothing.
-    return standUp({ ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, next)), refinePenalty: 0,
+    return standUp({ ...s, dayNumber: next, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, whatSurfaces(s, next)), trainerCard: null, refinePenalty: 0,
       pendingPlacement: null, daySecondsLeft: dayTotalSeconds(s.dayTimeMult), scrumSecondsLeft: DAILY_SCRUM_SECONDS });
   }
   // End-of-day: hold the Daily Scrum now, before advancing.
-  return standUp({ ...s, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, generateImpediment(s.gameSeed, s.sprintNumber, s.dayNumber)), scrumSecondsLeft: DAILY_SCRUM_SECONDS });
+  return standUp({ ...s, dayStage: 'dailyScrum', pendingImpediment: landImpediment(s, whatSurfaces(s, s.dayNumber)), trainerCard: null, scrumSecondsLeft: DAILY_SCRUM_SECONDS });
 }
 
 /** Move to the next day, or end the Sprint (open the Review) after the last day.

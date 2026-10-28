@@ -210,6 +210,32 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
             </Button>
           </div>
 
+          {/* Who the trainer is. Granted by the host and shown to everybody, because a room should
+              know who can play cards into its Sprint. */}
+          {(s.isHost || s.participants.some((p) => p.can_facilitate)) && (
+            <div data-part="lobby-trainer" className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Trainer</div>
+              <p className="text-[11px] text-muted-foreground">
+                A trainer plays cards into the Sprint - materials delayed, a Developer off sick - when they
+                judge it will teach something. While they run it, nothing turns up by chance.
+              </p>
+              <ul className="flex flex-wrap gap-2">
+                {s.participants.map((p) => (
+                  <li key={p.id} className="flex items-center gap-1.5 rounded-full border border-border px-2.5 py-1 text-xs">
+                    <span className="font-semibold">{p.display_name}</span>
+                    {p.can_facilitate && <span className="text-[10px] font-bold uppercase text-primary">trainer</span>}
+                    {s.isHost && (
+                      <button type="button" className={cn(FOCUS, 'text-[11px] text-primary underline underline-offset-2')}
+                        onClick={() => void s.setFacilitates(p.id, !p.can_facilitate)}>
+                        {p.can_facilitate ? 'Not trainer' : 'Make trainer'}
+                      </button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           {/* A session is several games with reflection between them, not one long run. This
               is where the next one starts, and where seats rotate - which is the whole
               reason seats belong to the game rather than to the session. */}
