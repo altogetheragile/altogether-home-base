@@ -21,7 +21,7 @@ import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 import { STAKEHOLDERS, STAKEHOLDER_LINES, type StakeholderLine } from './stakeholders';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, AI_DEV_FLOOR, AI_DEV_JITTER, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
+import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -91,16 +91,6 @@ export function secondsPerPoint(state: ZooGameState): number {
 }
 
 
-/** Whether the Developers are still working off something they have taken on. Seats played by the
- *  game wait while they are: work that appeared instantly and cost nothing is not work. */
-export const teamIsBusy = (state: ZooGameState): boolean =>
-  state.phase === 'sprint' && state.dayStage === 'building' && inFlight(state).length > 0;
-
-/** Work that has been taken on and not built yet. The seats played by the game finish what they
- *  started before they take anything else, which is the whole of what `teamIsBusy` is for. */
-export const inFlight = (state: ZooGameState): BacklogItem[] =>
-  state.backlog.filter((it) => it.status === 'committed' && it.started && !it.design);
-
 // ============= The other Developers =============
 //
 // The Developers used to be a collective noun. One seat, one set of hands, and the game either
@@ -155,89 +145,6 @@ export function joinTeam(state: ZooGameState, id: string, name: string): ZooGame
   return { ...state, team: { ...state.team, developers: [...state.team.developers, { id, name: label, player: true }] } };
 }
 
-/** What this Developer is building right now, if anything. Per person, which is the point: the
- *  old test asked whether ANYBODY was mid-build and stopped the whole team if they were, so one
- *  card in Doing froze the other two Developers for as long as it took. */
-export const heldBy = (state: ZooGameState, devId: string): BacklogItem | undefined =>
-  state.backlog.find((it) => it.status === 'committed' && it.started && !it.design && it.pulledBy === devId);
-
-/** Build seconds gone in this Sprint so far - today's spent time plus every day before it.
- *
- *  Used to measure your own pace, so it has to be the clock the work is actually charged against
- *  rather than wall time: a game paused to read a teaching card has not got any slower. */
-export const buildSecondsSoFar = (state: ZooGameState): number => {
-  const day = dayTotalSeconds(state.dayTimeMult ?? 1);
-  const before = Math.max(0, state.dayNumber - 1) * day;
-  return before + Math.max(0, day - state.daySecondsLeft);
-};
-
-/** How fast you are going, in seconds per point, measured from what your own Developer has
- *  actually finished this Sprint.
- *
- *  Null until you have finished something: a pace measured off no work is not a pace, and the
- *  first Sprint has none by definition. The forecast stands in for it, which is what the forecast
- *  is - the team's own answer to "how fast are we". */
-export const yourSecondsPerPoint = (state: ZooGameState): number | null => {
-  const you = yourDev(state);
-  if (!you) return null;
-  const done = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
-    && (it.status === 'done' || it.status === 'open')
-    && (it.pulledBy === you.id || (!it.pulledBy && (it.assignedDevs ?? []).includes(you.id))));
-  const points = done.reduce((n, it) => n + it.estimate, 0);
-  if (points <= 0) return null;
-  const spent = buildSecondsSoFar(state);
-  return spent > 0 ? spent / points : null;
-};
-
-/** What a point costs one of the Developers the game plays, in day seconds.
- *
- *  Your pace, bounded. The ceiling is the forecast pace - they never outrun what the team said it
- *  could finish - and the floor is `AI_DEV_FLOOR` of it, so a player who stops to read the
- *  acceptance criteria does not come back to a finished Sprint, and is not punished for reading.
- *  Seeded jitter on top, per person per Sprint, so Ben and Cara are two people rather than one
- *  drawn twice; it is applied inside the bounds, so no amount of jitter breaks either of them. */
-export function devSecondsPerPoint(state: ZooGameState, devId: string): number {
-  const forecast = secondsPerPoint(state);           // the ceiling: fastest they ever go
-  const slowest = forecast / AI_DEV_FLOOR;           // the floor: slowest they ever go
-  // Your pace, with the jitter that makes them two people rather than one drawn twice. It only
-  // ever makes somebody SLOWER than the pace they are matching, which is the asymmetry the ceiling
-  // asks for: a Sprint 1 team has no measured pace, so both of them are matching the forecast
-  // exactly - and jitter that could go either way was clamped back to the ceiling in both
-  // directions, leaving two colleagues working at identical speeds.
-  const rng = makeRng(hashStr(`pace:${devId}:${state.sprintNumber}`, state.gameSeed));
-  const theirs = (yourSecondsPerPoint(state) ?? forecast) * (1 + rng.next() * AI_DEV_JITTER);
-  // ...and then the bounds, once. Clamped twice over it looked careful and was dead code: the
-  // first clamp could not change an answer the second one did not change back.
-  return Math.min(slowest, Math.max(forecast, theirs));
-}
-
-/** How long this card will take the Developer who is taking it, in day seconds. At least one, so
- *  nothing is ever free. */
-export const workOwed = (state: ZooGameState, item: BacklogItem, devId: string): number =>
-  Math.max(1, Math.round(Math.max(1, item.estimate) * devSecondsPerPoint(state, devId)));
-
-/** Build time still owed on a card the game is working on, or null if it is not one.
- *
- *  Shown on the board, because work that takes time and says nothing about it is indistinguishable
- *  from work that is stuck - which is the one thing a board is there to make impossible. */
-export const stillBuilding = (item: BacklogItem): number | null =>
-  (item.owedSeconds ?? 0) > 0 && item.status === 'committed' && item.started && !item.design
-    ? item.owedSeconds! : null;
-
-/** One second of everybody else's work. The cards the game is building come down by a second
- *  each, together, because they are being built at the same time by different people - that is
- *  what "in parallel" means and the reason this is not a queue. */
-export const tickTheirWork = (state: ZooGameState): ZooGameState => {
-  if (state.dayStage !== 'building') return state;
-  let moved = false;
-  const backlog = state.backlog.map((it) => {
-    if (stillBuilding(it) === null) return it;
-    moved = true;
-    return { ...it, owedSeconds: Math.max(0, (it.owedSeconds ?? 0) - 1) };
-  });
-  return moved ? { ...state, backlog } : state;
-};
-
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
  *  rather than leaving a component to notice, so the expiry cannot fire from two browsers
  *  at once. Paused in learn mode and outside a running build day. */
@@ -257,11 +164,7 @@ export function tickDay(state: ZooGameState): ZooGameState {
   if (left <= 0) return endDay({ ...state, daySecondsLeft: 0 });
   // A question has a clock on it: it is asked while the work is being done, and answered or guessed
   // before the day is out. Both happen here, so they happen the same way in every browser.
-  // ...and so does everybody else's work. The Developers the game plays are building at the same
-  // time as you, and the day's clock is what they are building against - so their progress is a
-  // second of this tick rather than a timer of its own, which is what makes it the same in every
-  // browser, survive a reload, and stop dead when somebody puts a hand on the clock.
-  return askIfDue(guessUnanswered(tickTheirWork({ ...state, daySecondsLeft: left })));
+  return askIfDue(guessUnanswered({ ...state, daySecondsLeft: left }));
 }
 
 // ============= What the team says =============
@@ -1740,13 +1643,6 @@ export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
   // Nothing left: the card says so and waits to be moved. Done is the Developers' word, so the
   // card does not walk into the column by itself when the Product Owner accepts.
   if (readyToMove(item)) return 'Ready \u00b7 move it to Done';
-  // ...unless it is not yours. What is left on somebody else's card is their work, and telling you
-  // to go and build it on the park is an instruction to do a colleague's job - which is what the
-  // card said the day the Developers became three people.
-  if (stillBuilding(item)) {
-    const who = state.team.developers.find((d) => d.id === item.pulledBy);
-    return who ? `${who.name} is building it` : 'Being built';
-  }
   if (!isDesignDone(item, currentDesign(item), homeSizeOf(item, state.backlog))) return 'Next: build it on the park';
   const left = (item.acceptance ?? []).filter((_, i) => !acSettled(item, i)).length;
   if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
@@ -1926,12 +1822,6 @@ export function startItem(state: ZooGameState, id: string, by?: string, devId?: 
   // finish your work for you.
   const taker = devId ? state.team.developers.find((d) => d.id === devId) : undefined;
   const mine = taker ?? yourDev(state);
-  // ...and how long it will take them. Priced the moment they take it on, at the pace they are
-  // going at now, because that is the moment a team commits to a piece of work - and re-pricing it
-  // every second as the measurement moved would mean a card got further from finished the longer
-  // you watched it. Nothing is priced for you: what yours costs is however long you spend on it,
-  // which is the honest version and the one the day clock already charges you for.
-  const owed = taker ? workOwed(state, item, taker.id) : undefined;
   // Taking work into Doing is the moment the Developers take it ON, and it is the one moment every
   // route through the game passes through - dragged to Doing, started from the park, or picked up
   // by a seat played by the game. So it is where the work's cost is written down.
@@ -1944,7 +1834,7 @@ export function startItem(state: ZooGameState, id: string, by?: string, devId?: 
   const moved: ZooGameState = { ...state, pendingPlacement: pending,
     backlog: state.backlog.map((it) => (it.id === id
       ? { ...it, started: true, startedDay: state.dayNumber,
-        pulledBy: mine?.id, owedSeconds: owed, workSeconds: owed,
+        pulledBy: mine?.id,
         assignedDevs: (it.assignedDevs ?? []).length ? it.assignedDevs : (mine ? [mine.id] : []) }
       : it)) };
   // Taking work into Doing is a decision, and the Retrospective reads it back. Only the Developers
@@ -3260,18 +3150,6 @@ export function sendItemBack(state: ZooGameState, id: string, by?: string): ZooG
     status: 'committed' as const,
     draftDesign: it.design ?? it.draftDesign,
     design: undefined,
-    // ...and it costs the time again.
-    //
-    // This said "finishing it again costs Sprint time" and it did not: the owed seconds had
-    // already been counted down to nought, so a colleague rebuilt it on the next beat, for
-    // nothing, and asked again immediately. Reported as "when I reject them they are immediately
-    // submitted for approval again" - which is what a rejection with no cost looks like.
-    //
-    // Only a card a colleague is holding has owed seconds. What YOURS costs is however long you
-    // spend on it, which the day's clock already charges you for.
-    owedSeconds: it.owedSeconds !== undefined || it.workSeconds !== undefined
-      ? (it.workSeconds ?? workOwed(state, it, it.pulledBy ?? ''))
-      : undefined,
     // Counted, and kept after the rebuild clears the rest: doing something twice is capacity that
     // did not go into anything new, whether or not the item still says it came back.
     sentBackTimes: (it.sentBackTimes ?? 0) + 1,

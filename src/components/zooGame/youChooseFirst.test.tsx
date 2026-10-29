@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { initialZooState, DAY_SECONDS } from './config';
-import { startItem, yourDev, otherDevs, heldBy } from './engine';
-import { aiDevTurn } from './aiSeats';
+import { yourDev } from './engine';
 import { SeatBand } from './SeatBand';
 import type { ZooGameState } from './types';
 
@@ -118,56 +117,3 @@ describe('and you can say what to call you', () => {
   });
 });
 
-describe('the person at the table chooses first', () => {
-  it('so nobody pulls while you have nothing in hand', () => {
-    const s = sprint();
-    for (const dev of otherDevs(s)) {
-      expect(aiDevTurn(s, dev)?.action.type, `${dev.name} reached across you for a card`)
-        .not.toBe('START_ITEM');
-    }
-  });
-
-  it('and they get on with it once you have', () => {
-    // Waiting forever would be worse than not waiting: the point is that you choose first, not
-    // that two Developers stand about until you finish.
-    const top = sprint().backlog.find((it) => it.status === 'committed')!;
-    const s = startItem(sprint(), top.id);
-    const [ben] = otherDevs(s);
-    expect(aiDevTurn(s, ben)?.action.type, 'they are still waiting after you took one')
-      .toBe('START_ITEM');
-  });
-
-  it('and they take from the bottom of the Sprint Backlog, not the top', () => {
-    // The Product Backlog is ordered by value and the Sprint Backlog keeps that order, so the top
-    // is the thing worth doing most - the enclosure, not the toilets. It is still there when you
-    // come back to the board.
-    const s = sprint();
-    const top = s.backlog.find((it) => it.status === 'committed')!;
-    const mine = startItem(s, top.id);
-    const left = mine.backlog.filter((it) => it.status === 'committed' && !it.started);
-    expect(left.length, 'there is only one card left, so the order cannot be tested').toBeGreaterThan(1);
-
-    const [ben] = otherDevs(mine);
-    const move = aiDevTurn(mine, ben)!;
-    expect((move.action as { id: string }).id, 'he took the most valuable thing on the board')
-      .toBe(left[left.length - 1].id);
-    expect((move.action as { id: string }).id).not.toBe(left[0].id);
-  });
-
-  it('and what they leave is what you are offered next', () => {
-    const s = sprint();
-    const top = s.backlog.find((it) => it.status === 'committed')!;
-    let after = startItem(s, top.id);
-    const [ben, cara] = otherDevs(after);
-    for (const dev of [ben, cara]) {
-      const move = aiDevTurn(after, dev);
-      if (move?.action.type === 'START_ITEM') {
-        after = startItem(after, (move.action as { id: string }).id, 'developer', dev.id);
-      }
-    }
-    const held = otherDevs(after).map((d) => heldBy(after, d.id)?.name);
-    expect(held.filter(Boolean).length, 'neither of them took anything').toBe(2);
-    expect(held, 'one of them took the card at the top of the Sprint Backlog')
-      .not.toContain(top.name);
-  });
-});

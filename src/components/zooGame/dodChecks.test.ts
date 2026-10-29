@@ -3,6 +3,7 @@ import { checkDodLine, dodKind, dodVerdicts } from './dodChecks';
 import { DEFAULT_DOD, DOD_LIBRARY, initialZooState } from './config';
 import { reducer } from './useZooGame';
 import { aiTurn } from './aiSeats';
+import { developersTurn } from './playTheDevelopers';
 import { mayTake } from './seatRules';
 import type { ZooGameState, BacklogItem, ZooAction } from './types';
 import type { SeatName } from './useZooSessions';
@@ -133,7 +134,7 @@ describe('increment one changes nothing about what Done costs', () => {
       for (let i = 0; i < limit; i += 1) {
         let moved = false;
         for (const seat of AI) {
-          const m = aiTurn(s, seat);
+          const m = seat === 'developer' ? developersTurn(s) : aiTurn(s, seat);
           if (!m || !mayTake(m.action.type, { seat }).allowed) continue;
           s = reducer(s, m.action); moved = true; break;
         }

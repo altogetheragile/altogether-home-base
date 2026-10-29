@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import { reducer } from './useZooGame';
 import { aiTurn } from './aiSeats';
+import { developersTurn } from './playTheDevelopers';
 import { mayTake } from './seatRules';
 import type { ZooGameState, ZooAction } from './types';
 import type { SeatName } from './useZooSessions';
@@ -30,7 +31,7 @@ describe('a Sprint, played through to the Review', () => {
       for (let i = 0; i < limit; i += 1) {
         let moved = false;
         for (const seat of AI) {
-          const m = aiTurn(s, seat);
+          const m = seat === 'developer' ? developersTurn(s) : aiTurn(s, seat);
           if (!m || !mayTake(m.action.type, { seat }).allowed) continue;
           s = reducer(s, m.action); moved = true; break;
         }

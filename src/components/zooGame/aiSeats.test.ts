@@ -1,10 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { initialZooState, DAY_SECONDS } from './config';
+import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, isReady, suggestTasks, sprintCapacity, teamIsBusy, enclosureReady, pokerHand } from './engine';
-import { enclosureWater, enclosureFlora, designSatisfiesTask } from './design';
-import { aiTurn, aiDesign } from './aiSeats';
+import { splitEpic, pokerHand } from './engine';
+import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
 // only does its own job, that it says why, and - the one that would really bite - that a
@@ -18,14 +17,6 @@ const withWork = (seed = 1): ZooGameState =>
 const at = (over: Partial<ZooGameState>, seed = 1): ZooGameState => ({ ...withWork(seed), ...over });
 
 describe('a seat nobody is sitting in', () => {
-  it('has the Developers size the work, and say the number', () => {
-    const s = at({ phase: 'refine' });
-    const move = aiTurn(s, 'developer');
-    expect(move, 'the Developers had nothing to size').not.toBeNull();
-    expect(move!.action.type).toBe('ESTIMATE_ITEM');
-    expect(move!.says, 'the seat applied a number without saying it').toMatch(/sized .* at \d+/);
-  });
-
   it('does not let the Product Owner size the work', () => {
     // The gate would refuse it anyway, but a seat that keeps trying something it may not do
     // would sit there proposing refused moves forever.
@@ -52,20 +43,15 @@ describe('a seat nobody is sitting in', () => {
     expect(aiTurn(s, 'scrum_master')).toBeNull();
   });
 
-  it('will not let one person decree the Sprint Goal', () => {
-    // "A PO can propose a Sprint Goal, but the Scrum Team must all agree." The Guide: the
-    // Product Owner proposes how the product could increase in value, and the whole Scrum
-    // Team then collaborates to define the Goal. So a typed sentence is a proposal.
-    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
-    expect(s.sprintGoalAgreed, 'writing it counted as agreeing to it').toHaveLength(0);
-
-    for (const seat of ['developer', 'scrum_master', 'product_owner'] as const) {
-      const move = aiTurn(s, seat);
-      expect(move, `the ${seat} never said whether they agreed`).not.toBeNull();
-      expect(move!.action.type).toBe('AGREE_SPRINT_GOAL');
-      s = reducer(s, move!.action);
+  it('never plays the Developers, at any point in the game', () => {
+    // Al, 29 Oct 2026: "The AI building is just too clunky. Let a player take all the roles." The
+    // game sizes nothing, forecasts nothing, plans nothing and builds nothing.
+    for (const phase of ['refine', 'planning', 'sprint', 'review', 'retro'] as const) {
+      for (const dayStage of ['building', 'dailyScrum'] as const) {
+        const s = at({ phase, dayStage, sprintGoal: 'Open the Big Cats zone', planningTopic: 'what' });
+        expect(aiTurn(s, 'developer'), `the game played the Developers in ${phase}`).toBeNull();
+      }
     }
-    expect(s.sprintGoalAgreed.sort()).toEqual(['developer', 'product_owner', 'scrum_master']);
   });
 
   it('clears the agreement when the wording changes', () => {
@@ -85,304 +71,13 @@ describe('a seat nobody is sitting in', () => {
     expect(s.sprintGoalAgreed, 'trimming whitespace threw the agreement away').toHaveLength(1);
   });
 
-  it('gets a lone Product Owner through Sprint Planning', () => {
-    // The reported deadlock. Sitting as Product Owner, topic three needs steps, SET_TASKS is
-    // the Developers' and correctly refused - so with nobody in those seats the game sat on
-    // "5 items have no steps yet" forever and Start Sprint stayed disabled.
-    //
-    // Played as the event now runs: the Product Owner agrees their own Goal, and the seats work
-    // through the topics in order rather than doing all three at once. Both accountabilities take
-    // turns here, because it is the Scrum Master who moves the agenda on.
-    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
-    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' });
-    const moves: string[] = [];
-    for (let i = 0; i < 200; i += 1) {
-      const move = aiTurn(s, 'developer') ?? aiTurn(s, 'scrum_master');
-      if (!move) break;
-      moves.push(move.action.type);
-      s = reducer(s, move.action);
-    }
-    expect(moves, 'the Developers never selected anything').toContain('SET_FORECAST');
-    expect(moves, 'the Developers never planned the steps').toContain('SET_TASKS');
-    expect(s.forecast.length, 'nothing was forecast').toBeGreaterThan(0);
-    const unplanned = s.backlog.filter((it) => s.forecast.includes(it.id) && !(it.tasks ?? []).some((t) => t.label.trim()));
-    expect(unplanned, 'items were left without steps, so Start Sprint stays disabled').toHaveLength(0);
-  });
-
-  /** Sizing is refinement and belongs to no topic, so it happens whenever there is something
-   *  unsized. These tests are about the three topics, so settle it first and out of the way. */
-  const sized = (s0: ZooGameState): ZooGameState => {
-    let s = s0;
-    for (let i = 0; i < 50; i += 1) {
-      const m = aiTurn(s, 'developer');
-      if (m?.action.type !== 'ESTIMATE_ITEM') return s;
-      s = reducer(s, m.action);
-    }
-    throw new Error('the Developers never finished sizing');
-  };
-
-  it('does topic two\u2019s work at topic two, and not before', () => {
-    // Reported from a game: the rail said the Developers had chosen the work and written the
-    // steps for it while the screen was still on topic one, asking the Product Owner to agree
-    // the Sprint Goal - and the panel beside it said nothing was forecast yet. They had selected
-    // against a Goal that had only been proposed.
-    let s = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone' });
-    expect(s.planningTopic ?? 'why', 'this test needs to start at topic one').toBe('why');
-
-    // The Developers agree, and then stop, because agreeing is what topic one is for. Sizing is
-    // refinement and belongs to no topic, so it is settled first and out of the way.
-    const first = aiTurn(s, 'developer');
-    expect(first?.action.type).toBe('AGREE_SPRINT_GOAL');
-    s = sized(reducer(s, first!.action));
-    expect(aiTurn(s, 'developer'), 'they selected the work while the Goal was still only proposed').toBeNull();
-
-    // ...and they stay stopped once the Scrum Master agrees, because the Product Owner has not.
-    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'scrum_master' });
-    expect(aiTurn(s, 'developer'), 'two out of three agreeing was treated as the team agreeing').toBeNull();
-
-    // The Product Owner agrees. Now the Scrum Master moves the event on, and only then do they
-    // select - which is the order the three topics are in.
-    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' });
-    expect(aiTurn(s, 'developer'), 'they selected before the team had moved off topic one').toBeNull();
-    const moveOn = aiTurn(s, 'scrum_master');
-    expect(moveOn?.action).toEqual({ type: 'SET_PLANNING_TOPIC', topic: 'what' });
-    s = reducer(s, moveOn!.action);
-
-    const select = aiTurn(s, 'developer');
-    expect(select?.action.type, 'nobody selected anything at topic two').toBe('SET_FORECAST');
-    s = reducer(s, select!.action);
-    // Still nothing written about how: that is topic three, and the team is not there yet.
-    expect(aiTurn(s, 'developer'), 'the steps were written while the team was still choosing the work').toBeNull();
-
-    const onToHow = aiTurn(s, 'scrum_master');
-    expect(onToHow?.action).toEqual({ type: 'SET_PLANNING_TOPIC', topic: 'how' });
-    s = reducer(s, onToHow!.action);
-    expect(aiTurn(s, 'developer')?.action.type, 'nobody planned the steps at topic three').toBe('SET_TASKS');
-  });
-
-  it('leaves a Product Owner alone when they walk back to re-read the Goal', () => {
-    // The agenda only moves forwards, and each move fires once. Otherwise looking back at topic
-    // one would be a fight with the Scrum Master rather than a look back.
-    let s = sized(at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone',
-      sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'], planningTopic: 'what' }));
-    const select = aiTurn(s, 'developer')!;
-    expect(select.action.type).toBe('SET_FORECAST');
-    s = reducer(s, select.action);
-    expect(s.forecast.length, 'nothing was forecast, so this proves nothing').toBeGreaterThan(0);
-    s = reducer(s, { type: 'SET_PLANNING_TOPIC', topic: 'why' });   // the Product Owner looks back
-    expect(aiTurn(s, 'scrum_master'), 'the Scrum Master dragged them forward again').toBeNull();
-  });
-
-  it('does not wait on a seat nobody is holding', () => {
-    // An empty seat cannot agree to anything. Waiting for all three regardless would leave the
-    // Developers waiting forever on a chair.
-    const s = sized(at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone',
-      sprintGoalAgreed: ['developer', 'product_owner'], planningTopic: 'what' }));
-    expect(aiTurn(s, 'developer', ['developer', 'product_owner'])?.action.type,
-      'the Developers waited on a Scrum Master seat nobody was in').toBe('SET_FORECAST');
-  });
-
-  it('lets every seat get a turn, rather than one starving the others', () => {
-    // The reported symptom: Developers and Product Owner agreed, the Scrum Master sat on
-    // "waiting" forever. The cause was upstream - an AI move was judged against whoever was
-    // sitting at the browser, so every Developer action was refused while a human held the
-    // Product Owner seat, and the loop returned on that seat every tick without ever
-    // reaching the Scrum Master. This pins the sequence the loop is supposed to produce.
-    const ai = ['developer', 'scrum_master'] as const;
-    let s: ZooGameState = { ...withWork(1), phase: 'planning', sprintGoal: 'Open the Grounds zone' };
-    s = reducer(s, { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' });
-    for (let i = 0; i < 60; i += 1) {
-      let took = null;
-      for (const seat of ai) { const m = aiTurn(s, seat); if (m) { took = m; break; } }
-      if (!took) break;
-      s = reducer(s, took.action);
-    }
-    expect(s.sprintGoalAgreed.sort(), 'somebody never got to agree')
-      .toEqual(['developer', 'product_owner', 'scrum_master']);
-  });
-
-  it('finishes every item in a Sprint, whatever kind it is', () => {
-    // Reported twice. First they pulled work and never built it, so a Sprint ended with
-    // nothing Done. Then everything finished except a path - because the build was gated on
-    // the design being incomplete, and a path's preset already meets its own criteria, so it
-    // looked finished, was never built, never had a design stored, and could not leave Doing.
-    // Nothing about that was the route it gets drawn on the park.
-    let s: ZooGameState = withWork(1);
-    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
-    const take = s.backlog.filter((x) => x.status === 'backlog' && isReady(x)).slice(0, 6);
-    // The plans the Developers would actually have written at topic three, unticked.
-    for (const it of take) s = reducer(s, { type: 'SET_TASKS', id: it.id, tasks: suggestTasks(it) });
-    s = planSprint({ ...s, phase: 'planning' }, take.map((x) => x.id));
-
-    // Both seats, because neither can finish anything alone: the Developers build it and the
-    // Product Owner accepts it, and Done is the two of them agreeing that it is.
-    let moves = 0;
-    for (let i = 0; i < 400; i += 1) {
-      const m = aiTurn(s, 'developer') ?? aiTurn(s, 'product_owner');
-      if (!m) break;
-      // The clock is kept full: this is about whether every KIND of item can be finished, and a
-      // day running out partway through is a true thing about days that would say nothing about
-      // that. The day running out is held in sprintClock.test.ts.
-      s = { ...reducer(s, m.action), daySecondsLeft: DAY_SECONDS };
-      moves += 1;
-    }
-    expect(moves, 'the seats looped instead of finishing').toBeLessThan(400);
-
-    const worked = s.backlog.filter((x) => take.some((t) => t.id === x.id));
-    const unfinished = worked.filter((x) => x.status !== 'done' && x.status !== 'open');
-    expect(unfinished.map((x) => `${x.category}:${x.name}`), 'these never left Doing').toEqual([]);
-    expect(worked.length).toBeGreaterThan(3);
-    // and a category that finished did so with a design that meets its own criteria
-    for (const it of worked) {
-      expect(it.design, `${it.name} reached Done with no design`).toBeTruthy();
-    }
-  });
-
-  it('does not forecast an animal without the habitat it cannot start without', () => {
-    // Reported from a game, and read out of its state: the Lion Enclosure came back from Sprint
-    // one re-sized at one point, capacity was eight, the Lion was eight - so the Lion went in
-    // first, the one-point enclosure it needs did not fit after it, and Sprint two was a Sprint
-    // Backlog of one item nobody could start. Three days of nothing.
-    //
-    // Built as that Backlog and no other, because with a fuller one the Developers find
-    // something startable by luck and the test passes while the fault is still there.
-    const base = at({ phase: 'planning', sprintGoal: 'Open the Big Cats zone',
-      sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'], planningTopic: 'what' });
-    const lion = { ...base.backlog.find((x) => x.id === 'lion')!, estimate: 8, unsized: false, status: 'backlog' as const };
-    const home = { ...base.backlog.find((x) => x.id === 'lion-enc')!, estimate: 1, unsized: false, status: 'backlog' as const,
-      carriedOver: true, started: true, design: { parts: {}, colors: { ground: '#8c7a5b', fence: '#6b5b45' } } };
-    const s: ZooGameState = { ...base, velocity: [8], backlog: [lion, home] };
-    expect(sprintCapacity(s).points, 'this test needs the pair to be a tight fit').toBe(8);
-
-    const move = aiTurn(s, 'developer')!;
-    expect(move.action.type).toBe('SET_FORECAST');
-    const ids = (move.action as { ids: string[] }).ids;
-    expect(ids.length, 'they forecast nothing at all').toBeGreaterThan(0);
-
-    // Whatever they took, they can start something. A Sprint Backlog nobody can begin is three
-    // days of watching a board that will not move.
-    const committed: ZooGameState = { ...s, backlog: s.backlog.map((x) => (ids.includes(x.id) ? { ...x, status: 'committed' as const } : x)) };
-    const canStart = committed.backlog.filter((x) => x.status === 'committed' && enclosureReady(committed, x));
-    expect(canStart.map((x) => x.name), 'nothing in the Sprint Backlog could be started at all').not.toEqual([]);
-    if (ids.includes('lion')) expect(ids, 'the Lion went in without its enclosure').toContain('lion-enc');
-  });
-
-  it('does not propose starting an animal whose habitat is not built', () => {
-    // The loop this caused: START_ITEM on an animal is refused by the engine while its
-    // enclosure is unbuilt, so the item stayed unstarted and the same move came back every
-    // tick, forever. The animal has to be the ONLY thing left to pull, or the Developers
-    // simply reach for the habitat first and the guard is never exercised.
-    let s: ZooGameState = withWork(1);
-    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
-    const animal = s.backlog.find((x) => x.category === 'exhibit' && isReady(x))!;
-    s = reducer(s, { type: 'SET_TASKS', id: animal.id, tasks: [{ id: 't1', label: 'do it', done: true }] });
-    s = planSprint({ ...s, phase: 'planning' }, [animal.id]);   // the animal, and nothing else
-
-    const move = aiTurn(s, 'developer');
-    expect(move, 'they proposed starting an animal with nowhere to live').toBeNull();
-
-    // ...and once its habitat exists they take it.
-    const withHome = { ...s, backlog: s.backlog.map((it) =>
-      it.id === animal.enclosureId ? { ...it, status: 'open' as const } : it) };
-    expect(aiTurn(withHome, 'developer')?.action.type).toBe('START_ITEM');
-  });
-
-  it('still forecasts after a Sprint that delivered nothing', () => {
-    // Velocity is measured, so a Sprint that delivered nothing leaves a capacity of zero.
-    // Taking only what fits inside zero is taking nothing, so the Developers forecast
-    // nothing - and a team that had one bad Sprint could never start another. Reported as a
-    // Planning screen stuck on "0 items in this Sprint, 0 / 0 pts".
-    let s: ZooGameState = withWork(1);
-    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
-    s = { ...s, phase: 'planning', sprintNumber: 2, velocity: [0],
-          sprintGoal: 'Open the Big Cats zone',
-          sprintGoalAgreed: ['developer', 'scrum_master', 'product_owner'],
-          // Selecting work is topic two's business, and this is a test about selecting work.
-          planningTopic: 'what' };
-    expect(sprintCapacity(s).points, 'this test is not exercising a zero capacity').toBe(0);
-
-    const move = aiTurn(s, 'developer');
-    expect(move?.action.type, 'the Developers forecast nothing, so Planning cannot move on').toBe('SET_FORECAST');
-    expect((move!.action as { ids: string[] }).ids.length).toBeGreaterThan(0);
-    expect(move!.says, 'they did not say why they were guessing').toMatch(/no velocity/i);
-  });
-
-  it('builds what the plan says it built', () => {
-    // Reported from a game: "Lay the ground, shelter and water" ticked itself on a bare hatched
-    // box - the ground was painted and there was no shelter and no water anywhere in it. Three
-    // things promised, one done, and the tick said otherwise.
-    const habitat = withWork(1).backlog.find((it) => it.category === 'enclosure')!;
-    const design = aiDesign(habitat);
-    expect(enclosureWater(design).length, 'a habitat with no water in it').toBeGreaterThan(0);
-    expect(enclosureFlora(design).length, 'a habitat with nothing growing in it').toBeGreaterThan(0);
-    expect(designSatisfiesTask(habitat, design, 'Lay the ground, shelter and water')).toBe(true);
-
-    // ...and the ground on its own does not tick it any more.
-    const bare = { ...design, water: [], flora: [] };
-    expect(designSatisfiesTask(habitat, bare, 'Lay the ground, shelter and water'),
-      'a bare box ticked off the shelter and the water').toBe(false);
-  });
-
-  it('never says the work is Done, because that is not theirs to say', () => {
-    // Reported from a game: "Built Big Cats Planting to the Definition of Done" while four
-    // acceptance criteria sat untouched and the card said "accept 4 more criteria". Done is the
-    // whole team's word and it waits on the Product Owner's, so the Developers saying it is
-    // both wrong and the wrong lesson.
-    let s = at({ phase: 'sprint', dayStage: 'building' });
-    const item = s.backlog.find((it) => it.category === 'enclosure')!;
-    s = { ...s, daySecondsLeft: DAY_SECONDS, backlog: s.backlog.map((it) => (it.id === item.id
-      ? { ...it, status: 'committed' as const, sprintNumber: s.sprintNumber, started: true, unsized: false, estimate: 3 } : it)) };
-
-    const move = aiTurn(s, 'developer')!;
-    expect(move.action.type).toBe('BUILD_ITEM');
-    expect(move.says, 'the Developers declared something Done that nobody had accepted')
-      .not.toMatch(/definition of done|\bis Done\b/i);
-    expect(move.says, 'they did not say what they had actually done').toMatch(/^Built /);
-  });
-
-  it('finishes what it took on before it takes anything else', () => {
-    // These two used to be about the day being able to AFFORD a build: work was priced in seconds
-    // of day, and a day with five seconds left could not take an eight point item. That pricing is
-    // gone - it paced a Sprint correctly and was a timer you sat and watched - so what paces the
-    // seats now is the same thing that paces a person: finish the thing in your hands.
-    let s: ZooGameState = withWork(1);
-    for (const it of s.backlog.filter((x) => x.unsized)) s = reducer(s, { type: 'ESTIMATE_ITEM', id: it.id, points: it.trueSize ?? 3 });
-    const take = s.backlog.filter((x) => x.status === 'backlog' && isReady(x)).slice(0, 4);
-    for (const it of take) s = reducer(s, { type: 'SET_TASKS', id: it.id, tasks: suggestTasks(it) });
-    s = planSprint({ ...s, phase: 'planning' }, take.map((x) => x.id));
-
-    const started = { ...s, backlog: s.backlog.map((it) =>
-      (it.id === take[0].id ? { ...it, started: true } : it)) };
-    expect(teamIsBusy(started), 'work was taken on and nobody was working').toBe(true);
-    expect(aiTurn(started, 'developer')?.action.type,
-      'they took something else on with a card half built in their hands').toBe('BUILD_ITEM');
-
-    const built = { ...started, backlog: started.backlog.map((it) =>
-      (it.id === take[0].id ? { ...it, design: { parts: {}, colors: {} } } : it)) } as ZooGameState;
-    expect(teamIsBusy(built), 'the work was built and the team was still busy with it').toBe(false);
-  });
-
-  it('runs out of things to do instead of looping', () => {
-    // The property that matters most: each move has to make its own condition stop holding,
-    // or a seat sits there sizing the same item forever and burns a session down.
-    let s = at({ phase: 'refine' });
-    let moves = 0;
-    for (let i = 0; i < 500; i += 1) {
-      const move = aiTurn(s, 'developer');
-      if (!move) break;
-      s = reducer(s, move.action);
-      moves += 1;
-    }
-    expect(moves, 'the Developers had nothing to do at all').toBeGreaterThan(0);
-    expect(moves, 'the seat looped instead of finishing').toBeLessThan(500);
-    expect(aiTurn(s, 'developer'), 'it should be finished once everything is sized').toBeNull();
-  });
-
   it('stays deterministic, so a trainer can still replay a seed', () => {
     // The plan worried that AI seats would cost the reproducibility a shared debrief leans
     // on. These ones do not: same seed, same state, same move.
-    const a = aiTurn(at({ phase: 'refine' }), 'developer')!;
-    const b = aiTurn(at({ phase: 'refine' }), 'developer')!;
+    const review = () => at({ phase: 'review', signals: [{ suggestion: 'Somewhere to eat', drivenBy: 'food', estimatedValue: 'high' }] });
+    const a = aiTurn(review(), 'product_owner')!;
+    const b = aiTurn(review(), 'product_owner')!;
+    expect(a, 'the Product Owner had nothing to do, so nothing is being tested').toBeTruthy();
     expect(a).toEqual(b);
     // A different seed deals a different hand. Whether it lands on a different NUMBER is a
     // different question: the Fibonacci scale has 1, 2 and 3 at the small end, and most items in

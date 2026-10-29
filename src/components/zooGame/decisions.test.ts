@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { initialZooState } from './config';
 import { reducer } from './useZooGame';
 import { aiTurn } from './aiSeats';
+import { developersTurn } from './playTheDevelopers';
 import { mayTake } from './seatRules';
 import { decisionsIn, sprintProgress, sprintCapacity, goalMeasures, nextNudge, retroQuestions } from './engine';
 import type { ZooGameState, ZooAction, TeamDecision } from './types';
@@ -23,7 +24,7 @@ function playSprint(seed = 7, during: (s: ZooGameState) => ZooAction[] = () => [
     for (let i = 0; i < limit; i += 1) {
       let moved = false;
       for (const seat of AI) {
-        const m = aiTurn(s, seat);
+        const m = seat === 'developer' ? developersTurn(s) : aiTurn(s, seat);
         if (!m || !mayTake(m.action.type, { seat }).allowed) continue;
         s = reducer(s, m.action); moved = true; break;
       }

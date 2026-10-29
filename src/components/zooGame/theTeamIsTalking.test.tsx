@@ -1,19 +1,15 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, renderHook } from '@testing-library/react';
-import { act } from 'react';
+import { describe, it, expect } from 'vitest';
+import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { initialZooState, DAY_SECONDS } from './config';
 import {
   say, speaking, askIfDue, answerQuestion, guessUnanswered, startNextSprint, tickDay,
-  otherDevs, QUESTION_PATIENCE, CHAT_KEPT, startItem,
+  otherDevs, QUESTION_PATIENCE, CHAT_KEPT,
 } from './engine';
 import { reducer } from './useZooGame';
-import { aiDevTurn } from './aiSeats';
-import { useAiSeats } from './useZooSession';
-import type { SeatName } from './useZooSessions';
 import { TeamChat } from './TeamChat';
 import { SEAT } from './seats';
-import type { ZooGameState, ZooAction, ScrumTeamMember } from './types';
+import type { ZooGameState } from './types';
 
 // The team, talking.
 //
@@ -169,106 +165,6 @@ describe('taking a card', () => {
     const nothing = s.backlog.find((it) => it.status === 'backlog')!;
     const after = reducer(s, { type: 'START_ITEM', id: nothing.id });
     expect(after.chat ?? [], 'the team announced work it never started').toHaveLength(0);
-  });
-});
-
-describe('nobody says their own name', () => {
-  // They used to - "Cara: taking Signposts next" - from the days when a line had nowhere to say
-  // who was speaking. The bubble is signed now, so the prefix left Cara talking about herself in
-  // the third person.
-  it('because the bubble is already signed', () => {
-    const s = sprint();
-    const [ben] = otherDevs(s);
-    const free = s.backlog.filter((it) => it.status === 'backlog'
-      && !['epic', 'exhibit'].includes(it.category) && !it.unsized).slice(0, 3);
-    expect(free.length, 'there is nothing for anybody to pull').toBeGreaterThan(1);
-    const open = { ...s, wipLimit: 0, backlog: s.backlog.map((it) => (free.some((f) => f.id === it.id)
-      ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
-    // You take one first: a colleague waits for the person at the table to choose before they
-    // reach across for anything. `theOtherDevsAreWorking` is where that rule is held.
-    const ready = startItem(open, free[0].id);
-    const names = s.team.developers.map((d) => d.name);
-    // Every line any of them would say, over a Sprint's worth of states.
-    let walk = ready;
-    const lines: string[] = [];
-    for (let i = 0; i < 40; i += 1) {
-      // Time passing, without spending a day on it: the owed seconds are what the day's clock
-      // counts down, and this test is about the words rather than about the pacing.
-      walk = { ...walk, backlog: walk.backlog.map((it) => ({ ...it, owedSeconds: 0 })) };
-      const move = aiDevTurn(walk, ben);
-      if (!move) break;
-      lines.push(move.says);
-      walk = reducer(walk, move.action);
-    }
-    expect(lines.length, 'nobody said anything, so nothing is being tested').toBeGreaterThan(1);
-    for (const line of lines) {
-      // Their OWN name. Naming a colleague is ordinary speech - "I will give Ada a hand with the
-      // Lion Enclosure" is exactly how somebody offers to help - and banning every name would be
-      // the rule applied past the point it means anything.
-      expect(line, `${ben.name} said their own name: "${line}"`).not.toContain(ben.name);
-    }
-    expect(names.length, 'there is nobody else on the team to name').toBeGreaterThan(1);
-  });
-});
-
-describe('the beat, putting it in the thread', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
-  /** One pass of the table, with nothing applied: just what it tried to send. */
-  const run = (state: ZooGameState, alongside: ScrumTeamMember[]) => {
-    const sent: ZooAction[] = [];
-    const session = { state, drivesClock: true,
-      sendAs: (_seat: SeatName, action: ZooAction) => { sent.push(action); } };
-    renderHook(() => useAiSeats(session as never, [], { alongside }));
-    act(() => { vi.advanceTimersByTime(4000); });
-    return sent;
-  };
-
-  it('says what a seat played by the game is about to do', () => {
-    // These lines existed long before there was anywhere to keep them. They were rendered in a
-    // shared session only, on a card that vanished after a few seconds.
-    const s = sprint();
-    const [ben] = otherDevs(s);
-    // Ben's card, and the time it cost already spent, so the next thing he does is build it.
-    const his = { ...s, backlog: s.backlog.map((it) => (it.started
-      ? { ...it, pulledBy: ben.id, assignedDevs: [ben.id], owedSeconds: 0 } : it)) } as ZooGameState;
-    const sent = run(his, [ben]);
-    expect(sent.some((a) => a.type === 'BUILD_ITEM'), 'he built nothing, so nothing is being tested')
-      .toBe(true);
-    const said = sent.filter((a) => a.type === 'SAY');
-    expect(said.length, 'the team worked in silence').toBeGreaterThan(0);
-    expect(said[0]).toMatchObject({ who: 'developer', from: ben.name });
-  });
-
-  it('holds a pull up rather than making it, and says nothing twice', () => {
-    // Two rules meeting on one move.
-    //
-    // A pull the engine refuses - no room under the WIP limit, a habitat not built yet - is not a
-    // thing that happened, and a thread announcing refused moves is a thread nobody can trust. The
-    // reducer is the only one that knows, so it does the talking and the beat keeps quiet.
-    //
-    // And a pull is a card movement, so it is asked before it is made: the beat sends the
-    // PROPOSAL and the move itself waits on you. What the Developer would have said travels on
-    // it - the same sentence, said while asking instead of while doing.
-    const s = sprint();
-    const [ben] = otherDevs(s);
-    const free = s.backlog.filter((it) => it.status === 'backlog'
-      && !['epic', 'exhibit'].includes(it.category) && !it.unsized).slice(0, 3);
-    expect(free.length, 'there is nothing left for Ben to pull').toBeGreaterThan(1);
-    const open = { ...s, wipLimit: 0,
-      backlog: s.backlog.map((it) => (free.some((f) => f.id === it.id)
-        ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
-    // ...and you have already taken one, which is what Ben waits for before pulling.
-    const sent = run(startItem(open, free[0].id), [ben]);
-    expect(sent.some((a) => a.type === 'START_ITEM'),
-      'Ben moved a card without asking').toBe(false);
-    const asked = sent.find((a) => a.type === 'PROPOSE_MOVE');
-    expect(asked, 'nobody asked about anything, so nothing is being tested').toBeTruthy();
-    expect(asked).toMatchObject({ devId: ben.id, move: { kind: 'pull' } });
-    expect((asked as { says: string }).says, 'he held a card up and said nothing').toBeTruthy();
-    expect(sent.filter((a) => a.type === 'SAY'),
-      'the pull was announced twice: once by the beat and once by the reducer').toHaveLength(0);
   });
 });
 

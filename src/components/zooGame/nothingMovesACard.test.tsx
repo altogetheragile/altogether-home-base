@@ -1,13 +1,11 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, fireEvent, renderHook, act } from '@testing-library/react';
+import { describe, it, expect, vi } from 'vitest';
+import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ActionRail } from './ActionRail';
 import { initialZooState } from './config';
-import { startItem, tickDay, endDay, proposeMove, agreeMove, declineMove, waitingOnYou,
+import { tickDay, endDay, proposeMove, agreeMove, declineMove, waitingOnYou,
   wasTurnedDown, otherDevs, ASKS_FIRST } from './engine';
-import { useAiSeats, asProposed } from './useZooSession';
-import type { ZooGameState, ZooAction, ScrumTeamMember } from './types';
-import type { SeatName } from './useZooSessions';
+import type { ZooGameState } from './types';
 
 // Nothing moves a card but you, or somebody asking you first.
 //
@@ -147,35 +145,6 @@ describe('which moves have to be agreed', () => {
     expect(ASKS_FIRST.has('LEND_A_HAND')).toBe(false);
   });
 
-  it('names each of them as a move that can be written down', () => {
-    // A set with a type in it and no shape here would simply go through unasked, which is the one
-    // way these two can drift apart.
-    for (const type of ASKS_FIRST) {
-      const action = type === 'SET_FORECAST' ? { type, ids: ['a', 'b'] } : { type, id: 'a' };
-      expect(asProposed(action), `${type} is asked for and cannot be written down`).toBeTruthy();
-    }
-    expect(asProposed({ type: 'RUN_DAILY_SCRUM' }), 'an event was mistaken for a card movement').toBeNull();
-  });
-});
-
-describe('the beat', () => {
-  beforeEach(() => { vi.useFakeTimers(); });
-  afterEach(() => { vi.useRealTimers(); });
-
-  const run = (state: ZooGameState, alongside: ScrumTeamMember[]) => {
-    const sent: ZooAction[] = [];
-    renderHook(() => useAiSeats({ state, drivesClock: true,
-      sendAs: (_s: SeatName, a: ZooAction) => { sent.push(a); } } as never, [], { alongside }));
-    act(() => { vi.advanceTimersByTime(6000); });
-    return sent;
-  };
-
-  it('does nothing at all while a card is held up', () => {
-    const s = sprint();
-    const waiting = proposeMove(startItem(s, spare(s).id), ben(s).id,
-      { kind: 'pull', itemId: spare(s).id }, 'Taking it.');
-    expect(run(waiting, [ben(s)]), 'the team carried on while you were being asked').toEqual([]);
-  });
 });
 
 describe('the rail', () => {
