@@ -3813,8 +3813,10 @@ export function playTrainerCard(state: ZooGameState, card: PlayedCard): ZooGameS
     }] };
     return note(asked, { kind: 'trainer', by: 'trainer', what: `The trainer played "${card.title}", for the Product Owner.` });
   }
+  // A card the deck says lands on the Scrum Master goes to them directly: the one case they act
+  // first. Every other card is the team's to answer before anybody asks for help.
   const imp: Impediment = { id: `card-${card.id}-${state.sprintNumber}-${state.dayNumber}`,
-    title: card.title, detail: card.detail, kind: card.kind };
+    title: card.title, detail: card.detail, kind: card.kind, ...(card.landsOn === 'Scrum Master' ? { askedSm: true } : {}) };
   const led = { ...state, trainerLed: true };
   const now = state.dayStage === 'dailyScrum' && !state.pendingImpediment;
   const played = now
@@ -3975,10 +3977,37 @@ export function runDailyScrum(state: ZooGameState, by?: string): ZooGameState {
  *  All four conclude the Daily Scrum, because this IS the Daily Scrum's decision: the event is where
  *  it surfaced and the answer is what the team does about it today.
  */
+/** The Scrum Master's two answers. In a shared game they are only on the table once the Developers
+ *  have asked for help; the other two are the team's own. */
+export const SCRUM_MASTERS_ANSWERS: ReadonlySet<ImpedimentAnswer> = new Set(['remove', 'escalate']);
+
+/** Is what surfaced waiting on the team, rather than on the Scrum Master? Only ever in a shared
+ *  game: alone you are the whole team, and all four answers are yours at once. */
+export function teamAnswersFirst(state: ZooGameState): boolean {
+  return !!hatHolder(state) && !!state.pendingImpediment && !state.pendingImpediment.askedSm;
+}
+
+/** The Developers ask the Scrum Master to help with what surfaced. "The default is always ask the
+ *  team" (Al, 26 Oct 2026): the Scrum Master does not decide this unilaterally, they are asked. */
+export function askScrumMaster(state: ZooGameState, by?: string): ZooGameState {
+  const imp = state.pendingImpediment;
+  if (state.dayStage !== 'dailyScrum' || !imp || imp.askedSm) return state;
+  const sm = scrumMasterOf(state);
+  const asked = say({ ...state, pendingImpediment: { ...imp, askedSm: true } },
+    { who: 'you', from: 'You', kind: 'stand-up', text: `${plainName(sm.name)}, can you help with ${imp.title}? It is beyond us.` });
+  return note(asked, { kind: 'daily-scrum', by,
+    what: `Day ${state.dayNumber}: the Developers asked ${plainName(sm.name)} to help with ${imp.title}.`,
+    cost: 'nothing yet; the Scrum Master decides what to do about it' });
+}
+
+const plainName = (name: string): string => name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '');
+
 export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?: string): ZooGameState {
   if (state.dayStage !== 'dailyScrum') return state;
   const imp = state.pendingImpediment;
   if (!imp) return runDailyScrum(state, by);
+  // Not until they are asked.
+  if (SCRUM_MASTERS_ANSWERS.has(how) && teamAnswersFirst(state)) return state;
   const block = imp.kind === 'block';
   const goal = inTheWayOfTheGoal(state, imp);
 

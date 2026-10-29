@@ -3,7 +3,7 @@ import type { ZooGameState, ImpedimentAnswer, ChatKind } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
 import { DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS } from './config';
-import { sprintProgress, todaysDecision, inTheWayOfTheGoal, yourStandUp, goalAtRisk } from './engine';
+import { sprintProgress, todaysDecision, inTheWayOfTheGoal, yourStandUp, goalAtRisk, hatHolder, teamAnswersFirst } from './engine';
 import { Bubble } from './TeamChat';
 import { Burndown } from './Burndown';
 import { cn } from '@/lib/utils';
@@ -19,6 +19,9 @@ interface DailyScrumProps {
   onDrop?: (id: string) => void;
   /** What the Scrum Master does about what surfaced. Four answers, and the game charges each. */
   onAnswer?: (how: ImpedimentAnswer) => void;
+  /** In a shared game: the Developers ask whoever wears the Scrum Master hat to help. Until they do,
+   *  the two Scrum Master answers are not on the table. */
+  onAskScrumMaster?: () => void;
   /** Your own turn in the room. Chosen rather than typed, so what you say is something your own
    *  cards make true. */
   onSay?: (text: string, kind?: ChatKind) => void;
@@ -80,7 +83,14 @@ function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: stri
  *  real choice is whether you ADAPT to what it surfaced or carry on regardless (letting a
  *  blocker grow overnight). The timebox counts down; on expiry it adapts (the disciplined
  *  default), so you decide within the box. In learn mode the timebox is paused. */
-export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: DailyScrumProps) {
+export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrumMaster, onSay }: DailyScrumProps) {
+  // In a shared game the Scrum Master is a hat one of the Developers wears, and the team is asked
+  // first: "I'm not sure a SM unilaterally decides this - the default is always ask the team."
+  const viewer = useYou();
+  const hat = hatHolder(state);
+  const smName = hat?.name ?? '';
+  const teamFirst = teamAnswersFirst(state);
+  const smMine = !!hat && hat.id === viewer;
   // What does not fit, and whose call it is.
   //
   // Two different situations wear the same arithmetic. Work that will not fit while the Sprint
@@ -259,7 +269,9 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: D
                     ? (goalRisk
                       ? 'It is on work the Sprint Goal depends on, so it is not just one item\u2019s problem any more.'
                       : 'The Sprint Goal does not depend on it, and the Developers can clear their own blocks. Is this really yours?')
-                    : 'It is beyond what the Developers can sort out between themselves, which is what makes it yours.'}
+                    : hat
+                      ? `It is beyond what the Developers can sort out between themselves, which is ${teamFirst ? `a reason to ask ${smName} to help` : `why they asked ${smName}`}.`
+                      : 'It is beyond what the Developers can sort out between themselves, which is what makes it yours.'}
                 </div>
                 {/* Labelled the way slicing and velocity are. The Guide has impediments and says the
                     Scrum Master causes their removal; the block-versus-impediment split is a lens
@@ -273,9 +285,30 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: D
             </div>
           </div>
 
-          {/* Four answers, none forbidden, each with what it costs written on it. */}
+          {/* Four answers, none forbidden, each with what it costs written on it. In a shared game
+              they are two people's: the team's two first, and the Scrum Master's two once the team
+              has asked for help. */}
+          {hat && !teamFirst && (
+            <p data-part="asked-sm" className="text-xs text-muted-foreground">
+              {smMine
+                ? <>The Developers have asked you to help. As Scrum Master, it is your call: remove it, or escalate it.</>
+                : <>The Developers have asked {smName} to help. It is the Scrum Master&rsquo;s call now.</>}
+            </p>
+          )}
           <div data-part="answers" className="grid gap-2 sm:grid-cols-2">
-            {([
+            {(hat && teamFirst ? [
+              { how: 'team' as const, label: 'We will clear it ourselves',
+                cost: block ? 'about 5% of the day' : 'it is beyond us, and it grows overnight' },
+              { how: 'around' as const, label: 'We will work around it',
+                cost: 'a small cut today, and it is still there tomorrow' },
+              { how: 'ask' as const, label: `Ask ${smName} to help`,
+                cost: `the Scrum Master decides: remove it, or escalate it` },
+            ] : hat ? [
+              { how: 'remove' as const, label: smMine ? 'Remove it yourself' : `${smName} removes it`,
+                cost: block ? 'cleared, and they learn to wait for you' : 'cleared today, at about 10% of the day' },
+              { how: 'escalate' as const, label: smMine ? 'Escalate it' : `${smName} escalates it`,
+                cost: 'nothing today. It clears in a day or two, and nobody here solved it' },
+            ] : [
               { how: 'team' as const, label: 'Leave it to the Developers',
                 cost: block ? 'they clear it - about 5% of the day' : 'it is beyond them, and it grows overnight' },
               { how: 'remove' as const, label: 'Remove it yourself',
@@ -289,7 +322,9 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onSay }: D
               // move for whichever kind of thing it was - and a judgement with an orange button on
               // it is not a judgement, it is a prompt. The costs are the argument; the choice is
               // the Scrum Master's.
-              <button key={o.how} type="button" onClick={() => onAnswer?.(o.how)} disabled={!onAnswer}
+              <button key={o.how} type="button" data-answer={o.how}
+                onClick={() => (o.how === 'ask' ? onAskScrumMaster?.() : onAnswer?.(o.how))}
+                disabled={o.how === 'ask' ? !onAskScrumMaster : !onAnswer || (!!hat && !teamFirst && !smMine)}
                 className={cn(FOCUS, 'rounded-lg border border-border bg-card px-3 py-2 text-left transition-colors hover:border-primary/50 disabled:opacity-50')}>
                 <span className="block text-sm font-semibold">{o.label}</span>
                 <span className="block text-[11px] text-muted-foreground">{o.cost}</span>

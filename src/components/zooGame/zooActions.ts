@@ -127,6 +127,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     holdDailyScrum: () => send({ type: 'RUN_DAILY_SCRUM' }),
     setClockPaused: (paused: boolean) => send({ type: 'SET_CLOCK_PAUSED', paused }),
     answerImpediment: (how: 'team' | 'remove' | 'around' | 'escalate') => send({ type: 'ANSWER_IMPEDIMENT', how }),
+    askScrumMaster: () => send({ type: 'ASK_SCRUM_MASTER' }),
     setTrainerLed: (on: boolean) => send({ type: 'SET_TRAINER_LED', on }),
     playTrainerCard: (card: PlayedCard) => send({ type: 'PLAY_TRAINER_CARD', card }),
     skipDailyScrum: () => send({ type: 'SKIP_DAILY_SCRUM' }),

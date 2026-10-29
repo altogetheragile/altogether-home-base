@@ -59,6 +59,8 @@ interface SprintBoardProps {
   onHoldDailyScrum: () => void;
   /** What the Scrum Master does about what surfaced at the Daily Scrum. */
   onAnswerImpediment?: (how: ImpedimentAnswer) => void;
+  /** The Developers ask the Scrum Master hat holder to help with what surfaced. */
+  onAskScrumMaster?: () => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
   /** Hold the refinement the Scrum Team planned into this Sprint at topic three. */
@@ -188,7 +190,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -902,7 +904,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           className="zoo-theme max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-primary p-4 [&>button]:hidden">
           <DialogTitle className="sr-only">Daily Scrum</DialogTitle>
           <div>
-            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} onSay={onSay} />
+            <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} onAskScrumMaster={onAskScrumMaster} onSay={onSay} />
           </div>
         </DialogContent>
       </Dialog>
