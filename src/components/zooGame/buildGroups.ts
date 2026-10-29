@@ -23,7 +23,7 @@ import type { ToolbarIconName } from './toolbarIcons';
 
 export type GroupId =
   | 'structure'
-  | 'footprint' | 'shape' | 'ground' | 'barrier' | 'fence' | 'inside' | 'grown' | 'clump'
+  | 'footprint' | 'shape' | 'ground' | 'barrier' | 'inside' | 'grown' | 'clump'
   | 'stock' | 'look' | 'lives-in'
   | 'type' | 'offers' | 'colours'
   | 'planting'
@@ -142,10 +142,10 @@ export const GROUPS: GroupDef[] = [
   // a level. The swatches change with the structure; the word does not need to.
   { id: 'ground', writes: ['colors.ground', 'colors.water'], label: 'Surface', icon: 'surface', meets: ['a-home'],
     applies: habitat },
-  { id: 'barrier', writes: ['parts.barrier'], label: 'Perimeter', icon: 'perimeter', meets: ['held'], applies: habitat },
-  // What it looks like. Called Look wherever it happens - a habitat's fence, a building's walls
-  // and sign, an animal's coat, a plant's foliage - because it is one act, and it was three words.
-  { id: 'fence', writes: ['colors.fence'], label: 'Look', icon: 'look', meets: [], applies: habitat },
+  // What holds them in, and what colour it is: one menu, because it is one thing. The fence colour
+  // was a Look menu of its own, so the edge of a habitat was two menus - "why is the fence colour a
+  // separate menu from the boundary type?"
+  { id: 'barrier', writes: ['parts.barrier', 'colors.fence'], label: 'Perimeter', icon: 'perimeter', meets: ['held'], applies: habitat },
   { id: 'inside', writes: ['design.water', 'design.flora'], label: 'Interior', icon: 'interior', meets: ['a-home'], applies: habitat },
 
   // ---- an animal ----
