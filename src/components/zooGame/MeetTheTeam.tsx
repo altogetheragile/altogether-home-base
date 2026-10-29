@@ -1,3 +1,4 @@
+import { useYou } from './you';
 import type { ZooGameState } from './types';
 import type { SeatName } from './useZooSessions';
 import { Button } from '@/components/ui/button';
@@ -96,7 +97,8 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename }: {
   // to say you held all three accountabilities and outline all five cards; that stopped being true
   // when the Product Owner got a seat of her own and the other two Developers started working
   // beside you.
-  const you = seat ? null : yourDev(state);
+  const viewer = useYou();
+  const you = seat && !viewer ? null : yourDev(state, viewer);
   // The card says the accountability under the name, so a name carrying it too says it twice.
   const plain = (name: string) => name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '');
   const seats: (Seat & { id: string; name: string; initials?: string; hex: string })[] = [

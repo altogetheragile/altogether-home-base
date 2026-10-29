@@ -1,3 +1,4 @@
+import { useYou } from './you';
 import type { ZooGameState, ImpedimentAnswer, ChatKind } from './types';
 import { Button } from '@/components/ui/button';
 import { Users, AlertTriangle, CheckCircle2, Clock, Star, Target } from 'lucide-react';
@@ -41,8 +42,9 @@ function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: stri
   // in the room that was not one of them - the risk flag, which is the most important thing said
   // at a stand-up and the one the filter dropped on the floor.
   const thread = (state.chat ?? []).filter((m) => m.kind === 'stand-up' && m.day === state.dayNumber);
-  const yours = thread.some((m) => m.who === 'you');
-  const options = yours ? [] : yourStandUp(state);
+  const viewer = useYou();
+  const yours = thread.some((m) => m.who === 'you' || (!!viewer && m.member === viewer));
+  const options = yours ? [] : yourStandUp(state, viewer);
   if (!thread.length && !options.length) return null;
   return (
     <div data-part="stand-up" className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>

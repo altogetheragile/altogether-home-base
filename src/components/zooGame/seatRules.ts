@@ -108,6 +108,9 @@ export interface SeatContext {
   seat: SeatName | null;
   /** True for a participant watching rather than playing. */
   observer?: boolean;
+  /** The team member this player is, in a shared game. Every player is a Developer, whatever else
+   *  they hold (docs/ZOO_EVERYONE_A_DEVELOPER.md). */
+  memberId?: string;
   /** Granted `can_facilitate` by the host: a trainer, who acts ON the session rather than in it. */
   facilitator?: boolean;
   /** Seats nobody has taken and no AI is playing. Their work falls to the whole team rather
@@ -135,6 +138,9 @@ export function mayTake(type: ZooAction['type'], ctx: SeatContext): Verdict {
   const rule = OWNER[type];
   if (!rule || rule.who === 'anyone') return ALLOWED;         // most of the game: the team's
   if (ctx.seat === rule.who) return ALLOWED;
+  // Every player is a Developer, the Product Owner included: "Let a player take all the roles." A
+  // Product Owner building is, in the Guide's words, participating as a Developer.
+  if (rule.who === 'developer' && ctx.memberId) return ALLOWED;
   // A seat nobody is in used to permit everything, so that a short-handed team could not
   // deadlock. That was wrong, and badly so: alone in a session five seats are empty, so
   // every rule fell away and holding the Product Owner seat became indistinguishable from

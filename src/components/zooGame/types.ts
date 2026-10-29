@@ -419,7 +419,12 @@ export interface ZooConnector {
 
 /** One member of the Scrum Team. A `seat` a real person could take in a future multiplayer
  *  mode - kept as a first-class entity with a stable id, not just a label. */
-export interface ScrumTeamMember { id: string; name: string }
+export interface ScrumTeamMember {
+  id: string; name: string;
+  /** A person at the table in a shared game, rather than a name the game ships with. Somebody who
+   *  is playing says their own lines; nobody says them for them. */
+  player?: boolean;
+}
 
 /** Who said it. An accountability rather than a person, plus the name they go by - because the
  *  colour a bubble is drawn in is the accountability's and the name on it is the person's.
@@ -446,6 +451,9 @@ export interface ChatMessage {
   text: string;
   /** The card it is about, where it is about one. */
   itemId?: string;
+  /** Which team member said it, in a shared game. Stored as the person, not as "you": the same
+   *  line is "You" on the screen of whoever said it and their name on everybody else's. */
+  member?: string;
   /** The day it was said on, so the thread can be broken up by day. */
   day: number;
   /** Which conversation it belongs to, where it belongs to a particular one.
@@ -940,6 +948,7 @@ export type ZooAction =
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
   | { type: 'SET_TRAINER_LED'; on: boolean }
+  | { type: 'JOIN_TEAM'; id: string; name: string }
   | { type: 'PLAY_TRAINER_CARD'; card: PlayedCard }
   | { type: 'SKIP_DAILY_SCRUM'; by?: string }
   | { type: 'START_DAY' }
