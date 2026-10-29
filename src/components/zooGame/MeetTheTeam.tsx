@@ -4,7 +4,7 @@ import type { SeatName } from './useZooSessions';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
-import { sprintCapacity, yourDev } from './engine';
+import { sprintCapacity, yourDev, scrumMasterOf } from './engine';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
@@ -106,7 +106,7 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename }: {
       name: plain(state.team.productOwner.name), initials: 'PO',
       character: CHARACTER.po, hex: SEAT.productOwner.hex },
     { ...ROLES.scrum_master, seat: 'scrum_master', id: state.team.scrumMaster.id,
-      name: plain(state.team.scrumMaster.name), initials: 'SM',
+      name: plain(scrumMasterOf(state).name), initials: 'SM',
       character: CHARACTER.sm, hex: SEAT.scrumMaster.hex },
     // No letter on a Developer's figure: the card has their name on it in bold, and their first
     // initial on their chest is that word said twice.

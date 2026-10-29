@@ -87,10 +87,16 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
 
   // The seats the game plays: never the Developers. The team is the people at the table, and the
   // game builds nothing - "The AI building is just too clunky. Let a player take all the roles."
-  const aiSeats = lobby.seats.filter((x) => x.is_ai && x.seat !== 'developer').map((x) => x.seat);
+  // Nor the Scrum Master once a player wears the hat: the seat has retired, and its work is theirs.
+  const hat = !!session.state?.scrumMasterId;
+  const aiSeats = lobby.seats
+    .filter((x) => x.is_ai && x.seat !== 'developer' && !(hat && x.seat === 'scrum_master'))
+    .map((x) => x.seat);
   // The same list the Sprint Goal panel waits on, so the seats played by the game hold topic one
-  // open exactly as long as the screen does.
-  const mustAgree = [...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))];
+  // open exactly as long as the screen does. The hat holder agrees as one of the Developers.
+  const mustAgree = [...new Set(lobby.seats
+    .filter((x) => (x.participant_id || x.is_ai) && !(hat && x.seat === 'scrum_master'))
+    .map((x) => x.seat))];
   useAiSeats(session, aiSeats, { mustAgree, onSay: useCallback((seat: string, says: string, action: { type: string; topic?: string }) => {
     const kind = action.type;
     // A move that changes the topic is about the topic it moves TO, or the line announcing

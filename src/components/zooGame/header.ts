@@ -1,5 +1,5 @@
 import type { ZooGameState } from './types';
-import { goalPulse, dayTotalSeconds, acSettled } from './engine';
+import { goalPulse, dayTotalSeconds, acSettled, hatHolder } from './engine';
 
 // What the header says, read off the game rather than written on each screen.
 //
@@ -110,7 +110,10 @@ export function whoDoesWhatNow(state: ZooGameState, seat?: string | null): strin
         default: return 'The Developers plan how the work gets done. Nobody assigns it.';
       }
     case 'sprint':
-      if (state.dayStage === 'dailyScrum') return `The Developers inspect and adapt their plan. ${po} and ${state.team.scrumMaster.name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '')} are not in the room.`;
+      // With a hat, the Scrum Master is one of the Developers and is in the room like the rest.
+      if (state.dayStage === 'dailyScrum') return hatHolder(state)
+        ? `The Developers inspect and adapt their plan. ${po} is not in the room.`
+        : `The Developers inspect and adapt their plan. ${po} and ${state.team.scrumMaster.name.replace(/\s*\((PO|SM|Dev)\)\s*$/i, '')} are not in the room.`;
       return `Developers pull and build. ${po} refines and answers.`;
     case 'review':
       return `The Scrum Team and the visitors inspect the Increment. ${po} decides what happens next.`;
@@ -132,6 +135,8 @@ export interface SeatLine {
   /** Which of the Developers, for the shade of the stack they wear. Absent for the two seats there
    *  is only ever one of. */
   devIndex?: number;
+  /** This Developer holds the Scrum Master hat this Sprint. */
+  hat?: boolean;
   doing: string;
   /** In the room for what is happening on this screen. */
   present: boolean;
@@ -167,6 +172,7 @@ export function seatLines(state: ZooGameState): SeatLine[] {
     return waiting ?? (toAccept ? `checking ${shortName(toAccept.name)}` : 'available');
   };
 
+  const hat = hatHolder(state);
   const smDoing = (): string => {
     if (scrum) return 'not in the room';
     if (state.carriedImpediment) return 'clearing a blocker';
@@ -178,13 +184,15 @@ export function seatLines(state: ZooGameState): SeatLine[] {
   return [
     { id: state.team.productOwner.id, name: plain(state.team.productOwner.name), initials: 'PO',
       role: 'product_owner', doing: poDoing(), present: !scrum },
-    { id: state.team.scrumMaster.id, name: plain(state.team.scrumMaster.name), initials: 'SM',
-      role: 'scrum_master', doing: smDoing(), present: !scrum },
+    // In a shared game the Scrum Master is a hat one of the Developers wears, so there is no Sam
+    // to show: the holder is badged among the Developers instead.
+    ...(hat ? [] : [{ id: state.team.scrumMaster.id, name: plain(state.team.scrumMaster.name), initials: 'SM',
+      role: 'scrum_master' as const, doing: smDoing(), present: !scrum }]),
     ...state.team.developers.map((d, i) => ({
       id: d.id, name: plain(d.name), initials: plain(d.name).slice(0, 1).toUpperCase(),
       // Which of the Developers this is, so a band of them can be shaded the way the board shades
       // a stack. Position, not identity - the first Developer is the front of the stack.
-      role: 'developer' as const, devIndex: i, doing: devDoing(d.id), present: true,
+      role: 'developer' as const, devIndex: i, hat: d.id === hat?.id, doing: devDoing(d.id), present: true,
     })),
   ];
 }

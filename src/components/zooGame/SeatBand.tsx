@@ -43,8 +43,9 @@ const isMine = (
   seat: SeatName | null | undefined,
   you: ScrumTeamMember | undefined,
 ): boolean => (seat
-  // Your seat, and in a shared game your own Developer too: every player is one.
-  ? s.role === seat || (!!you && s.id === you.id)
+  // Your seat, and in a shared game your own Developer too: every player is one. Only your own,
+  // though: sitting in a Developer seat used to mark every Developer on the band as you.
+  ? (s.role === 'developer' && you ? s.id === you.id : s.role === seat || (!!you && s.id === you.id))
   : s.id === you?.id || s.role === 'scrum_master');
 
 /** Your own name, changed where it is written.
@@ -158,7 +159,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
               title={yours || cover || absent
                 ? `${s.name} · ${s.doing}\n${absent ? 'Whoever holds this seat is not here, so its work falls to the rest of you. '
                   : cover ? 'Nobody is holding this seat, so its work falls to you. ' : ''}${YOURS[s.role][state.phase] ?? ''}`
-                : `${s.name} · ${s.doing}`}
+                : `${s.name} · ${s.doing}${s.hat ? '\nHolds the Scrum Master hat this Sprint.' : ''}`}
               className={cn('flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1',
                 yours && 'border-2 border-primary bg-primary/5',
                 cover && !absent && 'border-2 border-dashed border-primary/60',
@@ -175,6 +176,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}
+                  {/* The Scrum Master hat, worn by a Developer: the SM the board writes on Sam,
+                      in the Scrum Master's colour, beside the name of whoever has it. */}
+                  {s.hat && <span data-part="seat-hat" title="Holds the Scrum Master hat this Sprint" className={cn(SEAT.scrumMaster.soft, 'ml-1 rounded-full px-1 text-[10px] font-semibold')}>SM</span>}
                   {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
                   {/* One name is yours to change: alone, that is your Developer's, not Sam's as well. */}
                   {yours && onRename && (mine || s.role === 'developer') && <RenameMe id={s.id} name={s.name} onRename={onRename} />}

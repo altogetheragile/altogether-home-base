@@ -142,7 +142,30 @@ export function asMember<T>(id: string | undefined, fn: () => T): T {
 export function joinTeam(state: ZooGameState, id: string, name: string): ZooGameState {
   if (!id || state.team.developers.some((d) => d.id === id)) return state;
   const label = name.trim().slice(0, 24) || 'Player';
-  return { ...state, team: { ...state.team, developers: [...state.team.developers, { id, name: label, player: true }] } };
+  return { ...state,
+    team: { ...state.team, developers: [...state.team.developers, { id, name: label, player: true }] },
+    // The first player to join holds the Scrum Master hat first (Al, 29 Oct 2026).
+    scrumMasterId: state.scrumMasterId ?? id };
+}
+
+/** The player holding the Scrum Master hat this Sprint, in a shared game. */
+export function hatHolder(state: ZooGameState): ScrumTeamMember | undefined {
+  return state.scrumMasterId ? state.team.developers.find((d) => d.id === state.scrumMasterId) : undefined;
+}
+
+/** Whoever is the Scrum Master right now: the hat holder in a shared game, Sam playing alone. */
+export function scrumMasterOf(state: ZooGameState): ScrumTeamMember {
+  return hatHolder(state) ?? state.team.scrumMaster;
+}
+
+/** Hand the hat to the next player, in the order they joined, at the start of a Sprint Planning.
+ *  Over a game everybody holds it, which is what the Scrum Master course wants. Nothing to do
+ *  playing alone. */
+export function passTheHat(state: ZooGameState): ZooGameState {
+  const players = state.team.developers.filter((d) => d.player);
+  if (players.length === 0) return state;
+  const at = players.findIndex((d) => d.id === state.scrumMasterId);
+  return { ...state, scrumMasterId: players[(at + 1) % players.length].id };
 }
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
@@ -216,7 +239,7 @@ export function say(state: ZooGameState, raw: Omit<ChatMessage, 'id' | 'day'>): 
  *  survives as the colour it is drawn in. */
 export function speaking(state: ZooGameState, by?: string): { who: ChatWho; from: string } {
   if (by === 'product_owner') return { who: 'product_owner', from: state.team.productOwner.name };
-  if (by === 'scrum_master') return { who: 'scrum_master', from: state.team.scrumMaster.name };
+  if (by === 'scrum_master') return { who: 'scrum_master', from: scrumMasterOf(state).name };
   if (by === 'developer') return { who: 'developer', from: 'The Developers' };
   return { who: 'you', from: 'You' };
 }
@@ -403,7 +426,7 @@ export function whatWeNoticed(state: ZooGameState, sprint = state.sprintNumber):
 export function openRetro(state: ZooGameState): ZooGameState {
   if ((state.chat ?? []).some((m) => m.kind === 'retro')) return state;   // already opened
   const noticed = whatWeNoticed(state);
-  let said = say({ ...state, chat: [] }, { who: 'scrum_master', from: state.team.scrumMaster.name, kind: 'retro',
+  let said = say({ ...state, chat: [] }, { who: 'scrum_master', from: scrumMasterOf(state).name, kind: 'retro',
     text: `Sprint ${state.sprintNumber}, then. How did we work? Not what we built - how we worked. Nobody outside this team is in the room, so say it.` });
   state.team.developers.forEach((dev, i) => {
     const line = noticed[i];
@@ -4262,7 +4285,8 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
 export function cancelSprint(state: ZooGameState): ZooGameState {
   if (state.phase !== 'sprint') return state;
   const backlog = returnUnfinished(state);
-  return {
+  // Straight into a new Sprint Planning, so the hat moves on here too.
+  return passTheHat({
     ...state,
     phase: 'planning',
     sprintNumber: state.sprintNumber + 1,
@@ -4286,7 +4310,7 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
     scrumSecondsLeft: DAILY_SCRUM_SECONDS,
     burndown: [],
     sprintsCancelled: (state.sprintsCancelled ?? 0) + 1,
-  };
+  });
 }
 
 // ============= The ladder: one practice per Sprint, and only once it is missed =============
@@ -4413,7 +4437,9 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
   // planned, exactly as the first one did. Being handed somebody else's forecast twice is what makes
   // the third Sprint's Planning worth having: a learner who has never been handed one has no
   // question that "we plan it ourselves" is the answer to.
-  return adopted(state, 'sprint-planning') ? next : planTheNextSprint(next);
+  // A new Sprint Planning, so the hat moves on.
+  const handed = passTheHat(next);
+  return adopted(state, 'sprint-planning') ? handed : planTheNextSprint(handed);
 }
 
 /** The next Sprint, planned for the team the way Sprint 1 was: the Goal written, the work chosen off

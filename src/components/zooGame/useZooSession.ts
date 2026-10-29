@@ -5,7 +5,7 @@ import type { ZooGameState, ZooAction } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
-import { mayTake, refusal, type SeatContext } from './seatRules';
+import { mayTake, refusal, withTheHat, type SeatContext } from './seatRules';
 import { aiTurn } from './aiSeats';
 import { speaking } from './engine';
 import type { SeatName } from './useZooSessions';
@@ -149,7 +149,8 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
   }, [flush]);
 
   const send = useCallback((action: ZooAction) => {
-    const verdict = mayTake(action.type, seatRef.current);
+    // Who holds the Scrum Master hat is game state, so it is read from the game, not the lobby.
+    const verdict = mayTake(action.type, withTheHat(seatRef.current, syncRef.current ? localState(syncRef.current) : null));
     if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
     setRefused(null);
     apply(stamped(action, seatRef.current.seat, seatRef.current.memberId));

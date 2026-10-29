@@ -1,4 +1,4 @@
-import type { ZooAction } from './types';
+import type { ZooAction, ZooGameState } from './types';
 import type { SeatName } from './useZooSessions';
 
 // Who may do what, and why.
@@ -113,6 +113,9 @@ export interface SeatContext {
   memberId?: string;
   /** Granted `can_facilitate` by the host: a trainer, who acts ON the session rather than in it. */
   facilitator?: boolean;
+  /** Who holds the Scrum Master hat this Sprint, and whether it is this player. In a shared game the
+   *  Scrum Master's calls are the hat holder's, not a seat's. */
+  hat?: { name: string; mine: boolean };
   /** Seats nobody has taken and no AI is playing. Their work falls to the whole team rather
    *  than to nobody, or a group of two could not finish a Sprint. */
   emptySeats?: SeatName[];
@@ -137,6 +140,13 @@ export function mayTake(type: ZooAction['type'], ctx: SeatContext): Verdict {
   }
   const rule = OWNER[type];
   if (!rule || rule.who === 'anyone') return ALLOWED;         // most of the game: the team's
+  // The Scrum Master is a hat one of the Developers wears this Sprint, so the call is theirs and
+  // nobody else's - not a seat's, and not an empty seat's to fall to the team.
+  if (rule.who === 'scrum_master' && ctx.hat) {
+    return ctx.hat.mine ? ALLOWED
+      : { allowed: false, owner: 'scrum_master', because: rule.because,
+          fix: `${ctx.hat.name} holds the Scrum Master hat this Sprint, so ask them.` };
+  }
   if (ctx.seat === rule.who) return ALLOWED;
   // Every player is a Developer, the Product Owner included: "Let a player take all the roles." A
   // Product Owner building is, in the Guide's words, participating as a Developer.
@@ -158,6 +168,12 @@ export function mayTake(type: ZooAction['type'], ctx: SeatContext): Verdict {
   return { allowed: false, owner: rule.who, because: rule.because };
 }
 
+
+/** The gate's context with the hat added, read from the game. */
+export function withTheHat(ctx: SeatContext, state: ZooGameState | null): SeatContext {
+  const holder = state?.scrumMasterId ? state.team.developers.find((d) => d.id === state.scrumMasterId) : undefined;
+  return holder ? { ...ctx, hat: { name: holder.name, mine: holder.id === ctx.memberId } } : ctx;
+}
 
 /** One line to put in front of somebody, naming whose call it is. */
 export function refusal(v: Verdict): string {
