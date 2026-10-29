@@ -739,6 +739,10 @@ export interface ZooGameState {
   /** A trainer is running the drama. While it is on, nothing turns up by chance: what gets in the
    *  team's way is what the trainer plays, when they judge it will teach something. */
   trainerLed?: boolean;
+  /** Which Developer holds the Scrum Master hat, in a shared game. Not a seat: one of the players,
+   *  who still builds, and it moves along at each Sprint Planning so everybody holds it. Absent
+   *  playing alone, where you are the Scrum Master throughout. docs/ZOO_EVERYONE_A_DEVELOPER.md. */
+  scrumMasterId?: string;
   /** The card a trainer has played, waiting for the next Daily Scrum - which is where anything in
    *  the team's way surfaces. */
   trainerCard?: Impediment | null;

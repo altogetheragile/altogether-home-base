@@ -125,8 +125,10 @@ In the order it would be built.
    that fixes two learners both being Ada, and it is worth doing on its own.
 2. **The team is the players.** At game start, `team.developers` is built from the seated players'
    names. No AI Developers in a shared game (`alongside` removed from `ZooTogether`).
-3. **The Scrum Master hat.** `scrumMasterId` on the game state, set at the first Sprint Planning
-   and moved along at each one after. The team strip badges the holder.
+3. **The Scrum Master hat.** `scrumMasterId` on the game state, given to the first player to join
+   and moved along at each Sprint Planning after (and when a Sprint is cancelled, since a new
+   Planning starts). The team strip badges the holder and drops Sam; the impediment call is the
+   holder's; the AI stops playing the Scrum Master seat once a hat is worn. **Built.**
 4. **Ask the team first.** The blocker answers split as above; "ask the Scrum Master to help" added
    to the Daily Scrum. Solo keeps all four, because there the player is the whole team.
 5. **Team decisions.** Forecast proposed and agreed; Sprint Goal agreed per player.
