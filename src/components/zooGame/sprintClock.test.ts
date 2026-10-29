@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint, startItem, teamIsBusy } from './engine';
+import { splitEpic, planSprint, startItem } from './engine';
 import type { ZooGameState } from './types';
 
 // A Sprint takes a Sprint.
@@ -41,16 +41,6 @@ describe('what a day is', () => {
     const startedAt = s.daySecondsLeft;
     for (let i = 0; i < 4; i += 1) s = reducer(s, { type: 'TICK_DAY' });
     expect(s.daySecondsLeft, 'the day did not run').toBe(startedAt - 4);
-  });
-
-  it('leaves the team busy until what they took on is built', () => {
-    // This is what stops a whole forecast landing inside one beat: the seats build what they took
-    // on before they take anything else.
-    let s = startItem(midSprint(), held(midSprint()).id);
-    expect(teamIsBusy(s), 'the team took work on and was free the same instant').toBe(true);
-    const it = s.backlog.find((x) => x.started)!;
-    s = { ...s, backlog: s.backlog.map((x) => (x.id === it.id ? { ...x, design: { parts: {}, colors: {} } } : x)) } as ZooGameState;
-    expect(teamIsBusy(s), 'the team was still busy after the work was built').toBe(false);
   });
 
   it('cannot give a Sprint more days than the Sprint has', () => {

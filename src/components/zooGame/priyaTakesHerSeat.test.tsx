@@ -1,12 +1,8 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { act } from 'react';
-import { useAiSeats } from './useZooSession';
+import { describe, it, expect } from 'vitest';
 import { aiTurn, SOLO_AI_SEATS } from './aiSeats';
 import { initialZooState } from './config';
-import { planSprint, startItem, availableItems, teamIsBusy } from './engine';
-import type { SeatName } from './useZooSessions';
-import type { ZooAction, ZooGameState, GameQuestion } from './types';
+import { planSprint, availableItems } from './engine';
+import type { ZooGameState, GameQuestion } from './types';
 
 // The seats nobody is sitting in, played while the Developers build.
 //
@@ -21,13 +17,6 @@ const sprint = (): ZooGameState => {
   const picks = availableItems(base).slice(0, 4).map((it) => it.id);
   return { ...planSprint(base, picks), phase: 'sprint', dayStage: 'building', dayNumber: 1 } as ZooGameState;
 };
-/** A Sprint with a card pulled and not yet built: the state the beat used to stop dead in. */
-const building = (): ZooGameState => {
-  const s = sprint();
-  const first = s.backlog.find((it) => it.status === 'committed' && it.sprintNumber === s.sprintNumber)!;
-  return startItem(s, first.id);
-};
-
 const howQuestion = (s: ZooGameState): ZooGameState => ({
     ...s,
     questions: [{
@@ -91,47 +80,3 @@ describe('which seats a game played alone hands over', () => {
   });
 });
 
-describe('the beat, while the Developers are building', () => {
-  beforeEach(() => vi.useFakeTimers());
-  afterEach(() => vi.useRealTimers());
-
-  const run = (seats: SeatName[], state: ZooGameState) => {
-    const sent: { seat: SeatName; action: ZooAction }[] = [];
-    const session = { state, drivesClock: true,
-      sendAs: (seat: SeatName, action: ZooAction) => { sent.push({ seat, action }); } };
-    renderHook(() => useAiSeats(session, seats));
-    act(() => { vi.advanceTimersByTime(20000); });
-    return sent;
-  };
-
-  it('lets the Product Owner act while work is in flight', () => {
-    // #880: busy HANDS take no new work. A Product Owner answering a question while the Developers
-    // build is not taking on new work - it is the one thing that seat is there to do.
-    const waiting = howQuestion(building());
-    expect(teamIsBusy(waiting), 'the team is not busy, so nothing is being tested').toBe(true);
-    expect(aiTurn(waiting, 'product_owner'), 'she has nothing to do, so nothing is being tested')
-      .toBeTruthy();
-
-    const sent = run(['product_owner'], waiting);
-    expect(sent.length, 'the Product Owner went silent the moment a card was pulled')
-      .toBeGreaterThan(0);
-    expect(sent[0].seat).toBe('product_owner');
-    // She says it and then does it - two moves now, because what a seat says is kept in the
-    // thread rather than flashed up on a card. The answer is the one that matters here.
-    expect(sent[0].action, 'she answered without a word, so nothing reaches the thread')
-      .toMatchObject({ type: 'SAY', who: 'product_owner' });
-    expect(sent.map((x) => x.action)).toContainEqual(
-      expect.objectContaining({ type: 'ANSWER_QUESTION', choice: 'theirs' }));
-  });
-
-  it('leaves the Developer seat held exactly as it was', () => {
-    // The change narrows the check to the seat it was written for; it does not relax it. With work
-    // in flight a Developer played by the game still sends nothing at all, which is what paces a
-    // Sprint - acted on at once, a whole forecast went by in seconds.
-    const busy = building();
-    expect(aiTurn(busy, 'developer'), 'the Developer seat has no move, so nothing is being tested')
-      .toBeTruthy();
-    expect(run(['developer'], busy),
-      'a Developer played by the game acted while work was in flight').toHaveLength(0);
-  });
-});

@@ -1197,8 +1197,7 @@ export function presetFor(item: BacklogItem): ItemDesign {
     // toilets already appears as a toilet structure. It should be like any other structure - the
     // devs decide."
     //
-    // `buildingTypeFor` still exists and is still right: it is the ADVICE, and it is what the
-    // Developers pick when the game is playing them. See `aiDesign`.
+    // `buildingTypeFor` still exists and is still right: it is the ADVICE the toolbar offers.
     const kind = item.template;
     // ...and a building comes with walls, a roof and a board over the door that is BLANK.
     //

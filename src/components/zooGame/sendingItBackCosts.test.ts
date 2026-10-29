@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
-import { startItem, sendItemBack, otherDevs, heldBy, stillBuilding, workOwed } from './engine';
-import { aiDevTurn } from './aiSeats';
-import { readyToAsk } from './parkChecks';
+import { startItem, sendItemBack, otherDevs } from './engine';
 import type { ZooGameState } from './types';
 
 // Not accepting the work costs the Sprint the time it took.
@@ -56,40 +54,6 @@ describe('sending it back', () => {
     expect(now.design, 'it is still Done, so nothing was sent anywhere').toBeUndefined();
     expect(now.draftDesign, 'the work they did was thrown away').toBeTruthy();
     expect(now.status).toBe('committed');
-  });
-
-  it('costs them the time it took, all over again', () => {
-    const { s, ben, card } = builtByBen();
-    expect(heldBy(s, ben.id), 'it is still in his hands, so it was never built').toBeUndefined();
-    const back = sendItemBack(s, card.id);
-    const now = back.backlog.find((it) => it.id === card.id)!;
-    expect(now.owedSeconds, 'building the wrong thing cost the Sprint nothing').toBeGreaterThan(0);
-    expect(now.owedSeconds, 'it costs a different amount the second time')
-      .toBe(now.workSeconds ?? workOwed(back, now, ben.id));
-  });
-
-  it('so it is not handed straight back for approval', () => {
-    // The whole of the report. One beat after the rejection, the colleague was rebuilding it and
-    // the question was back on the rail.
-    const { s, ben, card } = builtByBen();
-    const back = sendItemBack(s, card.id);
-    const move = aiDevTurn(back, ben);
-    expect(move?.action.type, 'he rebuilt it the instant it came back, for nothing')
-      .not.toBe('BUILD_ITEM');
-    expect(readyToAsk(back, back.backlog.find((it) => it.id === card.id)!),
-      'it is ready to be asked about again before anybody has touched it').toBe(false);
-    expect(stillBuilding(back.backlog.find((it) => it.id === card.id)!),
-      'it owes no time, so the next beat finishes it').not.toBeNull();
-  });
-
-  it('and he does finish it again, once the time has actually been spent', () => {
-    // Not a punishment and not a wall: the work gets done, it just costs what it cost.
-    const { s, ben, card } = builtByBen();
-    const sent = sendItemBack(s, card.id);
-    const back = { ...sent, backlog: sent.backlog.map((it) => (it.id === card.id
-      ? { ...it, owedSeconds: 0 } : it)) } as ZooGameState;
-    expect(aiDevTurn(back, ben)?.action, 'the time was spent and he still has not rebuilt it')
-      .toMatchObject({ type: 'BUILD_ITEM', id: card.id });
   });
 
   it('charges nothing extra for YOUR own card, because the day already does', () => {

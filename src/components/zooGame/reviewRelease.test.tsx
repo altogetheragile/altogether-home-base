@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import { initialZooState } from './config';
 import { reducer } from './useZooGame';
 import { aiTurn } from './aiSeats';
+import { developersTurn } from './playTheDevelopers';
 import { mayTake } from './seatRules';
 import { SprintReview } from './SprintReview';
 import type { ZooGameState, ZooAction } from './types';
@@ -32,7 +33,7 @@ function sprintWithNothingReleased(): ZooGameState {
     for (let i = 0; i < limit; i += 1) {
       let moved = false;
       for (const seat of AI) {
-        const m = aiTurn(s, seat);
+        const m = seat === 'developer' ? developersTurn(s) : aiTurn(s, seat);
         if (!m || !mayTake(m.action.type, { seat }).allowed) continue;
         s = reducer(s, m.action); moved = true; break;
       }

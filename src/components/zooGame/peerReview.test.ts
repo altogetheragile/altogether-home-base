@@ -78,68 +78,9 @@ describe('who is working on it', () => {
     expect(b.assignedDevs).toEqual([them.id]);
   });
 
-  it('prices what they took on, and never what you did', () => {
-    // What a colleague's card costs has to be written down somewhere, because the day's clock is
-    // what counts it down and the work has to take time or it is not work. Yours is not priced at
-    // all: what it costs is however long you spend on it, which the same day clock already
-    // charges you for - priced as well, you would pay twice.
-    const base = initialZooState(3);
-    const one = base.backlog.find((it) => !it.unsized && it.category === 'enclosure')!;
-    const s = {
-      ...base, phase: 'sprint', dayStage: 'building', sprintNumber: 1, daySecondsLeft: DAY_SECONDS, wipLimit: 0,
-      backlog: base.backlog.map((it) => (it.id === one.id
-        ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)),
-    } as ZooGameState;
-    const them = otherDevs(s)[0];
-    const theirs = startItem(s, one.id, 'developer', them.id).backlog.find((it) => it.id === one.id)!;
-    expect(theirs.owedSeconds, 'their card costs them nothing, so it would land at once').toBeGreaterThan(0);
-    expect(theirs.workSeconds, 'nothing says how long it was going to take, so no bar can be drawn')
-      .toBe(theirs.owedSeconds);
-    const yours = startItem(s, one.id).backlog.find((it) => it.id === one.id)!;
-    expect(yours.owedSeconds, 'your own work was priced, so you pay for it twice').toBeUndefined();
-  });
 });
 
 describe('the second pair of eyes', () => {
-  /** An item built, its plan ticked off, waiting only on a review. */
-  const waiting = (): ZooGameState => {
-    const s = startItem(sprint(), held(sprint()).id);
-    return {
-      ...s,
-      backlog: s.backlog.map((it) => (it.started
-        ? { ...it, design: { parts: {}, colors: {} } as never,
-          tasks: (it.tasks ?? []).map((t) => ({ ...t, done: true })) }
-        : it)),
-    } as ZooGameState;
-  };
-
-  it('is offered by the Developers themselves', () => {
-    // Seats played by the game built the work and never reviewed each other's, so an item could be
-    // finished in every other respect and never become Done.
-    const move = aiTurn(waiting(), 'developer');
-    expect(move, 'the Developers had nothing to offer on work waiting for a review').toBeTruthy();
-    expect(move!.action.type).toBe('ASSIGN_DEV');
-    expect(move!.says).toMatch(/second pair of eyes/i);
-  });
-
-  it('and clears the line the game was stuck on', () => {
-    const s = waiting();
-    const move = aiTurn(s, 'developer')!;
-    const a = move.action as { type: 'ASSIGN_DEV'; itemId: string; devId: string };
-    const item = s.backlog.find((it) => it.id === a.itemId)!;
-    expect((item.assignedDevs ?? []).includes(a.devId), 'the reviewer was already on it').toBe(false);
-    const after = {
-      ...s,
-      backlog: s.backlog.map((it) => (it.id === a.itemId
-        ? { ...it, assignedDevs: [...(it.assignedDevs ?? []), a.devId] } : it)),
-    } as ZooGameState;
-    const line = dodVerdicts(after, after.backlog.find((it) => it.id === a.itemId)!)
-      .find((c) => /Peer-reviewed/.test(c.line))!;
-    expect(line.answer && 'met' in line.answer && line.answer.met,
-      'a second Developer joined and the line still did not clear').toBe(true);
-    expect(line.answer?.evidence).toMatch(/2 Developers worked it/);
-  });
-
   it('does not offer a review on work that is not finished', () => {
     const s = startItem(sprint(), held(sprint()).id);   // started, nothing built yet
     const move = aiTurn(s, 'developer');

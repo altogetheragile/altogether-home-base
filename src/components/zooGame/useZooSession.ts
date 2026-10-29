@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import type { ZooGameState, ZooAction, ScrumTeamMember, ProposedMove } from './types';
+import type { ZooGameState, ZooAction } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
 import { mayTake, refusal, type SeatContext } from './seatRules';
-import { aiTurn, aiDevTurn } from './aiSeats';
-import { speaking, teamIsBusy, ASKS_FIRST, waitingOnYou, wasTurnedDown } from './engine';
+import { aiTurn } from './aiSeats';
+import { speaking } from './engine';
 import type { SeatName } from './useZooSessions';
 import { useTabAway } from './useTabAway';
 
@@ -232,7 +232,6 @@ export { reducer };
  *  day clock, so the board never sits dead while a large item is built - just long enough
  *  that a move reads as somebody doing something rather than the board twitching. */
 const BEAT_MS = 900;
-const WORK_BEAT_MS = 2200;
 /** The pause either side of moving the event on to the next topic.
  *
  *  Sprint Planning is three topics with an order, and the seats played by the game can do a
@@ -268,18 +267,6 @@ export const NARRATED = new Set(['START_ITEM', 'LEND_A_HAND']);
  *  bubble belonged to no card, and `say` - which collapses two lines in a row from one person
  *  about one card - could not tell that it was about the same card as the line above it.
  *  `ASSIGN_DEV` is the live one; `LEND_A_HAND` was the other, and that one is narrated now. */
-/** The move an action would make, named so it can be written down and asked about.
- *
- *  Null for anything that is not one of the three card movements, which is how `ASKS_FIRST` and
- *  this cannot drift apart: a type in the set with no shape here simply goes through unasked. */
-export function asProposed(action: object): ProposedMove | null {
-  const a = action as { type: string; id?: string; ids?: string[] };
-  if (a.type === 'START_ITEM' && a.id) return { kind: 'pull', itemId: a.id };
-  if (a.type === 'FINISH_ITEM' && a.id) return { kind: 'finish', itemId: a.id };
-  if (a.type === 'SET_FORECAST' && a.ids?.length) return { kind: 'forecast', ids: a.ids };
-  return null;
-}
-
 export const aboutCard = (action: object): string | undefined => {
   const named = action as { id?: string; itemId?: string };
   return named.id ?? named.itemId;
@@ -302,14 +289,6 @@ export interface AiTable {
   /** Moves this table leaves to the player. A seat played by the game does the seat's routine
    *  work; a decision somebody is sitting there to make is not routine work. */
   skip?: (action: ZooAction) => boolean;
-  /** The Developers the game plays BESIDE a player who is holding that seat themselves.
-   *
-   *  A different thing from putting 'developer' in `aiSeats`, and the two never go together. The
-   *  seat in the list is the Developers as one set of hands, for a table where nobody is in that
-   *  chair: it sizes the work, forecasts the Sprint and plans the steps. These are colleagues -
-   *  people with names, one card each, building at their own pace - for a table where somebody IS
-   *  in the chair and would quite rightly object to having Sprint Planning done for them. */
-  alongside?: readonly ScrumTeamMember[];
 }
 
 export function useAiSeats(
@@ -321,9 +300,6 @@ export function useAiSeats(
   const { mustAgree } = table;
   const seats = aiSeats.join(',');
   const agreers = (mustAgree ?? []).join(',');
-  // The same trick as the seat list: a stable string, so a new array of the same people each
-  // render does not tear the beat down and start it again.
-  const devs = (table.alongside ?? []).map((d) => d.id).join(',');
   // The state is read when the beat lands, not captured when it was scheduled.
   //
   // This used to be an effect that took `state` as a dependency and scheduled the move on a
@@ -336,7 +312,7 @@ export function useAiSeats(
   useEffect(() => { latest.current = { state, sendAs, table }; });
 
   useEffect(() => {
-    if (!drivesClock || (!seats && !devs)) return;
+    if (!drivesClock || !seats) return;
     let live = true;
     let timer: ReturnType<typeof setTimeout>;
     // A move that deserves watching gets its pause BEFORE it lands as well as after, so it reads
@@ -346,25 +322,9 @@ export function useAiSeats(
     const beat = () => {
       const { state: now, sendAs: send, table: at } = latest.current;
       const { onSay: say, skip } = at;
-      let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>>; dev?: ScrumTeamMember } | null = null;
-      // Somebody is already holding a card up. Nobody else acts until that is answered: two
-      // colleagues each waiting on you is a queue, and a queue is what was wrong with the old pace.
-      if (now && waitingOnYou(now)) {
-        if (live) timer = setTimeout(beat, BEAT_MS);
-        return;
-      }
+      let next: { seat: SeatName; move: NonNullable<ReturnType<typeof aiTurn>> } | null = null;
       if (now) {
         for (const seat of (seats ? seats.split(',') : []) as SeatName[]) {
-          // Busy HANDS take no new work. While there is time owed on what they have already taken
-          // on, the Developers are building it - which is most of what makes a Sprint take a
-          // Sprint. Charged in a lump and acted on at once, a whole forecast went by in seconds.
-          //
-          // It used to stop the whole beat, every seat with it, so the moment anybody pulled a
-          // card the Product Owner went silent: no answers, no acceptance, nothing, for as long as
-          // anything was being built. A Product Owner answering a question while the Developers
-          // build is not taking on new work - it is the one thing that seat is there to do, and
-          // the reason for playing it at all.
-          if (seat === 'developer' && teamIsBusy(now)) continue;
           const move = aiTurn(now, seat, agreers ? agreers.split(',') : undefined);
           // A move its own accountability may not take is skipped rather than sent, so a seat
           // that keeps proposing something impossible cannot starve the seats behind it in
@@ -373,44 +333,16 @@ export function useAiSeats(
           if (skip?.(move.action)) continue;
           next = { seat, move }; break;
         }
-        // ...and then the colleagues, who are all Developers, so their moves are judged against
-        // that accountability like anybody's. After the seats rather than before: the Product
-        // Owner answering a question is the one thing a waiting Developer needs, and a team
-        // building flat out must not be what keeps them from getting it.
-        for (const dev of next ? [] : (at.alongside ?? [])) {
-          const move = aiDevTurn(now, dev);
-          if (!move || !mayTake(move.action.type, { seat: 'developer' }).allowed) continue;
-          if (skip?.(move.action)) continue;
-          next = { seat: 'developer', move, dev }; break;
-        }
-      }
-      // A card movement is held up rather than made. Reported from playing it: "the pulling of the
-      // PBIs ... is very quick and confusing. All card movements need to be at least prompted and
-      // agreed." So the colleague says what they want to do and waits; `proposeMove` records it,
-      // the rail asks you, and `tickDay` holds the day while it is open. See `ASKS_FIRST`.
-      //
-      // Only the colleagues. A seat nobody is sitting in is not a Developer beside you - it is the
-      // Product Owner answering a question or the Scrum Master running an event, and neither moves
-      // a card between columns.
-      if (next?.dev && ASKS_FIRST.has(next.move.action.type) && now) {
-        const move = asProposed(next.move.action);
-        if (move && !wasTurnedDown(now, next.dev.id, move)) {
-          send(next.seat, { type: 'PROPOSE_MOVE', devId: next.dev.id, move, says: next.move.says });
-          if (live) timer = setTimeout(beat, BEAT_MS);
-          return;
-        }
       }
       if (next) {
-        // A build is the work itself, and a topic change is the event moving on. Both used to
-        // appear a second after the move before them: an item was taken and built inside one
-        // beat, and a Product Owner who agreed the Sprint Goal was on topic two before they had
+        // A topic change is the event moving on, and it used to appear a second after the move
+        // before it: a Product Owner who agreed the Sprint Goal was on topic two before they had
         // let go of the mouse.
         // A Daily Scrum is an event, not a move: the Scrum Master used to hold it about a second
         // after it opened, so the screen appeared and was gone before anybody had read the
         // blocker on it - and a human who wanted to hold or skip it themselves never got the
         // chance. It waits the longest of anything here.
-        const lead = next.move.weight ? WORK_BEAT_MS
-          : next.move.action.type === 'RUN_DAILY_SCRUM' ? EVENT_BEAT_MS
+        const lead = next.move.action.type === 'RUN_DAILY_SCRUM' ? EVENT_BEAT_MS
             : next.move.action.type === 'SET_PLANNING_TOPIC' ? TOPIC_BEAT_MS
               // A trainer's card is a dilemma put to the room. Answered in a beat, nobody would have
               // read it - so the Product Owner played by the game takes as long as an event does.
@@ -436,17 +368,11 @@ export function useAiSeats(
         // Sent as its own move rather than carried on the action, because most actions reach the
         // reducer from a person too, and a person's reasons are not the game's to write.
         if (now && !NARRATED.has(move.action.type)) {
-          const who = next.dev
-            ? { who: 'developer' as const, from: next.dev.name }
-            : speaking(now, seat);
+          const who = speaking(now, seat);
           const about = aboutCard(move.action);
           send(seat, { type: 'SAY', ...who, text: move.says, itemId: about });
         }
-        send(seat, move.action);       // one move at a time, so it reads as somebody working
-        // The work costs the day, and BUILD_ITEM charges it - so this no longer charges it again.
-        // It used to be the only place the cost was applied, which is exactly why a person's own
-        // building was free: the charge lived with the seat rather than with the work. `weight` is
-        // still what paces a move on screen, because building reads as taking longer than deciding.
+        send(seat, move.action);       // one move at a time, so it reads as somebody deciding
       }
       // ...and how long before the next one. A topic change, and the selection that finishes a
       // topic, are each left on screen long enough to read.
@@ -454,12 +380,11 @@ export function useAiSeats(
       // Nothing to do is not a reason to stop looking, either: what the seats can do next changes
       // with the clock as much as with anybody's move.
       const kind = next?.move.action.type;
-      const pause = next?.move.weight ? WORK_BEAT_MS
-        : kind === 'SET_PLANNING_TOPIC' || kind === 'SET_FORECAST' ? TOPIC_BEAT_MS
+      const pause = kind === 'SET_PLANNING_TOPIC' || kind === 'SET_FORECAST' ? TOPIC_BEAT_MS
           : BEAT_MS;
       if (live) timer = setTimeout(beat, pause);
     };
     timer = setTimeout(beat, BEAT_MS);
     return () => { live = false; clearTimeout(timer); };
-  }, [drivesClock, seats, agreers, devs]);
+  }, [drivesClock, seats, agreers]);
 }

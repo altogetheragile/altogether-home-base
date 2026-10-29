@@ -2,11 +2,10 @@ import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
-import {say, speaking, answerHuddle, lendAHand, proposeMove, agreeMove, declineMove, openRetro, openReview, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, sizeForTheAnimals, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, setTrainerLed, playTrainerCard, asMember, joinTeam, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
-import { applyParkChecks, wantedServices } from './parkChecks';
+import {say, speaking, answerHuddle, lendAHand, proposeMove, agreeMove, declineMove, openRetro, openReview, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, setTrainerLed, playTrainerCard, asMember, joinTeam, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
+import { applyParkChecks } from './parkChecks';
 import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail, recordEverything } from './trail';
-import { aiDesign } from './aiSeats';
 import { readTaught, writeTaught } from './whatYouHaveRead';
 import { useTabAway } from './useTabAway';
 
@@ -267,29 +266,8 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
       return pullIntoSprint(state, action.id, action.by);
     case 'DROP_FROM_SPRINT':
       return dropFromSprint(state, action.id, action.by);
-    case 'BUILD_ITEM': {
-      // A seat played by the game works out what to build from the item as it is NOW. Anything else
-      // is a lost update: the Developers decided to build a moment ago, the player chose a low hedge
-      // since, and the hedge would vanish under a design that was made before they chose it.
-      // Reported from playing it twice - "I still lose the ground colour", "the hedge I picked
-      // defaults to high fence".
-      const now = state.backlog.find((it) => it.id === action.id);
-      // ...and what lives in it, because what borders a habitat depends on what it has to hold.
-      const living = now ? state.backlog.filter((it) => it.enclosureId === now.id) : [];
-      const design = action.byTheGame && now ? aiDesign(now, living) : action.design;
-      // ...and how big it is, which is not part of the design: it is a field on the item, and
-      // nothing defaults to a size any more. A habitat the game builds for you still has to be
-      // given one, or it is a habitat nobody can move about in.
-      const sized = action.byTheGame && now?.category === 'enclosure' && !now.enclosureSize
-        ? setEnclosureSize(state, action.id, sizeForTheAnimals(now, state.backlog))
-        : state;
-      // ...and what a building offers, which is a field on the item too, and is nobody's default
-      // any more. What it was ASKED for is in its criteria, and that is what these Developers build.
-      const serving = action.byTheGame && now?.category === 'amenity' && !now.services
-        ? setServices(sized, action.id, wantedServices(now) ?? null)
-        : sized;
-      return buildItem(serving, action.id, design);
-    }
+    case 'BUILD_ITEM':
+      return buildItem(state, action.id, action.design);
     case 'EDIT_ITEM':
       return editItem(state, action.id, action.design);
     case 'ADD_ANOTHER':
