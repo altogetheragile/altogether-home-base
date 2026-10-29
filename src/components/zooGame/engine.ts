@@ -118,10 +118,42 @@ export const inFlight = (state: ZooGameState): BacklogItem[] =>
  *  The first on the team, by name, rather than a flag: somebody has to be you, every screen that
  *  draws the team already draws them in order, and a player who pulls a card should see their own
  *  name on it. */
-export const yourDev = (state: ZooGameState): ScrumTeamMember | undefined => state.team.developers[0];
+export const yourDev = (state: ZooGameState, id: string | null = acting): ScrumTeamMember | undefined =>
+  (id ? state.team.developers.find((d) => d.id === id) : state.team.developers[0]);
 
-/** The Developers the game plays beside you - everybody on the team who is not you. */
-export const otherDevs = (state: ZooGameState): ScrumTeamMember[] => state.team.developers.slice(1);
+/** Everybody on the team who is not you. */
+export const otherDevs = (state: ZooGameState, id: string | null = acting): ScrumTeamMember[] => {
+  const you = yourDev(state, id);
+  return state.team.developers.filter((d) => d.id !== you?.id);
+};
+
+// ============= Who "you" is, in a shared game =============
+//
+// Alone, you are the first Developer and always have been. Together, every player is a Developer
+// of their own (docs/ZOO_EVERYONE_A_DEVELOPER.md), and "you" was still the first one: two learners
+// in Developer seats were both Ada - the same name on their pulls, the same stand-up lines.
+//
+// The reducer runs in every browser, so "you" cannot be a setting of the screen. It travels in the
+// action instead: a shared session stamps each move with the member who sent it (`as`), and the
+// reducer sets it here for the length of that one move. Everything that asks `yourDev` while the
+// move is being made gets the person who made it. Pure still: same state, same action, same answer.
+let acting: string | null = null;
+
+/** Make one move as one member. */
+export function asMember<T>(id: string | undefined, fn: () => T): T {
+  if (!id) return fn();
+  const was = acting;
+  acting = id;
+  try { return fn(); } finally { acting = was; }
+}
+
+/** A player arriving at the table becomes a Developer of their own, under their own name. Once:
+ *  coming back after a dropped connection is the same person, not a second one. */
+export function joinTeam(state: ZooGameState, id: string, name: string): ZooGameState {
+  if (!id || state.team.developers.some((d) => d.id === id)) return state;
+  const label = name.trim().slice(0, 24) || 'Player';
+  return { ...state, team: { ...state.team, developers: [...state.team.developers, { id, name: label, player: true }] } };
+}
 
 /** What this Developer is building right now, if anything. Per person, which is the point: the
  *  old test asked whether ANYBODY was mid-build and stopped the whole team if they were, so one
@@ -255,7 +287,11 @@ export const CHAT_KEPT = 80;
  *  the game work at about a move a second, and a team that says "Lay the ground - done, on the
  *  Lion Enclosure" four times is four messages where a reader wanted one - the same collapsing a
  *  shared session already did to the cards that used to carry these. */
-export function say(state: ZooGameState, msg: Omit<ChatMessage, 'id' | 'day'>): ZooGameState {
+export function say(state: ZooGameState, raw: Omit<ChatMessage, 'id' | 'day'>): ZooGameState {
+  // "You", said by somebody in particular. Written down as who they are, so it reads as "You" only
+  // on their own screen; see `acting`.
+  const me = raw.who === 'you' && acting ? state.team.developers.find((d) => d.id === acting) : undefined;
+  const msg = me ? { ...raw, who: 'developer' as const, from: me.name, member: me.id } : raw;
   const thread = state.chat ?? [];
   const last = thread[thread.length - 1];
   const line: ChatMessage = { ...msg, day: state.dayNumber, id: `m${thread.length}-${state.dayNumber}` };
@@ -621,6 +657,8 @@ export function standUp(state: ZooGameState): ZooGameState {
   let said = state;
   let raised = false;
   for (const dev of otherDevs(state)) {
+    // A person at the table says their own lines. Read out for them, the event would be the game's.
+    if (dev.player) continue;
     // Nobody speaks for a pair of hands that has done nothing and holds nothing. Playing alone you
     // are all of the Developers, and a colleague you never gave a card would otherwise stand up
     // every morning to say they were "picking up the next thing" - which nobody ever was.
@@ -657,8 +695,8 @@ export function standUp(state: ZooGameState): ZooGameState {
  *  of it: the first is what the board says, and the others are the two ways a stand-up goes wrong
  *  - a status report to nobody, and a promise instead of a plan. Nothing is scored for picking
  *  one; the Retrospective reads back what was said. */
-export function yourStandUp(state: ZooGameState): { key: string; label: string; text: string }[] {
-  const you = yourDev(state);
+export function yourStandUp(state: ZooGameState, id?: string | null): { key: string; label: string; text: string }[] {
+  const you = yourDev(state, id ?? acting);
   if (!you) return [];
   // ...and it is already out of somebody's mouth by the time it is your turn, so yours is about
   // your own cards. The room has heard about the keeper being off.

@@ -1,6 +1,6 @@
 # Everyone Is A Developer: Multiplayer Design
 
-Status: **proposal, for Al to mark up.** Nothing here is built.
+Status: **agreed with Al, 29 October 2026.** See **Decided** at the end. Being built in the order under **What Changes Underneath**.
 
 The third of three steps agreed on 26 October 2026. The first two are live:
 
@@ -151,7 +151,28 @@ so games already played still load. Raising the Developer seats from four to nin
   list is worse than one.
 - **Cohort view.** A trainer watching several tables at once.
 
-## Questions For Al
+## Decided
+
+Al, 29 October 2026, on the five questions below and one more:
+
+1. **A learner can be the Product Owner in a shared game.** Yes. The seat is open to anybody; the AI
+   plays it when nobody does, and a trainer can take it.
+2. **A team of two is two Developers.** No AI Developers are added.
+3. **The Scrum Master hat goes first to the first player to join**, then in the order they joined.
+4. **The forecast:** one Developer proposes, the others agree.
+5. **A player who leaves** stays on the team as away; their cards wait, and a trainer can hand one on.
+6. **No AI builds anything, anywhere.** "The AI building is just too clunky. Let a player take all
+   the roles - Dev, SM and PO." So:
+   - Every player is a Developer, including whoever holds the Product Owner seat. A Product Owner
+     who builds is, in the Guide's words, participating as a Developer.
+   - A game of one player is that player in every role, exactly as solo.
+   - The AI only ever plays the Product Owner: answering questions, accepting work, answering
+     trainer cards. It never sizes, forecasts, plans or builds.
+   - All the code that let the AI build goes: the Developers "as one set of hands" for an empty
+     seat, the colleagues beside a human (`alongside`), `aiDevTurn`, `aiDesign` and the pacing
+     that existed for them.
+
+The questions as they were asked:
 
 1. **Can a learner be the Product Owner in a shared game?** The PO course route needs it. Proposed:
    yes, the seat is open to anybody, and AI by default.

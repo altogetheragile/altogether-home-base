@@ -61,8 +61,12 @@ const FLUSH_MS = 250;
 // move belongs to instead: only the Developers change the Sprint Backlog.
 const ACTOR_MATTERS = new Set(['SET_FORECAST', 'PLAN_SPRINT', 'PULL_ITEM', 'RUN_DAILY_SCRUM',
   'SKIP_DAILY_SCRUM', 'SET_WIP_LIMIT', 'SET_DOD', 'START_ITEM', 'OPEN_ITEM', 'SEND_BACK', 'ANSWER_QUESTION', 'ASK_TO_CHECK']);
-const stamped = (action: ZooAction, seat: SeatName | null | undefined): ZooAction =>
-  (seat && ACTOR_MATTERS.has(action.type) ? { ...action, by: seat } as ZooAction : action);
+const stamped = (action: ZooAction, seat: SeatName | null | undefined, member?: string): ZooAction => {
+  const by = seat && ACTOR_MATTERS.has(action.type) ? { ...action, by: seat } as ZooAction : action;
+  // ...and every move by a person carries who they are, so the reducer - which runs in every browser
+  // - makes it as them. See `asMember`.
+  return member ? { ...by, as: member } as unknown as ZooAction : by;
+};
 
 export function useZooSession(gameId: string | null, seat: SeatContext = { seat: null }): ZooSession {
   const { user } = useAuth();
@@ -148,7 +152,7 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
     const verdict = mayTake(action.type, seatRef.current);
     if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
     setRefused(null);
-    apply(stamped(action, seatRef.current.seat));
+    apply(stamped(action, seatRef.current.seat, seatRef.current.memberId));
   }, [apply]);
 
   // An AI seat is a player, so its move is judged the same way - just against its own

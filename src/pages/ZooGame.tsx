@@ -1,3 +1,4 @@
+import { YouContext } from '@/components/zooGame/you';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
@@ -51,13 +52,15 @@ import { SOLO_AI_SEATS, leftToThePlayer } from '@/components/zooGame/aiSeats';
  *  same screens serve a game played alone and a game played by a team - the only difference
  *  being which carrier the actions were built around. `saves` is off in a shared session,
  *  where the session itself is the save and a private copy would be a fork of it. */
-export function ZooGameScreens({ game, saves = true, seat = null, observer, covering, away, mustAgree = [], said, onDismissSaid, refused, onDismissRefused, onReading }:
+function Screens({ game, saves = true, seat = null, observer, covering, away, mustAgree = [], said, onDismissSaid, refused, onDismissRefused, onReading }:
   { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[];
     /** Seats held by somebody who is not connected right now. A subset of `covering`: their work
      *  falls to whoever is here, and the band says which of the two it is. */
     away?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
-    onReading?: (reading: boolean) => void }) {
+    onReading?: (reading: boolean) => void;
+    /** The team member at this browser, in a shared game. See `YouContext`. */
+    you?: string | null }) {
   // Priya and Sam, in a game played alone.
   //
   // The seats nobody is sitting in are played by the game - that is what makes one person a whole
@@ -452,6 +455,12 @@ export function ZooGameScreens({ game, saves = true, seat = null, observer, cove
 }
 
 /** Played alone: the same screens, with the reducer as the carrier. */
+/** Every screen of the game, told who is looking. A shared game passes the player at this browser;
+ *  alone it is nobody in particular and the screens fall back to the first Developer. */
+export function ZooGameScreens(props: Parameters<typeof Screens>[0]) {
+  return <YouContext.Provider value={props.you ?? null}><Screens {...props} /></YouContext.Provider>;
+}
+
 export default function ZooGame() {
   // Reading is not building. A solo player who opens what the game said - the notes in the dock, or
   // the Learn drawer - stops the day's clock while they read it, because a Sprint's time is for

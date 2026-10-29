@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
+import { useYou } from './you';
 import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext, whatToHelpWith, yourDev, activeWipLimit } from './engine';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
@@ -55,6 +56,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   className?: string;
 }) {
   const [at, setAt] = useState(0);
+  const viewer = useYou();
   /** Which carried blocker has been read. It stays out of the way once you have seen it, and the
    *  cost it carries stays whether you have read it or not. */
   const [seen, setSeen] = useState<string | null>(null);
@@ -201,7 +203,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   // question back when the Developers were one set of hands - and once two colleagues were
   // building beside you it meant the prompt never came again: the board always had something on
   // it, and the person at the table was never asked what they wanted to do next.
-  const you = yourDev(state);
+  const you = yourDev(state, viewer);
   const yoursInHand = !!you && state.backlog.some((it) => it.status === 'committed' && it.started
     && !it.design && it.sprintNumber === state.sprintNumber && it.pulledBy === you.id);
   const inTheDay = state.phase === 'sprint' && state.dayStage === 'building' && !held;

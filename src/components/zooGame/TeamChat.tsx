@@ -1,3 +1,4 @@
+import { useYou } from './you';
 import { Fragment, useEffect, useRef, type ReactNode } from 'react';
 import type { ZooGameState, ChatMessage, ChatWho } from './types';
 import { SEAT } from './seats';
@@ -37,7 +38,9 @@ const HEX: Record<ChatWho, string> = {
 const FIGURE = 18;
 
 export function Bubble({ msg, opens = true }: { msg: ChatMessage; opens?: boolean }) {
-  const mine = msg.who === 'you';
+  const viewer = useYou();
+  // Yours alone, or yours in a shared game: the line is stored as the person who said it.
+  const mine = msg.who === 'you' || (!!viewer && msg.member === viewer);
   return (
     <li data-part="chat-message" data-who={msg.who} data-opens={opens ? 'yes' : 'no'}
       className={cn('flex items-end gap-1.5', mine && 'flex-row-reverse')}>

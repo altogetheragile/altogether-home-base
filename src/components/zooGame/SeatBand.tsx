@@ -2,6 +2,7 @@ import type { ZooGameState, ScrumTeamMember } from './types';
 import type { SeatName } from './useZooSessions';
 import { seatLines, whoDoesWhatNow } from './header';
 import { yourDev } from './engine';
+import { useYou } from './you';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { useState } from 'react';
@@ -41,7 +42,10 @@ const isMine = (
   s: { role: string; id: string },
   seat: SeatName | null | undefined,
   you: ScrumTeamMember | undefined,
-): boolean => (seat ? s.role === seat : s.id === you?.id || s.role === 'scrum_master');
+): boolean => (seat
+  // Your seat, and in a shared game your own Developer too: every player is one.
+  ? s.role === seat || (!!you && s.id === you.id)
+  : s.id === you?.id || s.role === 'scrum_master');
 
 /** Your own name, changed where it is written.
  *
@@ -106,9 +110,10 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   onRename?: (memberId: string, name: string) => void;
   className?: string;
 }) {
+  const viewer = useYou();
   const lines = seatLines(state);
   // The Developer whose hands you have, for a game with nobody else at the table.
-  const you = yourDev(state);
+  const you = yourDev(state, viewer);
   const sentence = whoDoesWhatNow(state, observer ? null : seat ?? null);
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
@@ -143,7 +148,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                 onWho?.(`The ${s.role === 'product_owner' ? 'Product Owner' : 'Scrum Master'} takes part as a Developer only when they are working on Sprint Backlog items. ${s.name} has their own accountability here.`);
               },
             };
-          const yours = isMine(s, mine, observer ? undefined : you);
+          // With a seat and nobody known at this browser, only the seat is yours: the first Developer is
+          // not you just because nothing else was said.
+          const yours = isMine(s, mine, observer || (mine && !viewer) ? undefined : you);
           const cover = !yours && covered.has(s.role as SeatName);
           const absent = gone.has(s.role as SeatName);
           return (

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { initialZooState } from './config';
+import type { ZooGameState } from './types';
 
 // Creating, joining and seating a shared session. The game state itself is useZooSession's
 // job; this is the lobby's data - who is here and who is sitting where.
@@ -29,6 +30,8 @@ export const STARTING_SEATS: { seat: SeatName; seat_no: number }[] = [
   { seat: 'scrum_master', seat_no: 1 },
   ...Array.from({ length: 4 }, (_, i) => ({ seat: 'developer' as SeatName, seat_no: i + 1 })),
 ];
+
+const withNoDevelopers = (s: ZooGameState): ZooGameState => ({ ...s, team: { ...s.team, developers: [] } });
 
 /** Readable aloud, so a trainer can give it to a room. No I, O, 0 or 1. */
 function makeCode(): string {
@@ -147,8 +150,10 @@ export function useZooSessions(sessionId: string | null) {
       // Who sat where last time, so the rotation has something to move along.
       const previous = seats.filter((x) => x.participant_id).map((x) => ({ seat: x.seat, participant_id: x.participant_id! }));
       const { data, error: e } = await supabase.from('zoo_games')
+        // No Developers to begin with. The team is the people at the table, and each joins it as
+        // they come in (JOIN_TEAM) - there is no Ada for two learners to both be.
         .insert({ session_id: session.id, seq, seed, theme: 'zoo',
-                  state: initialZooState(seed) as never })
+                  state: withNoDevelopers(initialZooState(seed)) as never })
         .select('id').single();
       if (e) { setError(e.message); return null; }
       // Every seat starts played by AI, so an accountability is always held by somebody and
@@ -170,7 +175,8 @@ export function useZooSessions(sessionId: string | null) {
       });
       await supabase.from('zoo_game_seats').insert(STARTING_SEATS.map((c) => {
         const who = taken.get(`${c.seat}:${c.seat_no}`);
-        return { game_id: data.id, ...c, participant_id: who ?? null, is_ai: !who,
+        // A Developer seat nobody takes stays empty: the game plays no Developers.
+        return { game_id: data.id, ...c, participant_id: who ?? null, is_ai: !who && c.seat !== 'developer',
                  claimed_at: who ? new Date().toISOString() : null };
       }));
       await supabase.from('zoo_sessions').update({ status: 'live' }).eq('id', session.id);

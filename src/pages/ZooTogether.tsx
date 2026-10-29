@@ -1,10 +1,9 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ZooLobby } from '@/components/zooGame/ZooLobby';
 import { ZooGameScreens } from './ZooGame';
 import { TrainerDeck } from '@/components/zooGame/TrainerDeck';
 import { useZooSession, useSharedClock, useAiSeats } from '@/components/zooGame/useZooSession';
-import { otherDevs } from '@/components/zooGame/engine';
 import { useZooSessions } from '@/components/zooGame/useZooSessions';
 import { seatIsAway, unmannedSeats } from '@/components/zooGame/seatPresence';
 import type { SeatContext } from '@/components/zooGame/seatRules';
@@ -34,6 +33,9 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
     observer: lobby.me?.role === 'observer',
     // A trainer: granted by the host, never implied by hosting. See `TRAINER_ONLY`.
     facilitator: !!lobby.me?.can_facilitate,
+    // ...and which team member this player is. Every player is a Developer of their own, so this is
+    // their participant id whatever seat they hold; a watcher is not on the team.
+    memberId: lobby.me && lobby.me.role !== 'observer' ? lobby.me.id : undefined,
     // Seats with nobody in them - which includes a seat whose holder has shut their laptop. It used
     // to mean "no participant and no AI", so a held-but-absent seat read as staffed and its work
     // fell to nobody: the Sprint waited on somebody who had gone home, and nothing said so.
@@ -83,18 +85,13 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   const whereRef = useRef('');
   useEffect(() => { whereRef.current = here(session.state); });
 
-  const aiSeats = lobby.seats.filter((x) => x.is_ai).map((x) => x.seat);
+  // The seats the game plays: never the Developers. The team is the people at the table, and the
+  // game builds nothing - "The AI building is just too clunky. Let a player take all the roles."
+  const aiSeats = lobby.seats.filter((x) => x.is_ai && x.seat !== 'developer').map((x) => x.seat);
   // The same list the Sprint Goal panel waits on, so the seats played by the game hold topic one
   // open exactly as long as the screen does.
   const mustAgree = [...new Set(lobby.seats.filter((x) => x.participant_id || x.is_ai).map((x) => x.seat))];
-  // The Developers the game plays BESIDE a human one. Somebody is in that chair, so the seat
-  // itself is not played - but a Scrum Team is three Developers and the other two should be
-  // working. Empty when nobody holds it: then `aiSeats` has the seat in it and the game plays the
-  // Developers as one set of hands, which is the other way round and never both at once.
-  const devHeld = lobby.seats.some((x) => x.seat === 'developer' && x.participant_id && !x.is_ai);
-  const alongside = useMemo(() => (devHeld && session.state ? otherDevs(session.state) : []),
-    [devHeld, session.state]);
-  useAiSeats(session, aiSeats, { mustAgree, alongside, onSay: useCallback((seat: string, says: string, action: { type: string; topic?: string }) => {
+  useAiSeats(session, aiSeats, { mustAgree, onSay: useCallback((seat: string, says: string, action: { type: string; topic?: string }) => {
     const kind = action.type;
     // A move that changes the topic is about the topic it moves TO, or the line announcing
     // topic three would be filed under topic two and swept away on arrival.
@@ -119,6 +116,15 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   }, [forget]) });
   const { state, ready, present, drivesClock, error, refused, clearRefused } = session;
 
+  // Arriving is joining the team, under the name you gave the lobby. Sent once the game has loaded,
+  // and harmless again: somebody who reconnects is already on it.
+  const joined = !!state && !!ctx.memberId && state.team.developers.some((d) => d.id === ctx.memberId);
+  const { send } = session;
+  const myName = lobby.me?.display_name;
+  useEffect(() => {
+    if (ready && state && ctx.memberId && !joined) send({ type: 'JOIN_TEAM', id: ctx.memberId, name: myName ?? 'Player' });
+  }, [ready, state, ctx.memberId, joined, myName, send]);
+
   if (error) return <p className="p-10 text-center text-sm text-destructive">{error}</p>;
   if (!ready || !state) return <p className="p-10 text-center text-sm text-muted-foreground">Joining the game…</p>;
 
@@ -133,7 +139,7 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
         refused={refused} onDismissRefused={clearRefused}
         // Every accountability with somebody in it - a person or an AI - has to agree the
         // Sprint Goal. Empty seats cannot agree, so they are not waited on.
-        mustAgree={mustAgree} />
+        mustAgree={mustAgree} you={ctx.memberId ?? null} />
 
       {/* The trainer's hand, for the trainer only. */}
       {ctx.facilitator && <TrainerDeck state={state} onPlay={session.playTrainerCard} onSetLed={session.setTrainerLed} />}
