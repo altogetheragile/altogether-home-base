@@ -42,7 +42,7 @@ export interface TrainerCard {
 /** What a played card carries into the game: the situation as it read when it was played. Carried
  *  whole, so a deck reworded tomorrow cannot rewrite a Sprint that was played today - and every
  *  browser in the session lands the same card whatever deck it loaded. */
-export type PlayedCard = Pick<TrainerCard, 'id' | 'kind' | 'title' | 'detail' | 'item' | 'aiChoice' | 'aiSays'>;
+export type PlayedCard = Pick<TrainerCard, 'id' | 'kind' | 'title' | 'detail' | 'item' | 'aiChoice' | 'aiSays'> & Partial<Pick<TrainerCard, 'landsOn'>>;
 
 export const SHIPPED_TRAINER_CARDS: readonly TrainerCard[] = [
   { id: 'materials', kind: 'block', shipped: true, title: 'The materials are delayed',
@@ -124,5 +124,5 @@ export const trainerDeck = (): TrainerCard[] => deck;
 export const playableCards = (): TrainerCard[] => deck.filter((c) => !c.off);
 
 /** A card as it goes into the game. */
-export const asPlayed = (c: TrainerCard): PlayedCard => ({ id: c.id, kind: c.kind, title: c.title, detail: c.detail,
+export const asPlayed = (c: TrainerCard): PlayedCard => ({ id: c.id, kind: c.kind, title: c.title, detail: c.detail, landsOn: c.landsOn,
   ...(c.kind === 'decision' ? { item: c.item, aiChoice: c.aiChoice, aiSays: c.aiSays } : {}) });

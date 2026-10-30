@@ -130,7 +130,9 @@ In the order it would be built.
    Planning starts). The team strip badges the holder and drops Sam; the impediment call is the
    holder's; the AI stops playing the Scrum Master seat once a hat is worn. **Built.**
 4. **Ask the team first.** The blocker answers split as above; "ask the Scrum Master to help" added
-   to the Daily Scrum. Solo keeps all four, because there the player is the whole team.
+   to the Daily Scrum. Solo keeps all four, because there the player is the whole team. A trainer
+   card goes to the hat holder directly only when the deck says it lands on the Scrum Master.
+   **Built.**
 5. **Team decisions.** Forecast proposed and agreed; Sprint Goal agreed per player.
 6. **The lobby.** One Product Owner seat and a row per player; rotation removed.
 

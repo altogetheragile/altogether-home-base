@@ -5,7 +5,7 @@ import type { ZooGameState, ZooAction } from './types';
 import { reducer } from './useZooGame';
 import { localState, queueAction, confirmWrite, rebase, hasPending, writePayload, type SyncState } from './sessionSync';
 import { zooActions, type ZooActions } from './zooActions';
-import { mayTake, refusal, withTheHat, type SeatContext } from './seatRules';
+import { mayDo, refusal, withTheHat, type SeatContext } from './seatRules';
 import { aiTurn } from './aiSeats';
 import { speaking } from './engine';
 import type { SeatName } from './useZooSessions';
@@ -150,7 +150,7 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
 
   const send = useCallback((action: ZooAction) => {
     // Who holds the Scrum Master hat is game state, so it is read from the game, not the lobby.
-    const verdict = mayTake(action.type, withTheHat(seatRef.current, syncRef.current ? localState(syncRef.current) : null));
+    const verdict = mayDo(action, withTheHat(seatRef.current, syncRef.current ? localState(syncRef.current) : null));
     if (!verdict.allowed) { setRefused(refusal(verdict)); return; }
     setRefused(null);
     apply(stamped(action, seatRef.current.seat, seatRef.current.memberId));
@@ -159,7 +159,7 @@ export function useZooSession(gameId: string | null, seat: SeatContext = { seat:
   // An AI seat is a player, so its move is judged the same way - just against its own
   // accountability rather than against whoever happens to be sitting here.
   const sendAs = useCallback((asSeat: SeatName, action: ZooAction) => {
-    if (!mayTake(action.type, { seat: asSeat }).allowed) return;
+    if (!mayDo(action, { seat: asSeat }).allowed) return;
     apply(stamped(action, asSeat));
   }, [apply]);
 
@@ -330,7 +330,7 @@ export function useAiSeats(
           // A move its own accountability may not take is skipped rather than sent, so a seat
           // that keeps proposing something impossible cannot starve the seats behind it in
           // this list - which is how the Scrum Master ended up never getting to agree.
-          if (!move || !mayTake(move.action.type, { seat }).allowed) continue;
+          if (!move || !mayDo(move.action, { seat }).allowed) continue;
           if (skip?.(move.action)) continue;
           next = { seat, move }; break;
         }

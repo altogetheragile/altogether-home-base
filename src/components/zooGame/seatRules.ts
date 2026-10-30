@@ -78,6 +78,9 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   // block is still the Developers' business, which is why "leave it to them" is one of the answers
   // rather than the absence of one.
   ANSWER_IMPEDIMENT: { who: 'scrum_master', because: 'Causing the removal of impediments is the Scrum Master\u2019s accountability.' },
+  // ...but the team is asked first. Clearing it themselves or working around it is the Developers'
+  // own call (see `mayDo`), and asking the Scrum Master to help is how the other two open up.
+  ASK_SCRUM_MASTER:  { who: 'developer', because: 'The Developers ask the Scrum Master for help with what is in their way.' },
   SET_WIP_LIMIT:     { who: 'developer', because: 'How much the Developers take on at once is theirs to manage.' },
 };
 
@@ -168,6 +171,17 @@ export function mayTake(type: ZooAction['type'], ctx: SeatContext): Verdict {
   return { allowed: false, owner: rule.who, because: rule.because };
 }
 
+
+/** The answers to what surfaced that are the Developers' own, whoever holds the hat. */
+const TEAMS_ANSWERS: ReadonlySet<string> = new Set(['team', 'around']);
+
+/** May this player make this move? The same as `mayTake`, except where one action is two people's
+ *  depending on what it says: an impediment the team clears or works around is theirs, and only
+ *  removing or escalating it is the Scrum Master's. */
+export function mayDo(action: ZooAction, ctx: SeatContext): Verdict {
+  if (action.type === 'ANSWER_IMPEDIMENT' && TEAMS_ANSWERS.has(action.how)) return mayTake('ASK_SCRUM_MASTER', ctx);
+  return mayTake(action.type, ctx);
+}
 
 /** The gate's context with the hat added, read from the game. */
 export function withTheHat(ctx: SeatContext, state: ZooGameState | null): SeatContext {

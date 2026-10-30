@@ -93,6 +93,9 @@ export interface Impediment {
   tip?: string;
   /** Escalated upward: it resolves itself in a day or two, and the team learns to wait. */
   waitDays?: number;
+  /** In a shared game, the Developers have asked the Scrum Master to help with it. Until they do,
+   *  removing or escalating it is not on the table: the default is always ask the team. */
+  askedSm?: boolean;
 }
 
 /** What the Scrum Master did about what surfaced. Four answers, none of them forbidden: the game
@@ -946,6 +949,7 @@ export type ZooAction =
   | { type: 'END_DAY' }
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
+  | { type: 'ASK_SCRUM_MASTER'; by?: string }
   | { type: 'SET_TRAINER_LED'; on: boolean }
   | { type: 'JOIN_TEAM'; id: string; name: string }
   | { type: 'PLAY_TRAINER_CARD'; card: PlayedCard }
