@@ -954,6 +954,7 @@ export type ZooAction =
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
   | { type: 'ASK_SCRUM_MASTER'; by?: string }
   | { type: 'AGREE_FORECAST'; by?: string }
+  | { type: 'HAND_HAT'; to: string }
   | { type: 'SET_TRAINER_LED'; on: boolean }
   | { type: 'JOIN_TEAM'; id: string; name: string }
   | { type: 'PLAY_TRAINER_CARD'; card: PlayedCard }

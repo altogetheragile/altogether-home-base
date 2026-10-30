@@ -160,7 +160,8 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
         mustAgree={mustAgree} you={ctx.memberId ?? null} />
 
       {/* The trainer's hand, for the trainer only. */}
-      {ctx.facilitator && <TrainerDeck state={state} onPlay={session.playTrainerCard} onSetLed={session.setTrainerLed} />}
+      {ctx.facilitator && <TrainerDeck state={state} onPlay={session.playTrainerCard} onSetLed={session.setTrainerLed}
+        onHandHat={session.handHat} away={awaySeats} />}
 
       <div className="flex items-center justify-between gap-3 px-4 py-3 text-[11px] text-muted-foreground">
         <span>

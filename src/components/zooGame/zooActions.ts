@@ -131,6 +131,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     askScrumMaster: () => send({ type: 'ASK_SCRUM_MASTER' }),
     setTrainerLed: (on: boolean) => send({ type: 'SET_TRAINER_LED', on }),
     playTrainerCard: (card: PlayedCard) => send({ type: 'PLAY_TRAINER_CARD', card }),
+    handHat: (to: string) => send({ type: 'HAND_HAT', to }),
     skipDailyScrum: () => send({ type: 'SKIP_DAILY_SCRUM' }),
     beginDay: () => send({ type: 'START_DAY' }),
     cancelSprint: () => send({ type: 'CANCEL_SPRINT' }),

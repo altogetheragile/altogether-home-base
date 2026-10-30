@@ -3823,6 +3823,16 @@ export function setTrainerLed(state: ZooGameState, on: boolean): ZooGameState {
   return { ...state, trainerLed: on, trainerCard: on ? state.trainerCard ?? null : null };
 }
 
+/** The trainer hands the Scrum Master hat to another player - most often because whoever wears it
+ *  has gone, and a blocker the team asks for help with would otherwise wait on an empty chair. It
+ *  moves on from the new holder at the next Sprint Planning, as it always does. */
+export function handHat(state: ZooGameState, to: string): ZooGameState {
+  const next = players(state).find((p) => p.id === to);
+  if (!next || state.scrumMasterId === to) return state;
+  return note({ ...state, scrumMasterId: to }, { kind: 'trainer', by: 'trainer',
+    what: `The trainer handed the Scrum Master hat to ${next.name}.` });
+}
+
 /** A trainer plays a card. It lands at the Daily Scrum: now, if one is open with nothing on it,
  *  otherwise at the next one. Playing a card is running the drama, so it switches the roll off. */
 export function playTrainerCard(state: ZooGameState, card: PlayedCard): ZooGameState {
