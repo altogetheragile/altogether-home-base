@@ -99,8 +99,11 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   /** Seats whose holder is not connected right now. A subset of `covering` - the work falls to
    *  whoever is here either way, and this is the difference between a chair nobody took and a
    *  person who has gone. The lobby has always said it; in the game the seat just quietly became
-   *  yours to cover, which is the same news with the reason taken out. */
-  away?: SeatName[];
+   *  yours to cover, which is the same news with the reason taken out.
+   *
+   *  A seat name for the Product Owner, and a member id for a Developer: every player is a Developer
+   *  of their own, so one of them being away is not all of them being away. */
+  away?: string[];
   /** Watching rather than playing. An observer holds nothing, and the band should not outline a
    *  seat as theirs. */
   observer?: boolean;
@@ -153,7 +156,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
           // not you just because nothing else was said.
           const yours = isMine(s, mine, observer || (mine && !viewer) ? undefined : you);
           const cover = !yours && covered.has(s.role as SeatName);
-          const absent = gone.has(s.role as SeatName);
+          const absent = gone.has(s.id) || (s.role !== 'developer' && gone.has(s.role));
           return (
             <span key={s.id} {...drag} data-part="seat"
               title={yours || cover || absent

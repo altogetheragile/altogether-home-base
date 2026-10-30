@@ -33,15 +33,20 @@ describe('away', () => {
 
   it('means the team covers that work, the way an empty seat does', () => {
     // The gate's question is "is anybody doing this?", and the answer is the same either way.
-    expect(unmannedSeats(seats, people, ['u-al'])).toEqual(['scrum_master', 'developer']);
+    expect(unmannedSeats(seats, people, ['u-al'])).toEqual(['scrum_master']);
     expect(unmannedSeats(seats, people, ['u-al', 'u-sam']),
-      'a full table still had work falling to nobody').toEqual(['developer']);
+      'a full table still had work falling to nobody').toEqual([]);
+  });
+
+  it('never counts a Developer seat nobody is in: the Developers are the players, not chairs to cover', () => {
+    const table: SeatLike[] = [{ seat: 'product_owner', participant_id: null, is_ai: false }, ...seats.slice(2)];
+    expect(unmannedSeats(table, people, ['u-al'])).toEqual(['product_owner']);
   });
 
   it('is never guessed before presence is known', () => {
     // Empty presence means the channel has not synced - not that the room is deserted. Calling
     // everybody absent for a second would open every gate in the game.
-    expect(unmannedSeats(seats, people, []), 'an unsynced channel emptied the table').toEqual(['developer']);
+    expect(unmannedSeats(seats, people, []), 'an unsynced channel emptied the table').toEqual([]);
     expect(hereCount(people, []), 'nobody was counted before presence arrived').toBe(2);
   });
 });

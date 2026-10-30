@@ -136,7 +136,9 @@ In the order it would be built.
 5. **Team decisions.** Forecast proposed and agreed; Sprint Goal agreed per player. Changing the
    forecast is proposing it again, so the others are asked again; topic three and starting the
    Sprint wait on it. One player alone agrees by making it. **Built.**
-6. **The lobby.** One Product Owner seat and a row per player; rotation removed.
+6. **The lobby.** One Product Owner seat and a row per player; rotation removed. The lobby shows
+   the players' rows and one empty chair, not nine; a Developer seat is never offered to AI, and an
+   empty one is not work for anybody to cover. **Built.**
 
 Database: steps 1 to 5 change only the game state, which is JSON. Step 6 stops new games creating a
 Scrum Master seat; the seats table's check constraint can keep `scrum_master` as an allowed value,

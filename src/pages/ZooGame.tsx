@@ -1,4 +1,4 @@
-import { YouContext } from '@/components/zooGame/you';
+import { YouContext, useYou } from '@/components/zooGame/you';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
 import { useZooGame } from '@/components/zooGame/useZooGame';
@@ -56,11 +56,13 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[];
     /** Seats held by somebody who is not connected right now. A subset of `covering`: their work
      *  falls to whoever is here, and the band says which of the two it is. */
-    away?: SeatName[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
+    away?: string[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
     /** Somebody is reading what the game said; a solo game stops its clock while they are. */
     onReading?: (reading: boolean) => void;
     /** The team member at this browser, in a shared game. See `YouContext`. */
     you?: string | null }) {
+  // The player at this browser, in a shared game: a Developer whatever seat they hold.
+  const viewer = useYou();
   // Priya and Sam, in a game played alone.
   //
   // The seats nobody is sitting in are played by the game - that is what makes one person a whole
@@ -425,7 +427,7 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
         return <ZooShell state={state} {...shellProps}><SprintPlanning state={state} onPlan={plan} onSetForecast={setForecast} mustAgree={mustAgree} mySeat={seat} onAgreeSprintGoal={agreeSprintGoal} onAgreeForecast={agreeForecast} onEstimate={estimate} onSetTasks={setTasks} onPlanShape={planShape} onToggleGoalCritical={toggleGoalCritical} onReorderForecast={reorderForecast} onRefine={() => setPhase('refine')} onSetSprintGoal={setSprintGoal} onTakeSignal={takeSignal} onSplitEpic={splitEpic} onNavigateStep={() => setPoNote(null)} onSetTopic={setPlanningTopic} onSetBet={setSprintBet} teachCard={cardFor('planning')} onMarkTaught={markTaught} /></ZooShell>;
       case 'sprint':
         return <ZooShell state={state} {...shellProps} tools={<BoardTools state={state} teachCard={cardFor('sprint')} onMarkTaught={markTaught}
-          onSetScrumAt={setDailyScrumAt} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onCancelSprint={cancelSprint} />}><SprintBoard onAskToCheck={askToCheck} state={state} rail={<TeamChat state={state} className="mt-2 h-[34%] shrink-0" rail={actionRail("mt-2 shrink-0")} />} onEstimate={estimate} onToggleTask={toggleTask} onFinishItem={finishItem} onStartItem={startItem} onReorderSprint={reorderSprint} onPull={pull} onDropFromSprint={dropFromSprint} onAnswerPlacement={answerPlacement} onOpen={deployComplete} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onAnswerImpediment={answerImpediment} onAskScrumMaster={askScrumMaster} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSay={say} onAnswerHuddle={answerHuddle} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} drawing={drawing} onAddPbi={createPbi} onSetUserStories={setUserStories} onAssignDev={assignDev} onBuilding={selectOnPark} seat={seat} canBuild={!seat || seat === 'developer' || (covering ?? []).includes('developer')} /></ZooShell>;
+          onSetScrumAt={setDailyScrumAt} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onCancelSprint={cancelSprint} />}><SprintBoard onAskToCheck={askToCheck} state={state} rail={<TeamChat state={state} className="mt-2 h-[34%] shrink-0" rail={actionRail("mt-2 shrink-0")} />} onEstimate={estimate} onToggleTask={toggleTask} onFinishItem={finishItem} onStartItem={startItem} onReorderSprint={reorderSprint} onPull={pull} onDropFromSprint={dropFromSprint} onAnswerPlacement={answerPlacement} onOpen={deployComplete} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onAnswerImpediment={answerImpediment} onAskScrumMaster={askScrumMaster} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSay={say} onAnswerHuddle={answerHuddle} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} drawing={drawing} onAddPbi={createPbi} onSetUserStories={setUserStories} onAssignDev={assignDev} onBuilding={selectOnPark} seat={seat} canBuild={!seat || seat === 'developer' || !!viewer || (covering ?? []).includes('developer')} /></ZooShell>;
       case 'review':
         return <ZooShell state={state} {...shellProps}><SprintReview state={state} onSay={say} onTakeSignal={takeSignal} onDeclineSignal={declineSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} onOpen={open} onConfirmAc={confirmAc} onToggleTask={toggleTask} onSendBack={sendBack} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':

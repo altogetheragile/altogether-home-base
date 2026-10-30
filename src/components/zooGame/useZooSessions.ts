@@ -22,13 +22,20 @@ export interface SessionRow {
   status: 'lobby' | 'live' | 'paused' | 'done';
 }
 
-/** The seats a Scrum Team starts with. One Product Owner, one Scrum Master, and room for
- *  Developers - the Guide's "typically 10 or fewer" for the whole team, so four here leaves
- *  a team of six. Unclaimed seats fall to AI, so a pair can still see a whole team work. */
+/** The most Developers at one table. The Guide says a Scrum Team is "typically 10 or fewer people",
+ *  which is a size it recommends rather than a rule, so nine besides the Product Owner is the
+ *  game's cap and not a Scrum one. */
+export const MAX_DEVELOPERS = 9;
+
+/** The seats a game starts with: one Product Owner, and a Developer seat for each player.
+ *
+ *  No Scrum Master seat. The Scrum Master is a hat one of the Developers wears, and it moves round
+ *  inside the game (docs/ZOO_EVERYONE_A_DEVELOPER.md). Games played before keep theirs - the seats
+ *  table still allows it - so they load as they were. The Product Owner seat starts played by AI;
+ *  a Developer seat nobody takes stays empty, because the game plays no Developers. */
 export const STARTING_SEATS: { seat: SeatName; seat_no: number }[] = [
   { seat: 'product_owner', seat_no: 1 },
-  { seat: 'scrum_master', seat_no: 1 },
-  ...Array.from({ length: 4 }, (_, i) => ({ seat: 'developer' as SeatName, seat_no: i + 1 })),
+  ...Array.from({ length: MAX_DEVELOPERS }, (_, i) => ({ seat: 'developer' as SeatName, seat_no: i + 1 })),
 ];
 
 const withNoDevelopers = (s: ZooGameState): ZooGameState => ({ ...s, team: { ...s.team, developers: [] } });
@@ -136,10 +143,10 @@ export function useZooSessions(sessionId: string | null) {
    *  training session actually is - play, reflect, play again - and it is why seats belong
    *  to the game rather than to the session.
    *
-   *  `rotate` moves everyone one accountability along, so over three games each person has
-   *  held each one. That is the reflection the second game exists for: you were Product
-   *  Owner then and a Developer now, what looked different? */
-  const startGame = useCallback(async (rotate = false): Promise<string | null> => {
+   *  Everybody keeps their seat. There used to be a "rotate" that moved everyone one
+   *  accountability along; with every player a Developer and the Scrum Master hat moving round
+   *  inside the game, there is nothing left to rotate. */
+  const startGame = useCallback(async (): Promise<string | null> => {
     if (!session) return null;
     setBusy(true);
     try {
@@ -147,7 +154,7 @@ export function useZooSessions(sessionId: string | null) {
       const { data: last } = await supabase.from('zoo_games')
         .select('seq').eq('session_id', session.id).order('seq', { ascending: false }).limit(1);
       const seq = (last?.[0]?.seq ?? 0) + 1;
-      // Who sat where last time, so the rotation has something to move along.
+      // Who sat where last time, so everybody sits down again.
       const previous = seats.filter((x) => x.participant_id).map((x) => ({ seat: x.seat, participant_id: x.participant_id! }));
       const { data, error: e } = await supabase.from('zoo_games')
         // No Developers to begin with. The team is the people at the table, and each joins it as
@@ -156,23 +163,16 @@ export function useZooSessions(sessionId: string | null) {
                   state: withNoDevelopers(initialZooState(seed)) as never })
         .select('id').single();
       if (e) { setError(e.message); return null; }
-      // Every seat starts played by AI, so an accountability is always held by somebody and
-      // the gate has something to enforce from the first click. Claiming a seat clears its
-      // AI flag; this is what makes a lone player face a real Scrum Team rather than a set
-      // of empty chairs that quietly permit everything.
-      const ROTATION: Record<SeatName, SeatName> = {
-        product_owner: 'scrum_master', scrum_master: 'developer', developer: 'product_owner',
-      };
-      // Everyone who had a seat gets one again, moved along if rotating. Anything left over
-      // is played by AI, so the team is complete from the first click.
+      // Everyone who had a seat gets the same one again. Somebody who was in a Scrum Master seat, in
+      // a game from before the hat, sits as a Developer: that is what they are now. The Product Owner
+      // seat nobody takes is played by AI, so the accountability is always held by somebody.
       const taken = new Map<string, string>();   // "seat:no" -> participant
-      previous.forEach((prev, i) => {
-        const want = rotate ? ROTATION[prev.seat] : prev.seat;
+      for (const prev of previous) {
+        const want = prev.seat === 'product_owner' ? 'product_owner' : 'developer';
         const free = STARTING_SEATS.find((c) => c.seat === want && !taken.has(`${c.seat}:${c.seat_no}`))
-          ?? STARTING_SEATS.find((c) => !taken.has(`${c.seat}:${c.seat_no}`));
+          ?? STARTING_SEATS.find((c) => c.seat === 'developer' && !taken.has(`${c.seat}:${c.seat_no}`));
         if (free) taken.set(`${free.seat}:${free.seat_no}`, prev.participant_id);
-        else void i;
-      });
+      }
       await supabase.from('zoo_game_seats').insert(STARTING_SEATS.map((c) => {
         const who = taken.get(`${c.seat}:${c.seat_no}`);
         // A Developer seat nobody takes stays empty: the game plays no Developers.
@@ -254,7 +254,8 @@ export function useZooSessions(sessionId: string | null) {
     if (role === 'observer') {
       for (const s of seats.filter((x) => x.participant_id === me.id)) {
         const { error: se } = await supabase.from('zoo_game_seats')
-          .update({ participant_id: null, claimed_at: null, is_ai: true }).eq('id', s.id);
+          // The Product Owner seat goes to AI. A Developer seat just empties: the game plays no Developers.
+          .update({ participant_id: null, claimed_at: null, is_ai: s.seat !== 'developer' }).eq('id', s.id);
         if (se) {
           setError('Could not give up your seat, so you are still playing.');
           return;

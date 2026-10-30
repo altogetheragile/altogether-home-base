@@ -46,9 +46,14 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
   // yours to cover. Covered because nobody took it and covered because whoever took it has shut
   // their laptop are different things to a room full of people: one is a seat to fill, the other
   // is somebody to check on.
-  const awaySeats = lobby.seats
-    .filter((x) => seatIsAway(x, lobby.participants, lobby.present))
-    .map((x) => x.seat);
+  //
+  // By seat for the Product Owner, and by person for everybody, since each player is a Developer of
+  // their own: one of them shutting their laptop is not the whole team away.
+  const awayHolders = lobby.seats.filter((x) => seatIsAway(x, lobby.participants, lobby.present));
+  const awaySeats = [
+    ...awayHolders.filter((x) => x.seat !== 'developer').map((x) => x.seat as string),
+    ...awayHolders.map((x) => x.participant_id!),
+  ];
   const session = useZooSession(gameId, ctx);
   useSharedClock(session);
   // Seats with nobody in them are played by the game, so a pair can still field a whole

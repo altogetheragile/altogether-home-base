@@ -44,8 +44,12 @@ export function seatIsAway(seat: SeatLike, participants: ParticipantLike[], pres
  *  game, and a rule that is briefly wrong in the loosest possible direction is worse than one that
  *  waits. */
 export function unmannedSeats(seats: SeatLike[], participants: ParticipantLike[], present: string[]): SeatName[] {
-  if (!present.length) return seats.filter((s) => !s.participant_id && !s.is_ai).map((s) => s.seat);
-  return seats
+  // Not a Developer seat. The Developers are the players, so a Developer seat nobody sits in is a
+  // chair, not an accountability somebody has to cover - and counting it marked every player on the
+  // band as covering for an empty one.
+  const accountable = seats.filter((s) => s.seat !== 'developer');
+  if (!present.length) return accountable.filter((s) => !s.participant_id && !s.is_ai).map((s) => s.seat);
+  return accountable
     .filter((s) => !s.is_ai && !holderHere(s, participants, present))
     .map((s) => s.seat);
 }
