@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL } from './engine';
+import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
+import { useYou } from './you';
 
 
 import { TaskEditor, SplitEpicPanel } from './Board';
@@ -41,6 +42,8 @@ interface SprintPlanningProps {
   /** Yours, so you can agree as yourself and only as yourself. */
   mySeat?: string | null;
   onAgreeSprintGoal?: (seat: string) => void;
+  /** In a shared game: agree the forecast as it stands, which somebody else proposed. */
+  onAgreeForecast?: () => void;
   onEstimate: (id: string, points: number) => void;
   onSetTasks: (id: string, tasks: SprintTask[]) => void;
   /** Topic three's shape decisions: how big, which habitat, what kind of building or planting. */
@@ -250,7 +253,7 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onAgreeForecast, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
   // Where the Scrum Team is in the event, not where this browser is. Sprint Planning has three
   // topics in an order, and a topic each player was privately on meant the seats played by the
   // game could not tell which one the team was in.
@@ -294,6 +297,13 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // `mustAgree` is empty when playing alone, where you are all three and agreeing with
   // yourself teaches nothing.
   const outstanding = mustAgree.filter((who) => !state.sprintGoalAgreed.includes(who));
+  // In a shared game each player agrees as themselves, so a row is a person as often as a seat.
+  const viewer = useYou();
+  const agreer = (who: string): string => AGREER[who] ?? state.team.developers.find((d) => d.id === who)?.name ?? who;
+  // ...and the forecast is proposed by one Developer and agreed by the others.
+  const forecastWaiting = forecastWaitingOn(state);
+  const proposer = state.team.developers.find((d) => d.id === state.forecastAgreed?.[0]);
+  const yourAgreementOwed = !!viewer && forecastWaiting.some((p) => p.id === viewer);
   const agreed = hasGoal && outstanding.length === 0;
   const hasWhat = chosen.length > 0;
   const fixingItem = fixing ? items.find((i) => i.id === fixing) : null;
@@ -438,12 +448,12 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                     return (
                       <li key={who} className="flex items-center justify-between gap-2 text-xs">
                         <span className={yes ? 'text-muted-foreground' : 'text-foreground'}>
-                          {yes ? '\u2713 ' : '\u00b7 '}{AGREER[who] ?? who}
+                          {yes ? '\u2713 ' : '\u00b7 '}{agreer(who)}{who === viewer && ' (you)'}
                         </span>
-                        {!yes && who === mySeat && onAgreeSprintGoal && (
+                        {!yes && (who === mySeat || who === viewer) && onAgreeSprintGoal && (
                           <Button size="sm" variant="outline" onClick={() => onAgreeSprintGoal(who)}>I agree</Button>
                         )}
-                        {!yes && who !== mySeat && <span className="text-[11px] text-muted-foreground">waiting</span>}
+                        {!yes && who !== mySeat && who !== viewer && <span className="text-[11px] text-muted-foreground">waiting</span>}
                       </li>
                     );
                   })}
@@ -722,7 +732,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">{state.sprintGoal.trim() ? 'A Sprint Goal is an objective, not a word' : 'Write the Sprint Goal to continue'}</span>}
               {hasGoal && outstanding.length > 0 && (
                 <span className="hidden text-[11px] text-muted-foreground sm:inline">
-                  Proposed. Waiting on {outstanding.map((w) => AGREER[w] ?? w).join(' and ')}
+                  Proposed. Waiting on {outstanding.map((w) => (w === viewer ? 'you' : agreer(w))).join(' and ')}
                 </span>
               )}
               <Button disabled={!agreed} onClick={() => setStep('what')}>Next: what to build <ArrowRight className="ml-1 h-4 w-4" /></Button>
@@ -731,7 +741,18 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           {step === 'what' && (
             <>
               {!hasWhat && <span className="hidden text-[11px] text-muted-foreground sm:inline">Pick at least one item to continue</span>}
-              <Button disabled={!hasWhat} onClick={() => setStep('how')}>Next: how <ArrowRight className="ml-1 h-4 w-4" /></Button>
+              {/* One Developer proposes the forecast and the others agree it. Changing it is
+                  proposing it again, so everybody is asked again. */}
+              {hasWhat && forecastWaiting.length > 0 && (
+                <span data-part="forecast-agreement" className="text-[11px] text-muted-foreground">
+                  {proposer ? `${proposer.id === viewer ? 'You' : proposer.name} proposed this forecast. ` : ''}
+                  Waiting on {forecastWaiting.map((p) => (p.id === viewer ? 'you' : p.name)).join(' and ')}
+                </span>
+              )}
+              {yourAgreementOwed && onAgreeForecast && (
+                <Button variant="outline" data-part="agree-forecast" onClick={onAgreeForecast}>I agree</Button>
+              )}
+              <Button disabled={!hasWhat || forecastWaiting.length > 0} onClick={() => setStep('how')}>Next: how <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
           {step === 'how' && (

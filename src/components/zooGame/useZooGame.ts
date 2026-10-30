@@ -2,7 +2,7 @@ import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
 import { initialZooState } from './config';
-import {say, speaking, answerHuddle, lendAHand, proposeMove, agreeMove, declineMove, openRetro, openReview, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, askScrumMaster, setTrainerLed, playTrainerCard, asMember, joinTeam, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
+import {say, speaking, answerHuddle, lendAHand, proposeMove, agreeMove, declineMove, openRetro, openReview, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, writeBacklog, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, askScrumMaster, agreeForecast, forecastWaitingOn, setTrainerLed, playTrainerCard, asMember, joinTeam, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt} from './engine';
 import { applyParkChecks } from './parkChecks';
 import { tallyWork } from './whatItCost';
 import { remember, trailStartedAt, forgetTrail, recordEverything } from './trail';
@@ -301,8 +301,12 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'ANSWER_PLACEMENT':
       return answerPlacement(state, action.id, action.choice);
     case 'SET_PLANNING_TOPIC':
-      // Sprint Planning is one event. Whoever moves the agenda on moves it for everybody.
+      // Sprint Planning is one event. Whoever moves the agenda on moves it for everybody - but not
+      // on to how, until the team has agreed what.
+      if (action.topic === 'how' && forecastWaitingOn(state).length > 0) return state;
       return { ...state, planningTopic: action.topic };
+    case 'AGREE_FORECAST':
+      return agreeForecast(state);
     case 'AGREE_SPRINT_GOAL':
       return agreeSprintGoal(state, action.seat);
     case 'SET_FORECAST':

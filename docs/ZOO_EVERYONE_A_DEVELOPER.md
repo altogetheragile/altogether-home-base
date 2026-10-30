@@ -133,7 +133,9 @@ In the order it would be built.
    to the Daily Scrum. Solo keeps all four, because there the player is the whole team. A trainer
    card goes to the hat holder directly only when the deck says it lands on the Scrum Master.
    **Built.**
-5. **Team decisions.** Forecast proposed and agreed; Sprint Goal agreed per player.
+5. **Team decisions.** Forecast proposed and agreed; Sprint Goal agreed per player. Changing the
+   forecast is proposing it again, so the others are asked again; topic three and starting the
+   Sprint wait on it. One player alone agrees by making it. **Built.**
 6. **The lobby.** One Product Owner seat and a row per player; rotation removed.
 
 Database: steps 1 to 5 change only the game state, which is JSON. Step 6 stops new games creating a
