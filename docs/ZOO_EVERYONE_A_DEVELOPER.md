@@ -169,6 +169,8 @@ Al, 29 October 2026, on the five questions below and one more:
 3. **The Scrum Master hat goes first to the first player to join**, then in the order they joined.
 4. **The forecast:** one Developer proposes, the others agree.
 5. **A player who leaves** stays on the team as away; their cards wait, and a trainer can hand one on.
+   If they wear the Scrum Master hat, the trainer's panel says so and the trainer can hand the hat
+   to somebody who is here (`HAND_HAT`, trainer only); it moves on from them at the next Planning.
 6. **No AI builds anything, anywhere.** "The AI building is just too clunky. Let a player take all
    the roles - Dev, SM and PO." So:
    - Every player is a Developer, including whoever holds the Product Owner seat. A Product Owner
