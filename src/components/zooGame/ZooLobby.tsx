@@ -1,18 +1,20 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Users, Bot, Eye, Check, Copy, Play, RotateCw } from 'lucide-react';
+import { Users, Bot, Eye, Check, Copy, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useZooSessions, type Seat, type Participant, type SeatName } from './useZooSessions';
 import { hereCount, seatIsAway, unmannedSeats } from './seatPresence';
+import { tableSeats } from './lobbyTable';
 import { PADDING, SURFACE, TEXT, FOCUS } from './ui/tokens';
 
 // The table before the game starts: who is here, and who is sitting where.
 //
-// It is a Scrum Team being formed, so it shows the accountabilities rather than a list of
-// players. The seats are the teaching: one Product Owner, one Scrum Master, Developers, and
-// no way to hold two at once. What nobody claims is played by AI, so a pair can still field
-// a whole team - which is what makes this reach a solo learner as well as a class.
+// It is a Scrum Team being formed: one Product Owner, and a row for each player, every one of whom is
+// a Developer. There is no Scrum Master seat. The Scrum Master is a hat one of the Developers wears,
+// and it moves round inside the game, so there is nothing to choose here and nothing to rotate
+// (docs/ZOO_EVERYONE_A_DEVELOPER.md). The Product Owner seat is open to anybody - a learner, the
+// trainer - and played by AI when nobody takes it. The Developers are never played by AI.
 
 const SEAT_LABEL: Record<SeatName, string> = {
   product_owner: 'Product Owner',
@@ -20,9 +22,9 @@ const SEAT_LABEL: Record<SeatName, string> = {
   developer: 'Developer',
 };
 const SEAT_WHY: Record<SeatName, string> = {
-  product_owner: 'Accountable for maximising value. Orders the Product Backlog and writes the goals.',
+  product_owner: 'Accountable for maximising value. Orders the Product Backlog and writes the goals. Builds as a Developer too.',
   scrum_master: 'Accountable for Scrum being understood and enacted, and for the team’s effectiveness.',
-  developer: 'Accountable for creating a usable Increment each Sprint.',
+  developer: 'Accountable for creating a usable Increment each Sprint. One of you also wears the Scrum Master hat each Sprint.',
 };
 
 export function SeatCard({ seat, holder, away, mine, canAct, canLeave, canCover, onClaim, onLeave, onAi }: {
@@ -69,7 +71,8 @@ export function SeatCard({ seat, holder, away, mine, canAct, canLeave, canCover,
           : !taken && canAct
             ? <div className="flex gap-1">
                 <Button size="sm" onClick={onClaim}>Sit here</Button>
-                <Button size="sm" variant="ghost" onClick={() => onAi(true)} title="Let AI play this accountability">AI</Button>
+                {/* Never for a Developer: the game plays no Developers. */}
+                {seat.seat !== 'developer' && <Button size="sm" variant="ghost" onClick={() => onAi(true)} title="Let AI play this accountability">AI</Button>}
               </div>
             : seat.is_ai && canAct
               ? <div className="flex gap-1">
@@ -93,8 +96,8 @@ export function Doorway({ onCreated, onJoined }: { onCreated: (id: string) => vo
       <div className="space-y-1 text-center">
         <h1 className={TEXT.screen}>Play together</h1>
         <p className="text-sm text-muted-foreground">
-          One zoo, one Scrum Team, several people. Seats are the accountabilities, and whatever
-          nobody takes is played by AI.
+          One zoo, one Scrum Team, several people. Everybody is a Developer. The Product Owner is
+          played by AI unless somebody takes the seat.
         </p>
       </div>
 
@@ -144,7 +147,7 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
   const holderOf = (seat: Seat) => s.participants.find((p) => p.id === seat.participant_id) ?? null;
   const seated = s.seats.some((x) => x.participant_id === s.me?.id);
   const observing = s.me?.role === 'observer';
-  const byKind = (k: SeatName) => s.seats.filter((x) => x.seat === k).sort((a, b) => a.seat_no - b.seat_no);
+  const table = tableSeats(s.seats, observing);
   // Seats with nobody and no AI: the state that quietly switched the gate off, and which
   // games created before that was fixed still carry.
   const emptyCount = unmannedSeats(s.seats, s.participants, s.present).length;
@@ -184,15 +187,14 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
           <div className="space-y-2">
             <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">The Scrum Team</div>
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {(['product_owner', 'scrum_master', 'developer'] as SeatName[]).flatMap((k) =>
-                byKind(k).map((seat) => (
+              {table.map((seat) => (
                   <SeatCard key={seat.id} seat={seat} holder={holderOf(seat)}
                     away={seatIsAway(seat, s.participants, s.present)} canCover={s.isHost}
                     mine={seat.participant_id === s.me?.id} canAct={!observing} canLeave={!!s.me && seat.participant_id === s.me.id}
                     onClaim={() => void s.claimSeat(seat.id)}
                     onLeave={() => void s.leaveSeat(seat.id)}
                     onAi={(on) => void s.fillWithAi(seat.id, on)} />
-                )))}
+              ))}
             </div>
           </div>
 
@@ -202,11 +204,11 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
               {observing
                 ? 'Watching. You hold no seat and act on nothing, which is how a trainer joins a team they are coaching.'
                 : seated
-                  ? 'Playing. Watching gives your seat to AI, so the team can carry on without you.'
+                  ? 'Playing. Watching gives up your seat, so the team carries on without you.'
                   : 'Playing. Switch to watching to coach without taking a seat.'}
             </div>
             <Button size="sm" variant="ghost" onClick={() => void s.setRole(observing ? 'player' : 'observer')}>
-              {observing ? 'Take a seat instead' : seated ? 'Watch instead - AI takes my seat' : 'Watch instead'}
+              {observing ? 'Take a seat instead' : 'Watch instead'}
             </Button>
           </div>
 
@@ -237,22 +239,18 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
           )}
 
           {/* A session is several games with reflection between them, not one long run. This
-              is where the next one starts, and where seats rotate - which is the whole
-              reason seats belong to the game rather than to the session. */}
+              is where the next one starts. Seats are kept: everybody is a Developer, and the
+              Scrum Master hat moves round inside the game, so there is nothing to rotate. */}
           {s.isHost && (
             <div className={cn(SURFACE.card, PADDING.default, 'space-y-2')}>
               <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Start another game</div>
               <p className="text-[11px] text-muted-foreground">
-                A game is one run toward one Product Goal. Rotating moves everyone one accountability
-                along, so after three games each of you has held each one - which is what makes the
-                reflection between them worth having.
+                A game is one run toward one Product Goal. Everybody keeps their seat. The Scrum Master
+                hat moves round inside the game, one Sprint each, so there is nothing to rotate.
               </p>
               <div className="flex flex-wrap gap-2">
-                <Button size="sm" disabled={s.busy} onClick={() => void s.startGame(true)}>
-                  <RotateCw className="mr-1.5 h-3.5 w-3.5" /> Next game, rotate seats
-                </Button>
-                <Button size="sm" variant="outline" disabled={s.busy} onClick={() => void s.startGame(false)}>
-                  Next game, keep seats
+                <Button size="sm" disabled={s.busy} onClick={() => void s.startGame()}>
+                  <Play className="mr-1.5 h-3.5 w-3.5" /> Next game
                 </Button>
                 {emptyCount > 0 && (
                   <Button size="sm" variant="ghost" disabled={s.busy}
