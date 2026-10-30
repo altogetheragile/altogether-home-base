@@ -627,6 +627,9 @@ export interface ZooGameState {
    *  can see is not a forecast: another player would have their own, and an AI Developer
    *  could not plan the steps for work it cannot see. PLAN_SPRINT commits it. */
   forecast: string[];
+  /** In a shared game, the players who have agreed the forecast as it stands. Whoever changes it
+   *  proposes it, and is the first to agree; the others agree or change it themselves. */
+  forecastAgreed?: string[];
   /** Whether the current Sprint's goal was met, set at the Review (null until then,
    *  or when there is no goal). */
   sprintGoalMet: boolean | null;
@@ -950,6 +953,7 @@ export type ZooAction =
   | { type: 'RUN_DAILY_SCRUM'; by?: string }
   | { type: 'ANSWER_IMPEDIMENT'; how: ImpedimentAnswer; by?: string }
   | { type: 'ASK_SCRUM_MASTER'; by?: string }
+  | { type: 'AGREE_FORECAST'; by?: string }
   | { type: 'SET_TRAINER_LED'; on: boolean }
   | { type: 'JOIN_TEAM'; id: string; name: string }
   | { type: 'PLAY_TRAINER_CARD'; card: PlayedCard }

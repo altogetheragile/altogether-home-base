@@ -93,10 +93,17 @@ function SharedGame({ gameId, sessionId, onBack }: { gameId: string; sessionId: 
     .filter((x) => x.is_ai && x.seat !== 'developer' && !(hat && x.seat === 'scrum_master'))
     .map((x) => x.seat);
   // The same list the Sprint Goal panel waits on, so the seats played by the game hold topic one
-  // open exactly as long as the screen does. The hat holder agrees as one of the Developers.
-  const mustAgree = [...new Set(lobby.seats
-    .filter((x) => (x.participant_id || x.is_ai) && !(hat && x.seat === 'scrum_master'))
-    .map((x) => x.seat))];
+  // open exactly as long as the screen does.
+  //
+  // Once the players are on the team, each of them agrees for themselves - a Product Owner who is
+  // a person included, since they are one of the players. The only seat still waited on is one the
+  // game plays, which can only be the Product Owner's.
+  const people = (session.state?.team.developers ?? []).filter((d) => d.player).map((d) => d.id);
+  const mustAgree = people.length > 0
+    ? [...aiSeats.filter((x) => x === 'product_owner'), ...people]
+    : [...new Set(lobby.seats
+      .filter((x) => (x.participant_id || x.is_ai) && !(hat && x.seat === 'scrum_master'))
+      .map((x) => x.seat))];
   useAiSeats(session, aiSeats, { mustAgree, onSay: useCallback((seat: string, says: string, action: { type: string; topic?: string }) => {
     const kind = action.type;
     // A move that changes the topic is about the topic it moves TO, or the line announcing

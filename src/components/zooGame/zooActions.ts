@@ -30,6 +30,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     declineSignal: (index: number) => send({ type: 'DECLINE_SIGNAL', index }),
     setForecast: (ids: string[]) => send({ type: 'SET_FORECAST', ids }),
     agreeSprintGoal: (seat: string) => send({ type: 'AGREE_SPRINT_GOAL', seat }),
+    agreeForecast: () => send({ type: 'AGREE_FORECAST' }),
     plan: (ids: string[], refinementPoints?: number) => send({ type: 'PLAN_SPRINT', ids, refinementPoints }),
     holdRefinement: () => send({ type: 'HOLD_REFINEMENT' }),
     agreeDod: () => send({ type: 'AGREE_DOD' }),

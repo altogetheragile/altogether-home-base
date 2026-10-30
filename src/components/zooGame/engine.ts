@@ -162,10 +162,10 @@ export function scrumMasterOf(state: ZooGameState): ScrumTeamMember {
  *  Over a game everybody holds it, which is what the Scrum Master course wants. Nothing to do
  *  playing alone. */
 export function passTheHat(state: ZooGameState): ZooGameState {
-  const players = state.team.developers.filter((d) => d.player);
-  if (players.length === 0) return state;
-  const at = players.findIndex((d) => d.id === state.scrumMasterId);
-  return { ...state, scrumMasterId: players[(at + 1) % players.length].id };
+  const team = players(state);
+  if (team.length === 0) return state;
+  const at = team.findIndex((d) => d.id === state.scrumMasterId);
+  return { ...state, scrumMasterId: team[(at + 1) % team.length].id };
 }
 
 /** One second of the build day. The reducer ends the day itself when the clock runs out,
@@ -2740,11 +2740,37 @@ export function readyHorizon(state: ZooGameState): number {
 /** Agreeing, as one accountability, to the Sprint Goal as it currently reads. */
 export function agreeSprintGoal(state: ZooGameState, seat: string): ZooGameState {
   if (!state.sprintGoal.trim() || state.sprintGoalAgreed.includes(seat)) return state;
+  // In a shared game each player agrees for themselves, and nobody agrees for somebody else.
+  if (acting && seat !== acting && players(state).some((p) => p.id === seat)) return state;
   return { ...state, sprintGoalAgreed: [...state.sprintGoalAgreed, seat] };
 }
 
+/** The people at the table, in a shared game. Empty playing alone. */
+export const players = (state: ZooGameState): ScrumTeamMember[] => state.team.developers.filter((d) => d.player);
+
+/** Who still has to agree the forecast before Planning moves on to how. One Developer proposes and
+ *  the others agree (Al, 29 Oct 2026). Nobody, playing alone or as the only player: a forecast with
+ *  one person in it is agreed when they make it. */
+export function forecastWaitingOn(state: ZooGameState): ScrumTeamMember[] {
+  const team = players(state);
+  if (team.length < 2 || state.forecast.length === 0) return [];
+  const agreed = state.forecastAgreed ?? [];
+  return team.filter((p) => !agreed.includes(p.id));
+}
+
 export function setForecast(state: ZooGameState, ids: string[]): ZooGameState {
-  return state.phase === 'planning' ? { ...state, forecast: ids } : state;
+  if (state.phase !== 'planning') return state;
+  // Changing the forecast is proposing it: whoever changed it agrees, and everybody else is asked
+  // again, because what they agreed to is not what is there now.
+  return { ...state, forecast: ids, ...(acting ? { forecastAgreed: [acting] } : {}) };
+}
+
+/** A player agrees the forecast as it stands. */
+export function agreeForecast(state: ZooGameState): ZooGameState {
+  if (state.phase !== 'planning' || !acting || state.forecast.length === 0) return state;
+  const agreed = state.forecastAgreed ?? [];
+  if (agreed.includes(acting) || !players(state).some((p) => p.id === acting)) return state;
+  return { ...state, forecastAgreed: [...agreed, acting] };
 }
 
 // ============= Starting on the board =============
@@ -2856,6 +2882,8 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
 }
 
 export function planSprint(state: ZooGameState, ids: string[], refinementPoints = 0): ZooGameState {
+  // Not on a forecast the team has not agreed.
+  if (forecastWaitingOn(state).length > 0) return state;
   // Only Product Backlog items that meet the Definition of Ready can be forecast - sized, small enough,
   // and with acceptance criteria. Anything else has to go back through Refinement first.
   const committed = new Set(state.backlog.filter((it) => ids.includes(it.id) && it.status === 'backlog' && isReady(it)).map((it) => it.id));
@@ -2867,7 +2895,7 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
   // and only its last state is committed, so who chose it is remembered from then rather than now.
   const turnedAway = ids.filter((id) => !committed.has(id));
   const started: ZooGameState = {
-    ...state, phase: 'sprint', committedIds: [...committed], backlog, forecast: [],
+    ...state, phase: 'sprint', committedIds: [...committed], backlog, forecast: [], forecastAgreed: [],
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
     sprintForecast: sprintCapacity(state).points,
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.
