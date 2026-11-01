@@ -47,7 +47,7 @@ vi.mock('@/integrations/supabase/client', () => ({
 // player to write, and they are the Product Owner while they write it.
 
 const intro = (goal = '') => render(
-  <MemoryRouter><ZooIntro productGoal={goal} onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}}
+  <MemoryRouter><ZooIntro productGoal={goal} onSetGoal={() => {}} onStart={() => {}}
     onSetGoalShape={() => {}} /></MemoryRouter>,
 );
 const wand = (c: HTMLElement) => c.querySelector('[data-part="goal-wand"]') as HTMLButtonElement;
@@ -134,7 +134,7 @@ describe('and there is only one place to write it', () => {
     const onSetGoalShape = vi.fn();
     const { container } = render(
       <MemoryRouter><ZooIntro productGoal="lions" onSetGoal={() => {}} onStart={() => {}}
-        onStartFromTheBrief={() => {}} onSetGoalShape={onSetGoalShape} /></MemoryRouter>,
+        onSetGoalShape={onSetGoalShape} /></MemoryRouter>,
     );
     openTheShapes(container);
     const chip = [...container.querySelectorAll('button')].find((b) => /An epic user story/.test(b.textContent ?? ''))!;

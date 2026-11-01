@@ -95,7 +95,7 @@ describe('the Product Goal field', () => {
     // appended to a Goal nobody had written.
     const { container } = render(
       <MemoryRouter><ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
-        onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}} /></MemoryRouter>,
+        onSetGoal={() => {}} onStart={() => {}} /></MemoryRouter>,
     );
     const field = container.querySelector('[aria-label="Product Goal"]') as HTMLTextAreaElement;
     expect(field.value, 'the field is pre-filled, so typing appends to it').toBe('');
@@ -106,7 +106,7 @@ describe('the Product Goal field', () => {
     let got = '';
     const { container } = render(
       <MemoryRouter><ZooIntro productGoal={PRODUCT_GOAL} goalShape="outcome" goalMeasures={[]}
-        onSetGoal={(g) => { got = g; }} onStart={() => {}} onStartFromTheBrief={() => {}} /></MemoryRouter>,
+        onSetGoal={(g) => { got = g; }} onStart={() => {}} /></MemoryRouter>,
     );
     (container.querySelector('button[data-part="start"]') as HTMLButtonElement | null)?.click();
     expect(got === '' || got === PRODUCT_GOAL, `an empty field started a game with no Goal: "${got}"`).toBe(true);

@@ -12,7 +12,7 @@ import { INTRO_COPY } from './scrumContent';
 // to DO was below the things to read, and on a short window it was off the bottom of it.
 
 const intro = () => render(
-  <MemoryRouter><ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}} onStartFromTheBrief={() => {}}
+  <MemoryRouter><ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}}
     onSetGoalShape={() => {}} /></MemoryRouter>,
 );
 
