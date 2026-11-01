@@ -91,7 +91,8 @@ describe('the registry itself', () => {
     // The other direction: a checker with no way to reach it is dead weight, and dead weight is
     // how the three structures this replaced drifted apart.
     const written = new Set(everythingTheGameWrites().map((x) => criterionFor(x.asks)?.id));
-    const unreachable = CRITERIA.filter((d) => !written.has(d.id)).map((d) => d.id);
+    // ...except one retired on purpose, kept so saved games are still answered.
+    const unreachable = CRITERIA.filter((d) => !d.retired && !written.has(d.id)).map((d) => d.id);
     expect(unreachable, 'these are in the registry and nothing can ever ask them').toEqual([]);
   });
 });

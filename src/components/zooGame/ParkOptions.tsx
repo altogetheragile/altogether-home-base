@@ -271,8 +271,6 @@ export interface ParkOptionsApi {
   /** Take one plant out of a clump, counting the item's own plant as the first of them - the list
    *  in the strip IS the clump, so the index it hands back is an index into all of it. */
   onRemovePlant?: (id: string, index: number) => void;
-  /** Move an animal into a habitat - which is what "where it lives" means for an animal. */
-  onPutIn?: (id: string, enclosureId: string) => void;
   /** Open the card, from the chip that names it. The criteria are the item's, so the place to read
    *  them all is the item. */
   onOpenCard?: (id: string) => void;
@@ -543,17 +541,6 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             })}
           </Row>
         );
-      // Where they live. An animal has no place of its own on the park - it lives inside a habitat -
-      // so "move" for an animal means moving house.
-      case 'lives-in':
-        return (
-          <Row label={L('Lives in')}>
-            {state.backlog.filter((it) => it.category === 'enclosure' && (it.design || it.draftDesign)).map((h) => (
-              <Chip key={h.id} on={subject.enclosureId === h.id} onClick={() => api.onPutIn?.(subject.id, h.id)}>{h.name}</Chip>
-            ))}
-          </Row>
-        );
-
       // ---- a building ----
       // What it OFFERS, which is a different question from what it looks like.
       //

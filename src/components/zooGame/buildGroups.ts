@@ -24,7 +24,7 @@ import type { ToolbarIconName } from './toolbarIcons';
 export type GroupId =
   | 'structure'
   | 'footprint' | 'shape' | 'ground' | 'barrier' | 'inside' | 'grown' | 'clump'
-  | 'stock' | 'look' | 'lives-in'
+  | 'stock' | 'look'
   | 'type' | 'offers' | 'colours'
   | 'planting'
   | 'path' | 'park';
@@ -100,7 +100,7 @@ const path = (it: BacklogItem) => it.category === 'path';
  *
  *  A path is drawn rather than dropped. An animal is STOCKED: it has no spot of its own, it lives
  *  inside its habitat, and the park draws it there - which is what its own criterion asks ("Can I
- *  find them in their habitat?") and what the Lives in control decides.
+ *  find them in their habitat?"), which the habitat named on its card answers.
  *
  *  Three places in the game already knew that and one did not. Picking a lion's card put the lion
  *  under the cursor with exactly one thing it could ever say - "an animal lives in a habitat - drop
@@ -154,7 +154,9 @@ export const GROUPS: GroupDef[] = [
   // judgement rather than a measurement - so this group settles nothing the park can check, and
   // gets no light. It is still the control somebody reaches for at the Review.
   { id: 'look', writes: ['colors.coat'], label: 'Look', icon: 'look', meets: [], about: ['recognisable'], applies: animal },
-  { id: 'lives-in', writes: ['item.enclosureId'], label: 'Lives in', icon: 'lives-in', meets: ['findable', 'room-to-spare'], applies: animal },
+  // No "Lives in". Where an animal lives is on its Product Backlog item - the lion is built in the
+  // Lion Enclosure - so a menu offering one habitat, already chosen, was a question with no choice
+  // in it. Reported from playing it: "This is a pointless thing to have."
 
   // ---- a building ----
   // "Type: kiosk, cafe, shop" was Structure asked twice. What a building IS is the first decision.
@@ -238,5 +240,5 @@ export const REACHABLE = (): Set<string> => new Set(GROUPS.flatMap((g) => g.meet
 /** Criteria the park checks that no group can settle. Should be empty. */
 export const unreachableCriteria = (): string[] => {
   const reachable = REACHABLE();
-  return CRITERIA.filter((c) => c.answer && !reachable.has(c.id)).map((c) => c.id);
+  return CRITERIA.filter((c) => c.answer && !c.retired && !reachable.has(c.id)).map((c) => c.id);
 };

@@ -609,13 +609,14 @@ export function enclosureAcceptance(): string[] {
  *  into its enclosure. Handles plural names ("Penguins" -> "recognisable as penguins"). */
 export function exhibitAcceptance(name: string): string[] {
   const what = /s$/.test(name) ? name.toLowerCase() : 'a ' + name.toLowerCase();
-  // All four can fail. Two of them used to be free - the template made it recognisable and colouring
-  // it in made it finished - which meant a criterion nobody could fail, and those teach nothing.
+  // All three can fail. Two used to be free - the template made it recognisable and colouring it
+  // in made it finished - which meant a criterion nobody could fail, and those teach nothing. "Can
+  // I find them in their habitat?" went for the same reason: an animal is built once its habitat
+  // is Done, so it was always yes.
   return [
     `Can I tell they are ${what} without reading the sign?`,
     'Can I see a group rather than one animal on its own?',
     'Can I fit them in the habitat with room to spare?',
-    'Can I find them in their habitat?',
   ];
 }
 

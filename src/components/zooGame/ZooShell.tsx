@@ -581,7 +581,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                       onSetServices: edit.onSetServices,
                       onTurn,
                       onUnplace: (id) => setMoving(id),
-                      onPutIn,
                       // The first act of building, on the same toolbar as everything that follows
                       // it: one row, in the order the work happens.
                       onChooseStructure: edit.onChooseStructure,

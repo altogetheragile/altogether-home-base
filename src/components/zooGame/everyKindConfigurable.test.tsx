@@ -101,7 +101,7 @@ describe('what you can change about each kind of thing', () => {
 
 
 
-  it('an animal: how many of them, the coat they wear, and where they live', () => {
+  it('an animal: how many of them and the coat they wear, and not where they live', () => {
     const s = game();
     const { container } = open(s, of(s, 'exhibit'));
     expect(openGroup('stock').body.textContent).toMatch(/A pair|A family/);
@@ -110,7 +110,9 @@ describe('what you can change about each kind of thing', () => {
     const look = openGroup('look');
     expect(look.querySelector('[data-part="look-white"]'), 'an animal cannot be given a look').toBeTruthy();
     expect(look.body.textContent, 'the looks are unnamed swatches again').toMatch(/Natural/);
-    expect(stripNames(container), 'an animal cannot be moved to another habitat').toContain('Lives in');
+    // Where it lives is on its Product Backlog item: the lion is built in the Lion Enclosure. A menu
+    // offering the one habitat already chosen was "a pointless thing to have".
+    expect(stripNames(container), 'an animal was asked where it lives').not.toContain('Lives in');
     // An animal has no ground of its own: it lives inside a habitat, so it is not turned or moved
     // about the park like a kiosk.
     expect(stripNames(container), 'an animal was offered the park controls of a building').not.toContain('On the park');
