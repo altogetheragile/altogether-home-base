@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
 import { useYou } from './you';
-import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext, whatToHelpWith, yourDev, activeWipLimit } from './engine';
+import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext, whatToHelpWith, yourDev, activeWipLimit, hatHolder } from './engine';
+import { SEAT } from './seats';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -239,9 +240,14 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
     }
   }
 
-  const total = actions.length;
+  // Yours first. In a shared game a question for somebody else is still worth seeing - it is
+  // why the Sprint is waiting - but it is not the thing you are being asked to do.
+  const mine = (a: RailAction) => isYours(a.actor, state, seat, viewer);
+  const ordered = [...actions.filter(mine), ...actions.filter((a) => !mine(a))];
+  const total = ordered.length;
   const idx = total ? Math.min(at, total - 1) : 0;
-  const action = total ? actions[idx] : null;
+  const action = total ? ordered[idx] : null;
+  const yours = !!action && mine(action);
 
   // Nothing waiting: the rail still says what the team is on, because a line that vanishes is a line
   // you stop reading.
@@ -257,48 +263,112 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
       // move a card into the Doing column."
       : 'Nothing in hand. Drag a card to Doing to start building, or open the card and start it from there.';
 
+  // Three kinds of thing, drawn three ways, because they were one orange box and the one that needed
+  // you looked like everything else on the screen. Reported from playing it: "The message board is
+  // all messed up and unreadable. It is also hard to know there is an action required. Can
+  // messages of different types be distinct?"
+  //
+  //   - YOUR MOVE: a solid card, labelled, with the answers on it. It stays until it is answered.
+  //   - WAITING ON somebody else: the same card, quiet and dashed, with no buttons - it is theirs.
+  //   - Nothing asked: one muted line saying what the team is on.
+  //
+  // ...and what else is waiting is listed under it rather than hidden behind "4 more".
+  if (!action) {
+    return quiet ? (
+      <div data-part="action-rail" data-kind="quiet"
+        className={cn('shrink-0 rounded-lg border border-border bg-muted/30 px-3 py-2 text-[12px] text-muted-foreground', className)}>
+        {quiet}
+      </div>
+    ) : null;
+  }
+
+  const actor = action.actor.replace(/^The /, '');
+  const rest = ordered.map((a, i) => ({ a, i })).filter(({ i }) => i !== idx);
   return (
-    <div data-part="action-rail"
-      className={cn('flex min-h-[3rem] shrink-0 flex-wrap items-center gap-2 rounded-lg border-2 px-3 py-2',
-        action ? 'border-primary bg-primary/[0.05]' : 'border-border bg-muted/30', className)}>
-      <span className={cn('shrink-0 rounded px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide',
-        action ? 'bg-primary text-primary-foreground' : 'bg-secondary text-secondary-foreground')}>
-        {action ? action.actor.replace(/^The /, '') : 'Developers'}
-      </span>
-      {/* A floor under the words, so a long question with three answers wraps its buttons onto the
-          next line rather than squeezing itself into a column one word wide. */}
-      <span className="min-w-[min(100%,18rem)] flex-1 text-sm">
-        {action ? action.text : quiet}
-        {action?.note && (
-          <span className="block text-[11px] leading-snug text-amber-700 dark:text-amber-300">{action.note}</span>
+    <div data-part="action-rail" data-kind={yours ? 'yours' : 'waiting'}
+      className={cn('shrink-0 space-y-2 rounded-lg px-3 py-2.5',
+        yours ? 'border-2 border-primary bg-primary/[0.07] shadow-sm' : 'border border-dashed border-border bg-muted/30',
+        className)}>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {yours ? (
+          <span data-part="rail-yours" className="rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">
+            Your move
+          </span>
+        ) : (
+          <span data-part="rail-waiting" className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            Waiting on {actor}
+          </span>
         )}
-      </span>
-      {action?.answers.map((a) => (
-        <button key={a.label} type="button" onClick={a.act}
-          className={cn(FOCUS, 'shrink-0 rounded-md border px-2 py-1 text-xs font-semibold transition-colors',
-            a.primary ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
-              : 'border-border bg-card hover:bg-muted/60')}>
-          {a.label}
-        </button>
-      ))}
-      {/* One at a time, with a count if more are waiting. Nothing here is dismissed: it is answered
-          or it waits, and the waiting is the lesson. */}
-      {total > 1 && (
-        <button type="button" onClick={() => setAt((i) => (i + 1) % total)}
-          className={cn(FOCUS, 'flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:text-foreground')}>
-          {total - 1} more <ChevronRight className="h-3.5 w-3.5" />
-        </button>
-      )}
-      {/* Whose call it is. It said "waiting on them", which is the one word the sentence needed to
-          not be: in a room of five people, knowing that somebody else has to answer is only half
-          the news, and the other half is which chair to look at. */}
-      {seat && action && (
-        <span className="shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
-          {action.actor.replace(/^The /, '').toLowerCase().startsWith(seat.replace('_', ' ').slice(0, 4))
-            ? 'yours'
-            : `waiting on ${action.actor.replace(/^The /, '')}`}
+        {/* Who is asking, in their own colour: the Product Owner orange, the Scrum Master purple,
+            the Developers teal - the colours they wear everywhere else in the game. */}
+        <span data-part="rail-actor" className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold', actorTone(actor))}>
+          {actor}
         </span>
+        {total > 1 && (
+          <span data-part="rail-count" className="ml-auto text-[10px] font-medium text-muted-foreground">
+            {idx + 1} of {total}
+          </span>
+        )}
+      </div>
+      <p className={cn('text-sm leading-snug', yours ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+        {action.text}
+        {action.note && (
+          <span className="mt-0.5 block text-[11px] font-normal leading-snug text-amber-700 dark:text-amber-300">{action.note}</span>
+        )}
+      </p>
+      {/* An action with buttons is never dismissed: it is answered, or it waits. Somebody else's has
+          no buttons here, because pressing them would be answering for them. */}
+      {yours && action.answers.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {action.answers.map((a) => (
+            <button key={a.label} type="button" onClick={a.act}
+              className={cn(FOCUS, 'shrink-0 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+                a.primary ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
+                  : 'border-border bg-card hover:bg-muted/60')}>
+              {a.label}
+            </button>
+          ))}
+        </div>
+      )}
+      {rest.length > 0 && (
+        <ul data-part="rail-rest" className="space-y-0.5 border-t border-border/70 pt-1.5">
+          {rest.slice(0, 3).map(({ a, i }) => (
+            <li key={a.id}>
+              <button type="button" onClick={() => setAt(i)}
+                className={cn(FOCUS, 'flex w-full min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left text-[11px] hover:bg-muted/60')}>
+                <span className={cn('shrink-0 font-semibold', mine(a) ? 'text-primary' : 'text-muted-foreground')}>
+                  {mine(a) ? 'Yours' : `${a.actor.replace(/^The /, '')}'s`}
+                </span>
+                <span className="min-w-0 flex-1 truncate text-muted-foreground">{a.text}</span>
+                <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+              </button>
+            </li>
+          ))}
+          {rest.length > 3 && (
+            <li className="px-1 text-[10px] text-muted-foreground">and {rest.length - 3} more</li>
+          )}
+        </ul>
       )}
     </div>
   );
+}
+
+/** The colour of whoever is asking. */
+function actorTone(actor: string): string {
+  if (/product owner/i.test(actor)) return SEAT.productOwner.soft;
+  if (/scrum master/i.test(actor)) return SEAT.scrumMaster.soft;
+  return SEAT.developers.soft;
+}
+
+/** Whether a thing on the rail is this player's to answer.
+ *
+ *  Alone, everything is: you are the Scrum Master and the Developers, and what the Product Owner is
+ *  asked is left to you as well. In a shared game every player is a Developer, the Scrum Master's
+ *  calls are whoever wears the hat, and the Product Owner's are the Product Owner seat's. */
+function isYours(actor: string, state: ZooGameState, seat: SeatName | null | undefined, viewer: string | null): boolean {
+  if (!seat) return true;
+  const who = actor.replace(/^The /, '').toLowerCase();
+  if (who === 'product owner') return seat === 'product_owner';
+  if (who === 'scrum master') return seat === 'scrum_master' || (!!viewer && hatHolder(state)?.id === viewer);
+  return true;   // the Developers, or a Developer by name: every player is one
 }
