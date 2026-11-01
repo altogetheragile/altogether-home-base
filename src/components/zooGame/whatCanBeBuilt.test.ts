@@ -58,7 +58,7 @@ describe('what the catalogue can settle', () => {
 
   it('covers every criterion except the ones we know it does not', () => {
     const can = CATALOGUE_MEETS();
-    const uncovered = CRITERIA.filter((c) => !can.has(c.id)).map((c) => c.id).sort();
+    const uncovered = CRITERIA.filter((c) => !c.retired && !can.has(c.id)).map((c) => c.id).sort();
     expect(uncovered, 'a criterion can be asked for that nothing in the studio can build')
       .toEqual(Object.keys(CANNOT_BE_BUILT).sort());
   });
@@ -91,7 +91,7 @@ describe('what the catalogue can settle', () => {
     const pen = TOOLBOX.flatMap((g) => g.items).find((t) => t.name === 'Medium Enclosure')!;
     expect(meetsOf(pen)).toEqual(expect.arrayContaining(['held', 'roomy', 'a-home', 'walkable-to']));
     const lion = TOOLBOX.flatMap((g) => g.items).find((t) => t.name === 'Lion')!;
-    expect(meetsOf(lion)).toEqual(expect.arrayContaining(['recognisable', 'a-group', 'room-to-spare', 'findable']));
+    expect(meetsOf(lion)).toEqual(expect.arrayContaining(['recognisable', 'a-group', 'room-to-spare']));
     const kiosk = TOOLBOX.flatMap((g) => g.items).find((t) => t.name === 'Kiosk')!;
     expect(meetsOf(kiosk)).toEqual(expect.arrayContaining(['says-what-it-is', 'sells-food', 'walkable-to']));
   });

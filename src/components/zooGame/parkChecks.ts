@@ -139,6 +139,9 @@ export interface CriterionDef {
   /** The park's answer. Absent means only a person can say, which is not a gap: acceptance is a
    *  conversation, and the park is never going to tick "can I walk right round it?" for anybody. */
   answer?: (state: ZooGameState, item: BacklogItem) => Verdict;
+  /** No longer asked of anything new, and kept only so items already carrying it - a game in play,
+   *  a save - are still answered. Nothing on the build strip needs to settle it. */
+  retired?: true;
 }
 
 /** What a facility offers, which is the whole of what it is for. Three needs, one shape of answer.
@@ -291,6 +294,9 @@ export const CRITERIA: CriterionDef[] = [
   {
     id: 'findable', asks: 'Can I find them in their habitat?', short: 'visible in their habitat',
     answer: (state, item) => inHabitat(state, item),
+    // Retired with the "Lives in" menu. An animal can only be built once its habitat is Done, so
+    // this was true the moment it could be asked, and nothing the Developers did could change it.
+    retired: true,
   },
 
   // ---- getting about ----

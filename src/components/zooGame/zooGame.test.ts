@@ -1412,7 +1412,9 @@ describe('zoo game: the toolbox', () => {
     // Consistency across ALL items: each has at least one build-time (appearance) criterion and
     // exactly one deploy-time (placement/sizing) criterion - so every item is verified on the park
     // when placed, not just landscape scenery.
-    for (const t of TOOLBOX.flatMap((g) => g.items)) {
+    // Not an animal: it is not placed, it lives in the habitat on its card, and its one placement
+    // question ("Can I find them in their habitat?") was always yes, so it went.
+    for (const t of TOOLBOX.flatMap((g) => g.items).filter((x) => x.category !== 'exhibit')) {
       const acs = toolboxDraft(t).acceptance;
       const build = acs.filter((a) => !isDeployAcceptance(a));
       const deploy = acs.filter((a) => isDeployAcceptance(a));
@@ -2964,6 +2966,11 @@ describe('zoo game: every acceptance criterion is a question', () => {
     // what was drawn to it, and neither of them by anything in the studio.
     for (const t of TOOLBOX.flatMap((g) => g.items)) {
       const acs = toolboxDraft(t).acceptance;
+      // An animal is not placed: it lives in the habitat on its card.
+      if (t.category === 'exhibit') {
+        expect(acs.filter(isDeployAcceptance), `${t.name} is asked where it is`).toEqual([]);
+        continue;
+      }
       expect(acs.filter(isDeployAcceptance).length, `${t.name} has no placement criterion`).toBeGreaterThanOrEqual(1);
       expect(acs.filter((a) => !isDeployAcceptance(a)).length, `${t.name} has nothing to build`).toBeGreaterThanOrEqual(1);
     }
@@ -3160,7 +3167,10 @@ describe('zoo game: an exhibit is stocked, not built', () => {
 
   it('every criterion an exhibit has can be failed', () => {
     const acs = exhibitAcceptance('Lion');
-    expect(acs).toHaveLength(4);
+    // Three. "Can I find them in their habitat?" could not be failed - an animal is only built once its
+    // habitat is Done - so it went with the "Lives in" menu.
+    expect(acs).toHaveLength(3);
+    expect(acs.some((a) => /find them in their habitat/.test(a))).toBe(false);
     // The two that used to be free: the template made it recognisable, colouring it made it finished.
     expect(acs.some((a) => /group rather than one animal/.test(a))).toBe(true);
     expect(acs.some((a) => /room to spare/.test(a))).toBe(true);
