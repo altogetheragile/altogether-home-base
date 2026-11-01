@@ -1,7 +1,7 @@
 # The Game Flow: The Whole of Scrum, And A Trainer's Own Flows
 
-Status: **proposed, 1 November 2026.** Al's direction and three answers are under **Decided**. The
-open questions are under **Questions**. Nothing here is built yet.
+Status: **agreed with Al, 1 November 2026.** His direction and answers are under **Decided**.
+Nothing here is built yet.
 
 ## What Al Asked For
 
@@ -24,6 +24,14 @@ Al, 1 November 2026:
    screen for them.
 3. **Flows are reusable, and a trainer can reset one.** A trainer saves a flow ("Day 1 morning")
    and uses it again in later sessions. Reset puts a flow back to how it started.
+4. **A trainer is a role.** "All admins are trainers but not all trainers are admins." So
+   `trainer` is a role on a person's account, granted by an admin, and every admin counts as one.
+   See **The Trainer Role**.
+5. **A trainer's flows are their own.** Admins can share a flow with every trainer.
+6. **A trainer can restart the game** from the start of its flow, as well as resetting a saved
+   flow.
+7. **The team builds the park's own pieces too.** The main pathways and the bridge arrive
+   unrefined, like the zone epics, for the team to split and size.
 
 ## Where It Stands Today
 
@@ -64,8 +72,8 @@ cannot shape it, and the starter Product Backlog is not quite the one Al describ
 A solo game, and a shared game with no trainer, always runs the whole flow in Scrum's order:
 
 1. **Product Goal.** The player writes or picks one, as now.
-2. **The starter Product Backlog.** The Product Owner hands over **an epic for each zone**, plus the
-   park's own pieces (the main pathways, the bridge). Nothing arrives refined. Today the first area
+2. **The starter Product Backlog.** The Product Owner hands over **an epic for each zone**, and
+   one for the park's own pieces (the main pathways, the bridge). Nothing arrives refined. Today the first area
    arrives with its habitat and animal ready to build; in the whole flow that is the team's first
    piece of refinement.
 3. **Refinement.** The team splits and sizes enough to start: at least a Sprint's worth, which the
@@ -189,24 +197,47 @@ cards are ordinary deck cards, so an admin can edit or add to them in the deck e
 
 ### Reset
 
-**Reset** puts a saved flow back to the preset it was copied from. It asks first, and it does not
-touch games already played with the flow.
+Two kinds, both asking first:
 
-A second meaning is worth asking about (see **Questions**): restarting the current game from the
-start of its flow, so a trainer can run the same opening twice in a session.
+- **Reset a flow** puts a saved flow back to the preset it was copied from. Games already played
+  with it are not touched.
+- **Restart the game** starts the session's game again from the start of its flow, so a trainer
+  can run the same opening twice, or start over when the room has gone off track. It is a new game
+  in the same session, as "Next game" is today, so the game just played is kept to look back on.
+  Everybody keeps their seat.
+
+## The Trainer Role
+
+Today "trainer" exists only inside a session: the host marks somebody with **Make trainer**
+(`can_facilitate`), and only for that session. Flows outlive a session, so somebody has to be a
+trainer before any session exists.
+
+- **`trainer` is a role on the account**, beside `admin`, `moderator` and `user`. An admin grants it
+  from the user management screen that already grants the others. A person can hold it as well as
+  their other roles.
+- **Every admin is a trainer.** Checked as "has the trainer role, or is an admin", in one function
+  used everywhere, so the rule cannot drift.
+- **Only trainers see the Flows page** and the flow choice when setting up a game.
+- **In a session**, a trainer who hosts is its trainer without being marked. **Make trainer** is
+  offered only for participants who are trainers, so a learner cannot be made one by mistake.
+  Somebody can still be a trainer in a session without playing in it: they watch.
+- **Flows are a trainer's own.** An admin can **share** a flow, which puts it in every trainer's
+  list beside the presets. Only its owner or an admin can change it; anybody it is shared with can
+  copy it.
 
 ## Do We Need A Trainer View?
 
 Yes, but a small one, and not during play.
 
-- **Before the game: a Flows page.** This is new. It lists the presets and the trainer's own flows,
-  with copy, edit, rename, reset and delete. The lobby's "Set up the game" asks which flow to use.
+- **Before the game: a Flows page.** This is new, and only trainers see it. It lists the presets,
+  the flows shared by an admin, and the trainer's own flows, with copy, edit, rename, reset and
+  delete. The lobby's "Set up the game" asks which flow to use.
   Editing a flow is the choices table above: one row per choice, plain controls, and the suggested
   card beside a choice that has one.
 - **During the game: the panel the trainer already has.** The trainer watches the team's own board,
   because a card played from somewhere else is played blind. The trainer panel (cards, chance, the
-  Scrum Master hat) gains one section: **"Left out in this flow"**, listing what the flow skipped
-  and the card each one suggested.
+  Scrum Master hat) gains two things: **"Left out in this flow"**, listing what the flow skipped
+  and the card each one suggested, and **Restart the game**.
 - **Not in this design: a cohort view** of several tables at once. That is its own piece of work.
 
 ## What Changes Underneath
@@ -218,7 +249,8 @@ Review**) comes before step 3.
    the Product Owner's starter. The Retrospective stops offering practices when every practice is
    already in use. `startOnTheBoard` and `LADDER` stay, for the preset.
 2. **The starter is epics only.** `starterBacklog` gains an option for whether the first area
-   arrives refined. The whole flow uses epics only.
+   arrives refined, and the park's own pieces become an epic of their own. The whole flow uses
+   epics only.
 3. **Led through it.** The journey line, Priya handing each step over in the chat, the pinned
    "needs you" card, suggested lines for the Definition of Done, "enough to start" in Refinement,
    and each step showing on the park. Depends on the message board redesign, which goes first.
@@ -228,39 +260,31 @@ Review**) comes before step 3.
    tested, with no screens yet.
 5. **The lobby picks a flow.** "Set up the game" offers the presets. A shared game with no trainer
    uses the whole flow.
-6. **Saved flows, and the Flows page.** A trainer's flows are stored, and copied, edited, reset and
-   deleted from one page. **This needs a database table** (below).
-7. **Cards that come with a choice.** The three cards above go into the shipped deck, and the
-   trainer panel shows "Left out in this flow" with each one's card.
+6. **The trainer role.** The new account role, granted by admins, with every admin counted as a
+   trainer; a trainer who hosts is the session's trainer; Make trainer is offered only for
+   trainers. **Needs a migration** (below).
+7. **Saved flows, and the Flows page.** A trainer's flows are stored, and copied, edited, reset,
+   shared by an admin and deleted from one page. **Needs a migration** (below).
+8. **Cards that come with a choice, and restart.** The three cards above go into the shipped deck;
+   the trainer panel shows "Left out in this flow" and offers Restart the game.
 
 ### The Database
 
-Flows are reusable across sessions, so they cannot live in game state. Step 6 adds one table:
+Two migrations, each shown before it runs against production.
 
-- `zoo_flows`: `id`, `owner_user_id`, `name`, `based_on` (the preset), `choices` (JSON),
-  `created_at`, `updated_at`.
-- Row-level security: a trainer reads and writes their own flows.
-- Grants in the same migration, as the project now requires for a new table.
-
-The SQL will be shown before it runs against production.
+- **Step 6, the role.** Add `trainer` to the `app_role` enum, and an `is_trainer(user)` function:
+  true for the trainer role or the admin role. The session's "Make trainer" policy checks it.
+- **Step 7, the flows.** One table, `zoo_flows`: `id`, `owner_user_id`, `name`, `based_on` (the
+  preset), `choices` (JSON), `shared` (set by admins only), `created_at`, `updated_at`.
+  Row-level security: a trainer reads their own flows and shared ones, and writes their own; an
+  admin reads and writes all of them. Grants in the same migration, as the project now requires
+  for a new table.
 
 ## What Stays The Same
 
 - Every player is a Developer, the Scrum Master hat, the AI Product Owner.
 - The trainer cards, the deck editor and the hat handover.
 - Solo play's rules. Only where it starts changes.
-
-## Questions
-
-1. **Who can make a flow?** Proposed: anyone signed in, with "trainer" meaning a person running a
-   session, as now. The alternative is admins only.
-2. **Should flows be shared?** Proposed: each trainer's own to start with. Sharing a flow with
-   another trainer can come later.
-3. **Reset a game, too?** Should a trainer be able to restart the current game from the start of
-   its flow, as well as resetting a saved flow to its preset?
-4. **The Product Owner's starter.** Should the whole flow keep the park's own pieces (main
-   pathways, bridge) as ready items beside the zone epics, or should those be refined by the team
-   too?
 
 ## Queued For Review
 
