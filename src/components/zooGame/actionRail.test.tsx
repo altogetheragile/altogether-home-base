@@ -80,11 +80,16 @@ describe('the rail', () => {
         : it))),
     } as unknown as ZooGameState;
     const { container } = rail(both, { onAnswerPlacement: () => {}, onOpen: () => {} });
-    expect(container.textContent, 'both were shown at once, which is a panel again').toMatch(/more/);
-    const first = container.querySelector('[data-part="action-rail"]')!.textContent;
-    fireEvent.click(screen.getByRole('button', { name: /more/ }));
-    expect(container.querySelector('[data-part="action-rail"]')!.textContent,
+    // One open, with its answers; the other listed under it in a line, so it is seen rather than
+    // hidden behind "1 more" - and pressing that line brings it up.
+    expect(container.querySelector('[data-part="rail-count"]')?.textContent).toBe('1 of 2');
+    const rest = container.querySelectorAll('[data-part="rail-rest"] button');
+    expect(rest, 'what else is waiting is hidden').toHaveLength(1);
+    const first = container.querySelector('[data-part="action-rail"] > p')!.textContent;
+    fireEvent.click(rest[0]);
+    expect(container.querySelector('[data-part="action-rail"] > p')!.textContent,
       'the rail does not move on to the next one').not.toBe(first);
+    expect(container.querySelector('[data-part="rail-count"]')?.textContent).toBe('2 of 2');
   });
 
   it('has nothing to dismiss - an action is answered or it waits', () => {

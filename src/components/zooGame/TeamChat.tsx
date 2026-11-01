@@ -94,6 +94,9 @@ export function TeamChat({ state, rail, className }: {
   rail: ReactNode;
   className?: string;
 }) {
+  // What needs answering sits ABOVE the conversation, pinned, and the thread has the rest of the
+  // room. It was the other way round, under a thread squeezed into a third of the column, so the
+  // one thing waiting on you was the last thing on the screen and the chat was cut off mid-line.
   const thread = state.chat ?? [];
   const foot = useRef<HTMLDivElement>(null);
   // Follow the conversation. A chat that does not scroll to the newest line is a chat you have to
@@ -103,7 +106,8 @@ export function TeamChat({ state, rail, className }: {
   useEffect(() => { foot.current?.scrollIntoView?.({ block: 'nearest' }); }, [thread.length]);
 
   return (
-    <div data-part="team-chat" className={cn('flex min-h-0 flex-col', className)}>
+    <div data-part="team-chat" className={cn('flex min-h-0 flex-col gap-2', className)}>
+      {rail}
       <div className="min-h-0 flex-1 overflow-y-auto pr-1">
         {thread.length === 0 ? (
           <p className="py-2 text-[12px] text-muted-foreground">
@@ -128,7 +132,6 @@ export function TeamChat({ state, rail, className }: {
         )}
         <div ref={foot} />
       </div>
-      {rail}
     </div>
   );
 }

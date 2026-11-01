@@ -144,8 +144,11 @@ describe('the rail asks it', () => {
         text: 'Rounded or square?', askedAt: s.daySecondsLeft,
         choices: [{ key: 'theirs', label: 'Your call' }], day: 1 }],
     } as unknown as ZooGameState;
-    const said = rail(asked, () => {}).textContent ?? '';
-    expect(said, 'the pull prompt pushed a waiting question off the rail').toMatch(/Rounded or square/);
-    expect(said).not.toMatch(/What will you pull next\?/);
+    const shown = rail(asked, () => {});
+    const open = shown.querySelector('[data-part="action-rail"] > p')?.textContent ?? '';
+    expect(open, 'the pull prompt pushed a waiting question off the rail').toMatch(/Rounded or square/);
+    expect(open).not.toMatch(/What will you pull next\?/);
+    // ...and it is still there, listed under the question rather than lost.
+    expect(shown.querySelector('[data-part="rail-rest"]')?.textContent).toMatch(/What will you pull next\?/);
   });
 });
