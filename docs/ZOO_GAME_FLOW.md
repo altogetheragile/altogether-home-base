@@ -79,6 +79,70 @@ A solo game, and a shared game with no trainer, always runs the whole flow in Sc
 
 "Start building" goes from the opening screen. A solo player has one way in.
 
+### Led Through It: Simple, Intuitive, Not Boring
+
+Al, 1 November 2026: "A solo player and teams playing without a trainer are all led through the
+flow. It needs to be simple and intuitive but not boring."
+
+Without a trainer, the game is the trainer. Eight steps of Scrum before and around the first Sprint
+can easily read as a form to fill in, which is exactly what the ladder was built to avoid. So the
+flow is held to these rules.
+
+**Simple: you always know where you are and what to do next.**
+
+- **One journey line across the top.** The eight steps (Product Goal, Product Backlog, Refinement,
+  Definition of Done, Sprint Planning, Sprint, Review, Retrospective) on one line, with the current
+  one lit and the finished ones ticked. It replaces the phase pill, which names a step but not
+  where it sits. After the first Retrospective the line loops back to Sprint Planning, so the
+  Sprint visibly becomes a cycle.
+- **One thing to do on each screen, and one button to move on.** The one-question-per-screen rule
+  the game already follows, applied to the whole flow.
+- **Priya says what she needs.** The Product Owner hands each step over in the team chat, in her own
+  voice: "Here is my starter, one epic for each area. Split enough for one Sprint and we can
+  plan." What she asks for is pinned as a "needs you" card (see the message board redesign under
+  **Queued For Review**), so it cannot be missed.
+- **The teaching waits behind "?".** Each step says what to do in one line. Why Scrum does it lives
+  in the Teaching Card for that step, one press away, never in the way.
+
+**Intuitive: you do the thing, rather than being told about it.**
+
+- **Start from something, never from a blank page.** The Definition of Done offers suggested lines
+  to pick and change. The Sprint Goal offers candidates drawn from the top of the Product Backlog,
+  as it does today. Picking and changing is still the team's decision; facing an empty box is
+  where people stall.
+- **"Enough to start", and no more.** Refinement stops asking once a Sprint's worth of work is
+  ready, and says so. Refining the whole Product Backlog before Sprint 1 is the up-front planning
+  the game exists to argue against.
+- **Every step shows on the park.** The Product Goal sets out the empty park; the starter shows
+  each zone as a plot waiting for its epic; refined items appear as outlines where they will
+  stand; the forecast lights the outlines being built this Sprint. The park is the reason to
+  care, so it should change at every step, not only once building starts.
+
+**Not boring: get to the zoo quickly, and make choices matter.**
+
+- **Building within ten minutes.** The steps before Sprint 1 together should take a newcomer under
+  ten minutes. That is a target, measured with the newcomer playtester
+  (`scripts/playtest/`), whose key needs renewing first.
+- **Choices come back.** What the team chose earlier pays off or bites later, and the game says
+  which choice it was: a thin Definition of Done is what the Product Owner sends work back for; an
+  item left unrefined is the one that turns out to be two items at Planning; a Sprint Goal nobody
+  believed in is the one the Review says was not met. That is what turns the early steps from
+  paperwork into setting the game up.
+- **Something happens in every Sprint.** The Daily Scrum turns things up by chance (or the
+  trainer's cards), visitors arrive and react at the Review, and stakeholders ask for things. The
+  Sprint is where the variety lives, which is another reason the steps before it are kept short.
+- **Voices, not instructions.** Priya, the visitors and the suppliers say things as people do, as
+  they already do at the Review. A line from Joy on the visitor panel is more interesting than a
+  sentence starting "The Sprint Review is".
+
+**Together, without a trainer.** A shared game is led the same way. Anybody at the table can move
+the flow on, except where Scrum says the team decides together (the Sprint Goal and the forecast,
+from #958), where it waits for everybody. The "needs you" card says whose turn it is.
+
+**How we will know it works.** Before it ships, the newcomer playtester plays the whole flow from
+the opening screen, and the run is timed and read for the places it stalls. After it ships, one
+of Al's own sessions with real learners.
+
 ### A Flow Is A List Of Choices About Where The Game Starts
 
 A flow is a name and a set of choices, each of which either leaves a step for the team or does it
@@ -147,26 +211,31 @@ Yes, but a small one, and not during play.
 
 ## What Changes Underneath
 
-In the order it would be built, each its own PR.
+In the order it would be built, each its own PR. The message board redesign (under **Queued For
+Review**) comes before step 3.
 
 1. **The whole flow is the default.** The opening screen loses "Start building"; a new game goes to
    the Product Owner's starter. The Retrospective stops offering practices when every practice is
    already in use. `startOnTheBoard` and `LADDER` stay, for the preset.
 2. **The starter is epics only.** `starterBacklog` gains an option for whether the first area
    arrives refined. The whole flow uses epics only.
-3. **The flow, as data.** A `ZooFlow` type, the four presets, and `applyFlow(state, flow)`, which
+3. **Led through it.** The journey line, Priya handing each step over in the chat, the pinned
+   "needs you" card, suggested lines for the Definition of Done, "enough to start" in Refinement,
+   and each step showing on the park. Depends on the message board redesign, which goes first.
+   Timed with the newcomer playtester against the ten-minute target.
+4. **The flow, as data.** A `ZooFlow` type, the four presets, and `applyFlow(state, flow)`, which
    does the "done for them" steps in the engine and records which steps were left out. Pure and
    tested, with no screens yet.
-4. **The lobby picks a flow.** "Set up the game" offers the presets. A shared game with no trainer
+5. **The lobby picks a flow.** "Set up the game" offers the presets. A shared game with no trainer
    uses the whole flow.
-5. **Saved flows, and the Flows page.** A trainer's flows are stored, and copied, edited, reset and
+6. **Saved flows, and the Flows page.** A trainer's flows are stored, and copied, edited, reset and
    deleted from one page. **This needs a database table** (below).
-6. **Cards that come with a choice.** The three cards above go into the shipped deck, and the
+7. **Cards that come with a choice.** The three cards above go into the shipped deck, and the
    trainer panel shows "Left out in this flow" with each one's card.
 
 ### The Database
 
-Flows are reusable across sessions, so they cannot live in game state. Step 5 adds one table:
+Flows are reusable across sessions, so they cannot live in game state. Step 6 adds one table:
 
 - `zoo_flows`: `id`, `owner_user_id`, `name`, `based_on` (the preset), `choices` (JSON),
   `created_at`, `updated_at`.
