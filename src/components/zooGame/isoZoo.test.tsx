@@ -1071,6 +1071,28 @@ describe('people walk', () => {
     }
   });
 
+  it('walks each picture\'s visitors on that picture\'s own routes', () => {
+    // Reported from playing it: "People are walking off the zoo park area." The routes were named
+    // walk-0, walk-1... in every picture, and a page with two parks on it (the Increment, and the
+    // small one beside it) had two of each. `href="#walk-0"` finds the first in the document, so the
+    // visitors in one picture walked a route laid out at the other's size and angle.
+    const { container } = render(<>
+      <IsoZoo state={openZoo()} height={140} />
+      <IsoZoo state={openZoo()} height={460} turn={1} />
+    </>);
+    const ids = routes(container).map((p) => p.getAttribute('id'));
+    expect(ids.length, 'nobody is walking in either picture').toBeGreaterThan(0);
+    expect(new Set(ids).size, 'two pictures share a route').toBe(ids.length);
+    // ...and every walker follows a route drawn in its own picture.
+    for (const svg of container.querySelectorAll('svg[role="img"]')) {
+      const own = new Set(routes(svg).map((p) => p.getAttribute('id')));
+      for (const m of svg.querySelectorAll('mpath')) {
+        expect(own.has((m.getAttribute('href') ?? '').replace('#', '')),
+          'a visitor is walking a route from another picture').toBe(true);
+      }
+    }
+  });
+
   it('walks them to what is open, not to a building site', () => {
     // Every habitat standing on the park was a destination, so visitors walked to one with the
     // hoardings still up - past the dashed line and the hazard posts the same picture draws to say

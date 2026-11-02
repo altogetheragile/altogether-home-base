@@ -1980,7 +1980,11 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
     const len = there.reduce((sum, q2, k) => (k ? sum + Math.hypot(q2.x - there[k - 1].x, q2.y - there[k - 1].y) : 0), 0);
     // Their own pace, so a park full of people is not a park full of metronomes.
     const secs = Math.max(16, Math.min(80, (len * 2) / (PACE * (0.75 + jitter(i + 9, 13) * 0.6))));
-    const id = `walk-${i}`;
+    // Named for THIS picture. A page can hold more than one park, and `href="#walk-0"` finds the
+    // first walk-0 in the document, whichever picture drew it - so visitors followed a route laid
+    // out at another picture's size and angle. Reported from playing it: "People are walking off
+    // the zoo park area."
+    const id = `walk-${i}-${grassClip}`;
     if (stroll) {
       paths.push(<path key={id} id={id} fill="none" stroke="none"
         d={screen.map((q2, k) => `${k ? 'L' : 'M'}${q2.x.toFixed(1)},${q2.y.toFixed(1)}`).join(' ')} />);
