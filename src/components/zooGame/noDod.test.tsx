@@ -44,7 +44,8 @@ describe('the way to Sprint Planning', () => {
     refine(ready({ dodAgreed: false }));
     // The step where a team considers what Done means is where both answers live. It comes BEFORE
     // sizing now: the bar the work has to meet is part of how big the work is.
-    fireEvent.click(screen.getByText(/And agree what Done means/i));
+    // It opens by itself when a Sprint's worth is Ready, because that is when Priya asks.
+    if (!screen.queryByRole('button', { name: /Start without one/i })) fireEvent.click(screen.getByText(/And agree what Done means/i));
     expect(screen.getByRole('button', { name: /Start without one/i }), 'the only way on was to agree one').toBeTruthy();
   });
 });

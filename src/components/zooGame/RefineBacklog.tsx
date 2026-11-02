@@ -14,6 +14,7 @@ import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
 import { ItemTakeover } from './BacklogBench';
 import { PriyaHandover } from './PriyaHandover';
+import { handover } from './handover';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
  *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
@@ -103,7 +104,14 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const [lengthOpen, setLengthOpen] = useState(false);
   // Which item is on the bench. Nothing, until you pick one.
   const [focus, setFocus] = useState<string | null>(null);
-  const [dodOpen, setDodOpen] = useState(false);
+  // When Priya asks what Done means, the step she is asking about opens. Folded shut, the card said
+  // "agree the Definition of Done" over a heading you had to find and press first. Opening or
+  // closing it yourself wins, until what she is asking changes.
+  const asksForDone = handover(state)?.key === 'dod';
+  const [dodChosen, setDodChosen] = useState<{ asks: boolean; open: boolean } | null>(null);
+  const dodOpen = dodChosen && dodChosen.asks === asksForDone ? dodChosen.open : asksForDone;
+  const setDodOpen = (next: boolean | ((o: boolean) => boolean)) =>
+    setDodChosen({ asks: asksForDone, open: typeof next === 'function' ? next(dodOpen) : next });
   const items = availableItems(state);
   const benchItem = items.find((it) => it.id === focus) ?? null;
   const ready = items.filter((it) => !it.unsized);
@@ -199,14 +207,15 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           <Step n={2} title="And agree what Done means" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
             onToggle={() => setDodOpen((o) => !o)}
             right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              {!dodOpen && (state.dodAgreed
-                ? <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>
-                : <strong className={cn(TONE.attention.text)}>nobody has agreed it yet</strong>)}
+              {/* Said open or shut: the suggested lines are not an agreement. */}
+              {state.dodAgreed
+                ? !dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>
+                : <strong className={cn(TONE.attention.text)}>nobody has agreed it yet</strong>}
               <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
             </span>}>
             {dodOpen && (
               <div className="mt-1.5 space-y-2">
-                <DodEditor dod={state.definitionOfDone} onSave={onSetDod} />
+                <DodEditor dod={state.definitionOfDone} onSave={onSetDod} suggesting={!state.dodAgreed} />
                 {!state.dodAgreed && onAgreeDod && (<>
                   <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodOpen(false); }}>
                     <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done

@@ -9,20 +9,26 @@ import { FOCUS, PADDING, SURFACE, WIZARD } from './ui/tokens';
 interface DodEditorProps {
   dod: string[];
   onSave: (dod: string[]) => void;
+  /** Nobody has agreed one yet: the lines are the game's suggestion, and the library is open. A
+   *  team starts from something to pick and change rather than an empty box, which is where people
+   *  stall (docs/ZOO_GAME_FLOW.md, "Start from something"). */
+  suggesting?: boolean;
 }
 
 /** Refine the product-wide Definition of Done: edit the criteria, and add coached
  *  suggestions from a library grouped by the kind of quality bar each sets. Changes
  *  apply to every item from now on. */
-export function DodEditor({ dod, onSave }: DodEditorProps) {
+export function DodEditor({ dod, onSave, suggesting = false }: DodEditorProps) {
   const [items, setItems] = useState<string[]>(dod.length ? dod : ['']);
-  const [showCoach, setShowCoach] = useState(false);
+  const [showCoach, setShowCoach] = useState(suggesting);
 
   const commit = (next: string[]) => { setItems(next); onSave(next.map((s) => s.trim()).filter(Boolean)); };
   const edit = (i: number, v: string) => commit(items.map((x, j) => (j === i ? v : x)));
   const remove = (i: number) => commit(items.filter((_, j) => j !== i));
   const add = () => setItems((a) => [...a, '']);
-  const has = (c: string) => items.some((x) => x.trim().toLowerCase() === c.toLowerCase());
+  // A line that says the suggestion and then more ("Meets its acceptance criteria, confirmed by the
+  // Product Owner") already has it, and offering it again would add the same bar twice.
+  const has = (c: string) => items.some((x) => x.trim().toLowerCase().startsWith(c.toLowerCase()));
   const addSuggestion = (c: string) => { if (!has(c)) commit([...items.filter((x) => x.trim()), c]); };
 
   return (
@@ -43,6 +49,11 @@ export function DodEditor({ dod, onSave }: DodEditorProps) {
       </p>
 
       <div className="space-y-1.5">
+        {suggesting && (
+          <p data-part="dod-suggested" className="text-[11px] font-medium text-primary">
+            Suggested to start from. Keep, change or remove any line, and add your own.
+          </p>
+        )}
         {items.map((c, i) => (
           <div key={i} className="flex items-center gap-1.5">
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
