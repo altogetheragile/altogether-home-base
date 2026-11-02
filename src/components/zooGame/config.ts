@@ -303,16 +303,32 @@ const slug = (zone: string) => ZONE_ID[zone] ?? zone.toLowerCase().replace(/[^a-
 // the park's own greenery in the Grounds, which belongs to no habitat and answers nothing else's
 // criterion.
 
+/** How much of the starter arrives refined. */
+export interface StarterOptions {
+  /** The area opened first arrives as its habitat and animal, ready to build, and the park's own
+   *  pieces and the facilities arrive as items of their own. Off, everything is an epic and
+   *  splitting them is the team's first Refinement. */
+  firstAreaRefined?: boolean;
+}
+
 /** Write a Product Backlog for the brief. Rough and partial on purpose: it grows and changes from
  *  play, because signals from the Sprint Review add to it.
  *
- *  Granularity is mixed deliberately. The area the Scrum Team opens first arrives REFINED - its
- *  habitat and its animal, ready to build - which is enough to deliver a whole slice of zoo in
- *  Sprint 1. Every other area arrives as an EPIC: one themed item too big to build,
- *  which has to be split into the pieces that open it. */
-export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
+ *  Two shapes, because the game starts in two places.
+ *
+ *  The whole flow (`firstAreaRefined: false`) is the Product Owner's starter as Al described it:
+ *  "epics for the zoo zones". An epic for each area, the first area's first; one for the park's
+ *  own pieces, which serve every area and belong to none; and one for the facilities. Nothing is
+ *  ready to build, so the team's first job is the one Scrum gives them before Sprint Planning:
+ *  refine enough to start.
+ *
+ *  Starting on the board (the trainer's preset, and the default here) skips that, so the area
+ *  opened first arrives REFINED - its habitat and its animal - which is enough to deliver a whole
+ *  slice of zoo in Sprint 1, and every other area is an epic. */
+export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF, { firstAreaRefined = true }: StarterOptions = {}): BacklogItem[] {
   const zones = ZOO_AREAS.filter((a) => brief.zones.includes(a.zone));
   const first = zones.find((a) => a.zone === brief.firstZone) ?? zones[0];
+  if (!firstAreaRefined) return epicsOnly(brief, zones, first);
   const items: BacklogItem[] = [];
 
   if (first) {
@@ -376,6 +392,56 @@ export function starterBacklog(brief: ZooBrief = DEFAULT_BRIEF): BacklogItem[] {
   return items;
 }
 
+/** What the park's own pieces split into: the same items `starterBacklog` hands over ready-made. */
+const GROUNDS_MEMBERS: EpicMember[] = [
+  { id: 'paths', name: 'Main Pathways', kind: 'path' },
+  { id: 'bridge', name: 'Bridge', kind: 'flora', flora: 'bridge' },
+  { id: 'signposts', name: 'Signposts', kind: 'flora', flora: 'signpost' },
+  { id: 'fountain', name: 'Fountain', kind: 'flora', flora: 'fountain' },
+  { id: 'rocks', name: 'Rockery', kind: 'flora', flora: 'rocks' },
+  { id: 'trees', name: 'Trees', kind: 'flora', flora: 'tree' },
+  { id: 'flowerbed', name: 'Flowerbed', kind: 'flora', flora: 'flowers' },
+];
+
+/** The whole flow's starter: every area an epic, the first area's first, then the park's own
+ *  pieces and the facilities.
+ *
+ *  Somewhere to eat stays a need rather than going into the facilities epic. A need is not refined
+ *  either - nobody has decided what the work is - and it is the one item on this Backlog that says
+ *  what is wanted and leaves the how to the Developers, which an epic member cannot do. */
+function epicsOnly(brief: ZooBrief, zones: typeof ZOO_AREAS, first: (typeof ZOO_AREAS)[number] | undefined): BacklogItem[] {
+  const areas = first ? [first, ...zones.filter((a) => a !== first)] : zones;
+  // The animal that opens an area goes in its epic. The refined starter hands it over separately,
+  // so an area's own list can leave it out - Big Cats has no lion in it - and an epic built from
+  // that list alone would lose the animal the game opens with.
+  const withFlagship = (area: (typeof ZOO_AREAS)[number]): EpicMember[] => {
+    const flag = FLAGSHIP[area.zone];
+    if (!flag || area.members.some((mem) => mem.id === flag.id)) return area.members;
+    return [m(flag.id, flag.name, `${flag.id}-enc`, flag.appeal, flag.footprint, `${flag.name} Enclosure`), ...area.members];
+  };
+  const items = areas.map((area) => epic(slug(area.zone), area.zone, area.zone, withFlagship(area)));
+  // Criteria the pieces already answer (see parkChecks), asked of the park as a whole.
+  items.push(epic('grounds', 'Grounds', 'Grounds', GROUNDS_MEMBERS, [
+    'Does it join every area to the way in?',
+    'Can I cross the water on it?',
+    'Can I tell which way to go from here?',
+  ]));
+  const eat = need('somewhere-to-eat', 'Somewhere to eat', 'Facilities',
+    { as: 'a visitor', want: 'to buy food and a drink without leaving', soThat: 'lunchtime does not end our visit' },
+    ['Can I tell what it is from outside?', 'Can I buy food and a drink here?', 'Can I walk to it from the way in?']);
+  // Toilets before seating unless this audience came to sit down.
+  const comforts = brief.audience === 'comfortSeekers'
+    ? [ma('benches', 'Seating Area', 'rest'), ma('main-wc', 'Toilets', 'toilet')]
+    : [ma('main-wc', 'Toilets', 'toilet'), ma('benches', 'Seating Area', 'rest')];
+  const facilities = epic('facilities', 'Facilities', 'Facilities', comforts, [
+    'Can I find a free cubicle at a busy time?',
+    'Can I sit down in the shade?',
+  ]);
+  // Families want feeding first, which is the need; everyone else wants the facilities epic first.
+  items.push(...(brief.audience === 'families' ? [eat, facilities] : [facilities, eat]));
+  return items;
+}
+
 /** The brief the game assumes when nobody has answered the wizard - the zoo as it has always been. */
 export const DEFAULT_BRIEF: ZooBrief = { zones: ZOO_AREAS.map((a) => a.zone), audience: 'families', firstZone: 'Big Cats' };
 
@@ -390,12 +456,13 @@ function ma(id: string, name: string, services: 'food' | 'toilet' | 'rest'): Epi
 }
 /** A themed EPIC to be refined (split) into its members. Arrives unsized - an epic is not
  *  estimated or built directly; it is broken down first. */
-function epic(id: string, name: string, zone: string, members: EpicMember[]): BacklogItem {
+function epic(id: string, name: string, zone: string, members: EpicMember[], acceptance?: string[]): BacklogItem {
   return {
     id, name, category: 'epic', zone, estimate: 0, unsized: true, trueSize: 0,
     // Questions, like every other criterion - see ACCEPTANCE_FORM in design.ts. An epic's are about
-    // the zone as a whole, which is the only thing an epic ever delivers.
-    acceptance: ['Can I tell what every animal here is?', 'Can I see each species in a habitat of its own?', 'Can I eat, rest and find my way in this part of the park?'],
+    // the zone as a whole, which is the only thing an epic ever delivers. An area of animals is
+    // asked about its animals; the park's own pieces and the facilities bring their own.
+    acceptance: acceptance ?? ['Can I tell what every animal here is?', 'Can I see each species in a habitat of its own?', 'Can I eat, rest and find my way in this part of the park?'],
     status: 'backlog', sprintNumber: null, accessible: true, epicMembers: members,
   };
 }

@@ -32,9 +32,13 @@ function everythingTheGameWrites(): { where: string; asks: string }[] {
 
   // ...and the ones the game writes while it is being played: the starter Backlog, and the items
   // the visitors ask for at a Review.
-  const seeded = writeBacklog(initialZooState(1) as ZooGameState,
-    { zones: ['Big Cats', 'Waterside', 'Savanna'], audience: 'families', firstZone: 'Big Cats' });
+  // Both shapes of starter: all epics for the whole flow, and the first area refined for starting
+  // on the board.
+  const brief = { zones: ['Big Cats', 'Waterside', 'Savanna'], audience: 'families' as const, firstZone: 'Big Cats' };
+  const seeded = writeBacklog(initialZooState(1) as ZooGameState, brief);
   seeded.backlog.forEach((it) => add(`seed:${it.name}`, it.acceptance ?? []));
+  writeBacklog(initialZooState(1) as ZooGameState, brief, { firstAreaRefined: true })
+    .backlog.forEach((it) => add(`refined seed:${it.name}`, it.acceptance ?? []));
   for (const drivenBy of ['unmet:food', 'unmet:toilet', 'unmet:rest', 'crowding']) {
     const after = acceptSignal({ ...seeded, sprintNumber: 1,
       signals: [{ suggestion: 'x', drivenBy, estimatedValue: 'high' }] } as ZooGameState, 0);

@@ -17,7 +17,11 @@ import type { ZooGameState, BacklogItem } from './types';
 // shelter, planting and water INSIDE it. A separate planting item asked for the same work twice.
 
 const brief = { zones: ['Big Cats', 'Forest'], audience: 'families' as const, firstZone: 'Big Cats' };
+// The first area refined, so there is a habitat to ask about its planting.
 const written = (): ZooGameState =>
+  writeBacklog({ ...initialZooState(1), backlog: [] } as ZooGameState, brief, { firstAreaRefined: true });
+/** ...and the whole flow's starter, where everything is an epic. */
+const epicsOnly = (): ZooGameState =>
   writeBacklog({ ...initialZooState(1), backlog: [] } as ZooGameState, brief);
 
 describe('the Product Backlog the game writes', () => {
@@ -28,11 +32,14 @@ describe('the Product Backlog the game writes', () => {
   });
 
   it('does not hide one inside an area epic either', () => {
-    const s = written();
-    const buried = s.backlog
-      .filter((it) => it.category === 'epic')
-      .flatMap((e) => (e.epicMembers ?? []).filter((m) => m.kind === 'flora').map((m) => `${e.name}: ${m.name}`));
-    expect(buried, 'splitting an area would produce a planting item').toEqual([]);
+    // An AREA's epic. The park's own pieces are an epic too in the whole flow, and its trees are the
+    // Grounds' greenery below, which belongs to no habitat.
+    for (const s of [written(), epicsOnly()]) {
+      const buried = s.backlog
+        .filter((it) => it.category === 'epic' && it.zone !== 'Grounds')
+        .flatMap((e) => (e.epicMembers ?? []).filter((m) => m.kind === 'flora').map((m) => `${e.name}: ${m.name}`));
+      expect(buried, 'splitting an area would produce a planting item').toEqual([]);
+    }
   });
 
   it('still carries the park’s own greenery, which belongs to no habitat', () => {
@@ -42,6 +49,10 @@ describe('the Product Backlog the game writes', () => {
     const s = written();
     expect(s.backlog.some((it) => it.zone === 'Grounds' && it.template === 'tree'),
       'the park lost its greenery along with the duplication').toBe(true);
+    // ...and in the whole flow it is in the Grounds epic, waiting to be split out.
+    const grounds = epicsOnly().backlog.find((it) => it.id === 'grounds');
+    expect(grounds?.epicMembers?.some((m) => m.kind === 'flora' && m.flora === 'tree'),
+      'the whole flow lost the park\'s greenery').toBe(true);
   });
 
   it('is not proposed by the look-ahead either', () => {

@@ -144,6 +144,8 @@ describe('increment one changes nothing about what Done costs', () => {
     };
 
     act({ type: 'WRITE_BACKLOG', brief: { zones: ['Big Cats', 'Waterside'], audience: 'families', firstZone: 'Big Cats' } });
+    // The starter is all epics; the team's first Refinement splits out the lion and its habitat.
+    act({ type: 'SPLIT_EPIC', id: 'bigcats', memberIds: ['lion'] });
     act({ type: 'SET_PRODUCT_GOAL', goal: 'Open a zoo families come back to' });
     // A demanding agreement, none of which the game enforces yet.
     act({ type: 'SET_DOD', dod: ['Peer-reviewed by another Developer', 'Signposted so visitors can find it',
