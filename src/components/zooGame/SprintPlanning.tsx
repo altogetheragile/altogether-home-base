@@ -1,3 +1,4 @@
+import { PriyaHandover } from './PriyaHandover';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
 import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
@@ -368,6 +369,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
       {/* No park. It has the next click during Build and at the Review, and nowhere else - here
           it is decoration, and it halves the width of the work. */}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
+      <PriyaHandover state={state} className="max-w-2xl" />
       {/* ---- WHY ---- */}
       {step === 'why' && (
         <PlanColumns

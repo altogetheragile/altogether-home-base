@@ -13,6 +13,7 @@ import { useState, type ReactNode } from 'react';
 import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
 import { ItemTakeover } from './BacklogBench';
+import { PriyaHandover } from './PriyaHandover';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
  *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
@@ -150,6 +151,9 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {/* The Backlog on the left, and the card that acts on it on the right: what the Product
           Owner has ordered, beside the agreements that have to be made before any of it can be
           built. On a narrow screen they stack, list first - it is the thing being talked about. */}
+      {/* What Priya is asking for, first on a narrow screen. In the right-hand column it would come
+          after the whole Product Backlog, which is a long way down to find out what to do. */}
+      <PriyaHandover state={state} className="lg:hidden" />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
         <div className="min-w-0">
         {/* One scrollbar for the screen, not one per column. The list used to scroll inside itself,
@@ -163,6 +167,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   
         </div>
         <div className="min-w-0 space-y-3">
+        <PriyaHandover state={state} className="hidden lg:block" />
         {/* The card on the right has two faces. The agreements before the first Sprint, and the
             item you picked - the same bench the Product Backlog tab uses for the rest of the game.
             Picking an item used to do nothing at all, which made the list a list. */}

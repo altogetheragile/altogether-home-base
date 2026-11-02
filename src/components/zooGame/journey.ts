@@ -62,7 +62,8 @@ export function journey(state: ZooGameState): { steps: JourneyStep[]; sprint: nu
   const steps = JOURNEY.map((s, i): JourneyStep => {
     // Agreed is agreed, whichever step the screen is on: the team can write it before a Sprint's
     // worth is Ready.
-    if (s.key === 'dod' && state.dodAgreed && s.key !== now) return { ...s, status: 'done' };
+    // Agreeing to start without one is not a Definition of Done, so it is not ticked.
+    if (s.key === 'dod' && state.dodAgreed && s.key !== now) return { ...s, status: state.definitionOfDone.length ? 'done' : 'passed' };
     if (s.key === now) {
       const detail = s.key === 'planning' ? pill.replace(/^Sprint Planning · /, '')
         : s.key === 'sprint' ? pill : undefined;
@@ -75,7 +76,7 @@ export function journey(state: ZooGameState): { steps: JourneyStep[]; sprint: nu
     // Refinement is behind you once the game has moved on, even if it moved on short: Planning
     // will say so when there is not enough Ready. The Definition of Done is different - it either
     // was agreed or it was not, and a flow can leave it out.
-    if (s.key === 'dod' && !state.dodAgreed) return { ...s, status: 'passed' };
+    if (s.key === 'dod' && !(state.dodAgreed && state.definitionOfDone.length)) return { ...s, status: 'passed' };
     return { ...s, status: 'done' };
   });
   return { steps, sprint: state.sprintNumber, looped };
