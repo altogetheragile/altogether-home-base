@@ -54,7 +54,7 @@ describe('the journey line', () => {
 
   it('carries the pill\'s detail on the step you are on', () => {
     expect(journey(at({ phase: 'planning', planningTopic: 'what' })).steps.find((x) => x.key === 'planning')?.detail).toBe('What');
-    expect(journey(at({ phase: 'sprint', dayNumber: 2, dayStage: 'build' })).steps.find((x) => x.key === 'sprint')?.detail).toBe('Day 2 · Building');
+    expect(journey(at({ phase: 'sprint', dayNumber: 2, dayStage: 'building' })).steps.find((x) => x.key === 'sprint')?.detail).toBe('Day 2 · Building');
   });
 
   it('loops back to Sprint Planning after the first Retrospective', () => {
