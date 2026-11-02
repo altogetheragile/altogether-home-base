@@ -4,7 +4,8 @@ import { ParkView, type EditApi } from './ParkView';
 import { DoneGate } from './DoneGate';
 import { DayClock } from './DayClock';
 import { SeatBand } from './SeatBand';
-import { eventPill, goalLine } from './header';
+import { goalLine } from './header';
+import { JourneyLine } from './JourneyLine';
 import { inHandItem, structureChosen } from './engine';
 import { putDownByHand } from './buildGroups';
 import { ParkOptions } from './ParkOptions';
@@ -336,7 +337,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
     return corner === 'br' ? 'bl' : corner === 'tr' ? 'tl' : corner;
   };
 
-  const pill = eventPill(state);
   const goal = goalLine(state);
 
   const notes: GameNote[] = [];
@@ -383,14 +383,6 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                   </button>
                 )
             )}
-            {/* Where you are, in the words the event uses for itself - and orange while an event is
-                running, because an event is a moment and a working day is not. It replaces the seat
-                chip, the phase label and the day counter, which said three parts of one thing. */}
-            <span data-part="event-pill"
-              className={cn('rounded-full px-3 py-1 text-base font-bold leading-tight',
-                pill.event ? 'bg-primary text-primary-foreground' : 'bg-white/10 text-white')}>
-              {pill.text}
-            </span>
             {/* What the zoo is worth to the people who come to it: one for every visit that was
                 worth making. Not money and not points - a forecast buys nothing, which is the rule
                 this counter exists to make visible. */}
@@ -477,6 +469,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             <GameMenu onSave={onSave} onOpenSaves={onOpenSaves} onMeasures={() => setLearnAt('value')} links={menuLinks} tools={tools} />
           </div>
         </div>
+
+        {/* Where you are, in the whole of Scrum rather than in one step of it. It replaced the pill
+            that said "Before Sprint 1": a name for a step, with nothing to say where it sat or what
+            came next. The step you are on still carries what the pill said about it - which topic
+            of Planning, which day of the Sprint. */}
+        <JourneyLine state={state} className="-mx-1 px-1 pb-0.5" />
 
         {/* The three artifacts, in the order work moves through them - and, at the end of the row,
             which state the Sprint Backlog is in. The switch used to live on the board itself, where
