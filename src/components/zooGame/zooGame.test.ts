@@ -2694,7 +2694,7 @@ describe('zoo game: the Product Backlog is written, not handed over', () => {
     // same way, and it is the same sentence with a different noun - a habitat is asked "can I tell
     // an animal lives here, not a shed?", and the answer is ground, shelter, planting and water
     // INSIDE it. Asking for the same work twice is what a layer looks like from close up.
-    const s = writeBacklog(blank, { zones: ['Big Cats', 'Forest'], audience: 'families', firstZone: 'Big Cats' });
+    const s = writeBacklog(blank, { zones: ['Big Cats', 'Forest'], audience: 'families', firstZone: 'Big Cats' }, { firstAreaRefined: true });
     expect(s.backlog.find((i) => i.id === 'lion-enc')?.category).toBe('enclosure');
     expect(s.backlog.find((i) => i.id === 'bigcats-planting'), 'the area still carries a planting item').toBeUndefined();
     const forest = s.backlog.find((i) => i.id === 'forest');
@@ -2705,7 +2705,8 @@ describe('zoo game: the Product Backlog is written, not handed over', () => {
   });
 
   it('opens whichever area the Scrum Team chose, not always the same one', () => {
-    const s = writeBacklog(blank, { zones: ['Big Cats', 'Savanna'], audience: 'enthusiasts', firstZone: 'Savanna' });
+    const s = writeBacklog(blank, { zones: ['Big Cats', 'Savanna'], audience: 'enthusiasts', firstZone: 'Savanna' }, { firstAreaRefined: true });
+    expect(s.backlog.find((i) => i.id === 'giraffe')?.category).toBe('exhibit');
     expect(s.backlog.find((i) => i.id === 'giraffe')?.unsized).toBeFalsy();
     // Big Cats is now the epic, and it carries its animals.
     expect(s.backlog.find((i) => i.id === 'bigcats')?.category).toBe('epic');
@@ -2713,7 +2714,7 @@ describe('zoo game: the Product Backlog is written, not handed over', () => {
   });
 
   it('orders it by what the chosen visitors value, which is the Product Owner\'s job', () => {
-    const forFamilies = writeBacklog(blank, { zones: ['Savanna'], audience: 'families', firstZone: 'Savanna' });
+    const forFamilies = writeBacklog(blank, { zones: ['Savanna'], audience: 'families', firstZone: 'Savanna' }, { firstAreaRefined: true });
     const withAppeal = forFamilies.backlog.filter((i) => i.appeal);
     const scores = withAppeal.map((i) => i.appeal!.families);
     expect(scores).toEqual([...scores].sort((a, b) => b - a));

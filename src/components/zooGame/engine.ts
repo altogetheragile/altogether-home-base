@@ -21,7 +21,7 @@ import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 import { STAKEHOLDERS, STAKEHOLDER_LINES, type StakeholderLine } from './stakeholders';
 export { SIGNAL_NEEDS };
-import { starterBacklog, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
+import { starterBacklog, type StarterOptions, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -2793,7 +2793,7 @@ export function agreeForecast(state: ZooGameState): ZooGameState {
 /** Sprint 1, already planned, with the clock about to run. One button's worth of setup. */
 export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_BRIEF): ZooGameState {
   // Priya's Product Backlog, ordered by what this audience values.
-  let s = writeBacklog(state, brief);
+  let s = writeBacklog(state, brief, { firstAreaRefined: true });
 
   // The Developers sized what they took. Sizing is theirs and it happened before the learner
   // arrived, which is exactly what "it arrives planned" means.
@@ -2950,9 +2950,13 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
 
 /** Write the Product Backlog from the brief. The game starts with none, because a Product Backlog that is
  *  simply there teaches that a Product Backlog is a thing you are handed. This is the moment it
- *  comes into existence, and the answers decide what is in it and what order it is in. */
-export function writeBacklog(state: ZooGameState, brief: ZooBrief): ZooGameState {
-  const items = starterBacklog(brief);
+ *  comes into existence, and the answers decide what is in it and what order it is in.
+ *
+ *  Epics only unless asked otherwise: this is the whole flow's starter, and splitting it is the
+ *  team's first Refinement. `startOnTheBoard` asks for the first area refined, because it skips
+ *  Refinement altogether. */
+export function writeBacklog(state: ZooGameState, brief: ZooBrief, options: StarterOptions = { firstAreaRefined: false }): ZooGameState {
+  const items = starterBacklog(brief, options);
   const order = ['families', 'enthusiasts', 'comfortSeekers'] as const;
   const idx = order.indexOf(brief.audience);
   // Ordering the Product Backlog is the Product Owner's job and it is done by value - so the items

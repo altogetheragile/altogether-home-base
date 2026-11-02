@@ -41,6 +41,8 @@ describe('a Sprint, played through to the Review', () => {
     };
 
     po({ type: 'WRITE_BACKLOG', brief: { zones: ['Big Cats', 'Waterside'], audience: 'families', firstZone: 'Big Cats' } });
+    // The starter is all epics; the team's first Refinement splits out the lion and its habitat.
+    po({ type: 'SPLIT_EPIC', id: 'bigcats', memberIds: ['lion'] });
     po({ type: 'SET_PRODUCT_GOAL', goal: 'Open a zoo families come back to' });
     s = reducer(s, { type: 'AGREE_DOD' });
     s = reducer(s, { type: 'SET_PHASE', phase: 'planning' });

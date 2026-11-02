@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
-import type { ZooGameState, BacklogItem, PbiDraft, SprintTask } from './types';
+import type { ZooGameState, BacklogItem, PbiDraft, SprintTask, EpicMember } from './types';
 import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon, acSettled } from './engine';
 import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
@@ -27,6 +27,12 @@ export function CategoryIcon({ item, className }: { item: BacklogItem; className
 
 /** Refine an epic: tick the members to split out into their own PBIs (each animal becomes
  *  an enclosure + the animal that depends on it; each facility becomes an amenity). */
+/** What each piece of an epic comes out as. The park's own pieces were all called facilities, which
+ *  made a bridge and a flowerbed sound like a toilet block. */
+const MEMBER_KIND: Record<EpicMember['kind'], string> = {
+  exhibit: 'animal + enclosure', amenity: 'facility', path: 'pathway', flora: 'scenery',
+};
+
 export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
   epic: BacklogItem;
   onSplit: (memberIds: string[]) => void;
@@ -48,7 +54,12 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
   const whole = taken.length === members.length;
   return (
     <div className="space-y-3">
-      <p className="text-[11px] text-muted-foreground">Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). Untick anything you don&rsquo;t want yet - the epic stays for the rest.</p>
+      <p className="text-[11px] text-muted-foreground">
+        {members.some((m) => m.kind === 'exhibit')
+          ? <>Each animal becomes an enclosure plus the animal that lives in it (the animal can&rsquo;t be built until its enclosure is). </>
+          : <>Each piece becomes a Product Backlog item of its own. </>}
+        Untick anything you don&rsquo;t want yet - the epic stays for the rest.
+      </p>
       <p className="text-[11px] text-muted-foreground/70">
         &ldquo;Epic&rdquo; and splitting are common practice, not Scrum. The Guide has one kind of thing on a Product Backlog and
         asks only that an item you forecast can be Done inside a Sprint - splitting is how you get there.
@@ -59,7 +70,7 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
             <label className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={picked.has(mem.id)} onChange={() => toggle(mem.id)} />
               <span className="font-medium">{mem.name}</span>
-              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{mem.kind === 'exhibit' ? 'animal + enclosure' : 'facility'}</span>
+              <span className="rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{MEMBER_KIND[mem.kind]}</span>
             </label>
           </li>
         ))}

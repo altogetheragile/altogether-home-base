@@ -52,7 +52,7 @@ cannot shape it, and the starter Product Backlog is not quite the one Al describ
 | Al's step | Today |
 |---|---|
 | Start from a Product Goal | Yes, on the opening screen |
-| A starter Product Backlog from the Product Owner: an epic for each zone | Nearly. The first area arrives already refined (its habitat and animal), and every other area is an epic (`starterBacklog` in `config.ts`) |
+| A starter Product Backlog from the Product Owner: an epic for each zone | Yes. An epic for each area, one for the Grounds and one for the facilities, plus the Somewhere to eat need (`starterBacklog` in `config.ts`). Starting on the board still has the first area refined |
 | Refine enough stories to start | Yes, the Refinement screen: size, split, order |
 | Write the Definition of Done | Yes, inside Refinement |
 | Sprint Planning | Yes, the three topics |
@@ -250,7 +250,8 @@ Review**) comes before step 3.
    already in use. `startOnTheBoard` and `LADDER` stay, for the preset. **Built.**
 2. **The starter is epics only.** `starterBacklog` gains an option for whether the first area
    arrives refined, and the park's own pieces become an epic of their own. The whole flow uses
-   epics only.
+   epics only. **Built.** The facilities are an epic too; Somewhere to eat stays a need, which is
+   not refined either.
 3. **Led through it.** The journey line, Priya handing each step over in the chat, the pinned
    "needs you" card, suggested lines for the Definition of Done, "enough to start" in Refinement,
    and each step showing on the park. Depends on the message board redesign, which goes first.

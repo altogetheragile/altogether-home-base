@@ -18,8 +18,9 @@ import type { ZooGameState, BacklogItem } from './types';
 // Reported from playing it: "all buildings need to be connected by paths. Only the enclosures has
 // this as part of the PBI. Toilets, kiosks, etc all need paths."
 
+// The first area refined, so there is a habitat and a building to offer the pen to.
 const zoo = (): ZooGameState => writeBacklog(initialZooState(1) as ZooGameState,
-  { zones: ['Big Cats', 'Waterside'], audience: 'families', firstZone: 'Big Cats' });
+  { zones: ['Big Cats', 'Waterside'], audience: 'families', firstZone: 'Big Cats' }, { firstAreaRefined: true });
 
 const strip = (state: ZooGameState, item: BacklogItem) => render(
   <ParkOptions state={state} item={item} inside={null} onDrawing={() => {}} drawing={false}
