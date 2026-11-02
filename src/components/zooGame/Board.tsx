@@ -11,7 +11,7 @@ import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets, ranked } from './toolb
 import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight, Undo2 } from 'lucide-react';
+import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight, Undo2, Clock } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
 import { PbiCard, CategoryChip } from './PbiCard';
 import { Chip } from './ui/Chip';
@@ -612,6 +612,11 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // two-step delete guard
   const items = availableItems(state);
   const horizon = readyHorizon(state); // Sprints' worth of Ready work - refinement aims to keep 1-3
+  // "Enough to start, and no more" (docs/ZOO_GAME_FLOW.md). Once a Sprint's worth is Ready, what is
+  // still to refine stops asking: it is quiet and says "Later" rather than red and "Not ready".
+  // Refining the whole Product Backlog before the first Sprint is the up-front planning the game
+  // exists to argue against. It can still be refined; the screen just stops telling you to.
+  const enough = mode === 'refine' && horizon >= 1;
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -636,7 +641,12 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
     // in the narrow Backlog rail. In Planning an unready item cannot be forecast until it is put
     // right - the Guide allows refining here ("The Scrum Team may refine these items during this
     // process"), but a Product Backlog refined during the last Sprint would not need it.
-    const status = why ? (
+    const status = why && enough ? (
+      <span data-part="later" title={`${why}. It does not need to be yet: a Sprint\u2019s worth is Ready above it, and the rest is refined during the Sprints.`}
+        className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+        <Clock className="h-3 w-3" /> Later
+      </span>
+    ) : why ? (
       <span title={mode === 'plan' ? `${why}. You can put that right here, but a Product Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
         className={cn(TONE.attention.text, "flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide")}>
         <AlertCircle className="h-3 w-3" /> Not ready
@@ -662,7 +672,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.
-        <Button size="sm" className={cn(TONE.reflect.solid, "h-7 shrink-0 px-2 text-xs text-white hover:bg-rose-700")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
+        <Button size="sm" variant={enough ? 'outline' : 'default'} className={cn(!enough && TONE.reflect.solid, !enough && 'text-white hover:bg-rose-700', "h-7 shrink-0 px-2 text-xs")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => (onFocus ? onFocus(it.id) : setSizing(it.id))}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Size it</Button>
       ) : mode === 'refine' ? null
@@ -698,7 +708,8 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
           className={cn(
             focus === it.id && 'ring-2 ring-primary ring-offset-1',
             mode === 'refine' || mode === 'plan'
-            ? cn('border-2', it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
+            ? cn('border-2', why && enough ? 'border-dashed border-border bg-muted/20'
+              : it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
               : why ? 'border-amber-400 bg-amber-500/[0.05]'
               : 'border-emerald-400 bg-emerald-500/[0.04]')
             : undefined)}
