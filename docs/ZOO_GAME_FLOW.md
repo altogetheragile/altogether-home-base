@@ -255,7 +255,10 @@ Review**) comes before step 3.
 3. **Led through it.** The journey line, Priya handing each step over in the chat, the pinned
    "needs you" card, suggested lines for the Definition of Done, "enough to start" in Refinement,
    and each step showing on the park. Depends on the message board redesign, which goes first.
-   Timed with the newcomer playtester against the ten-minute target.
+   Timed with the newcomer playtester against the ten-minute target. **Started:** the journey line
+   (#968), and Priya handing over Refinement, the Definition of Done and Sprint Planning's first
+   topic, with the "needs you" card under her line (`handover.ts`). Her handover is drawn as a chat
+   line on the screen it belongs to, because the team chat is not on screen before the Sprint.
 4. **The flow, as data.** A `ZooFlow` type, the four presets, and `applyFlow(state, flow)`, which
    does the "done for them" steps in the engine and records which steps were left out. Pure and
    tested, with no screens yet.
