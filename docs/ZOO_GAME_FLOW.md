@@ -259,6 +259,8 @@ Review**) comes before step 3.
    (#968), and Priya handing over Refinement, the Definition of Done and Sprint Planning's first
    topic, with the "needs you" card under her line (`handover.ts`). Her handover is drawn as a chat
    line on the screen it belongs to, because the team chat is not on screen before the Sprint.
+   The Definition of Done opens when Priya asks for it, its lines marked as a suggestion and the
+   library of further lines open, until the Scrum Team agrees one.
 4. **The flow, as data.** A `ZooFlow` type, the four presets, and `applyFlow(state, flow)`, which
    does the "done for them" steps in the engine and records which steps were left out. Pure and
    tested, with no screens yet.
