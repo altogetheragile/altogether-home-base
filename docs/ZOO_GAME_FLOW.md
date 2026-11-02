@@ -247,7 +247,7 @@ Review**) comes before step 3.
 
 1. **The whole flow is the default.** The opening screen loses "Start building"; a new game goes to
    the Product Owner's starter. The Retrospective stops offering practices when every practice is
-   already in use. `startOnTheBoard` and `LADDER` stay, for the preset.
+   already in use. `startOnTheBoard` and `LADDER` stay, for the preset. **Built.**
 2. **The starter is epics only.** `starterBacklog` gains an option for whether the first area
    arrives refined, and the park's own pieces become an epic of their own. The whole flow uses
    epics only.

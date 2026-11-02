@@ -70,7 +70,7 @@ describe('a panel that explains', () => {
 describe('the screen it came from', () => {
   const intro = () => render(
     <MemoryRouter><ZooIntro productGoal="" onSetGoal={() => {}} onStart={() => {}}
-      onStartFromTheBrief={() => {}} onSetGoalShape={() => {}}
+      onSetGoalShape={() => {}}
       teachCard="product-goal" onMarkTaught={() => {}} /></MemoryRouter>,
   ).container;
 

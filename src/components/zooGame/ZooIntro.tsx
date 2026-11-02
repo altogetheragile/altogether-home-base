@@ -27,9 +27,8 @@ interface ZooIntroProps {
   goalShape?: GoalShape;
   goalMeasures?: GoalMeasure[];
   onSetGoalShape?: (shape: GoalShape, goal: string, measures: GoalMeasure[]) => void;
+  /** Start the game: the whole of Scrum, from the Product Goal. */
   onStart: () => void;
-  /** The long way round: write the Product Backlog from the brief, then plan the Sprint. */
-  onStartFromTheBrief?: () => void;
   /** Signed-in players can resume a saved game. */
   onOpenSaves?: () => void;
   /** Editing the teaching copy, for an admin polishing it in place. */
@@ -40,7 +39,7 @@ interface ZooIntroProps {
  *  Goal is, and then the Product Goal itself - which is the one thing the player writes before they
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
-export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onStartFromTheBrief, onOpenSaves, copy }: ZooIntroProps) {
+export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy }: ZooIntroProps) {
   // Empty while it is still the game's own suggestion, so the placeholder is doing the suggesting.
   // The field used to hold the default AS TEXT, identical to the placeholder behind it - so somebody
   // typing their own Goal appended it to one they had not written, and the game ran on whichever
@@ -243,36 +242,21 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
           {/* The Product Goal is the commitment of the Product Backlog, and every Sprint aims at
               it. Starting with none is not a state the game should let a Product Owner into - it
               arrives written, so this only ever catches somebody who cleared it. */}
-          {/* The two ways in, kept together as one group so a phone stacks the bar rather than
-              splitting this pair across two rows of it. */}
+          {/* The way in and the line about it, kept together so a phone stacks them. */}
           <span className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
-            {/* One line for the pair, not a hint beside a button that reads like another hint.
-                "Write a Product Goal first." sat next to a greyed button labelled "Write the
-                Product Backlog first", and the two were different kinds of thing wearing the same
-                clothes: one an instruction, one a route. A newcomer read them as contradictory
-                instructions. */}
+            {/* What happens next, so the button is not a step into the unknown. */}
             <span className="text-[11px] text-muted-foreground">
               {!goal.trim()
-                ? 'Write a Product Goal above to begin, either way.'
-                : 'Sprint 1 arrives planned. Or write the Product Backlog yourself first.'}
+                ? 'Write a Product Goal above to begin.'
+                : 'Next, Priya hands over her starter Product Backlog.'}
             </span>
-            {/* The other way in, kept quiet. Sprint 1 arrives planned, which is how a Sprint arrives
-                on somebody's first day - but a group that wants to write the Product Backlog and
-                plan the Sprint themselves is doing the exercise the long way round on purpose, and
-                that is a trainer's call rather than a thing to take away. */}
-            {onStartFromTheBrief && (
-              <button type="button" onClick={() => { onSetGoal(chosen()); onStartFromTheBrief(); }}
-                disabled={!goal.trim()} data-part="start-from-brief"
-                title="Start with an empty Product Backlog and plan Sprint 1 yourself. The longer way round, on purpose."
-                className={cn(FOCUS, BAR_ACTION, 'rounded-full px-3 py-1.5 text-xs font-semibold text-muted-foreground underline-offset-2 hover:text-foreground hover:underline disabled:opacity-40')}>
-                Write the Product Backlog myself
-              </button>
-            )}
-            <Button size="lg" className={cn(BAR_ACTION, 'rounded-full px-6')} disabled={!goal.trim()}
-              title={goal.trim() ? 'Sprint 1 is already planned - the board is open and the clock runs when you are ready'
-                : 'Write a Product Goal first - every Sprint aims at it.'}
+            {/* One way in: the whole of Scrum, from this Product Goal. Starting on a Sprint 1 that
+                somebody else planned is a trainer's preset now, not a learner's choice
+                (docs/ZOO_GAME_FLOW.md, Al, 1 November 2026). */}
+            <Button size="lg" data-part="start" className={cn(BAR_ACTION, 'rounded-full px-6')} disabled={!goal.trim()}
+              title={goal.trim() ? 'Start the game from this Product Goal' : 'Write a Product Goal first - every Sprint aims at it.'}
               onClick={() => { onSetGoal(chosen()); onStart(); }}>
-              Start building &rarr;
+              Start &rarr;
             </Button>
           </span>
         </div>
