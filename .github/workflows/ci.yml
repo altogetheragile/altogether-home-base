@@ -11,7 +11,8 @@ on:
 
 jobs:
   ci:
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, which Playwright 1.58 cannot install browsers on.
+    runs-on: ubuntu-24.04
 
     env:
       VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
@@ -136,7 +137,8 @@ jobs:
   # surfaces when Vercel fails AFTER merge. Runs in parallel with the SPA job above.
   web-next:
     name: Next site (apps/web)
-    runs-on: ubuntu-latest
+    # Pinned: ubuntu-latest moved to 26.04, which Playwright 1.58 cannot install browsers on.
+    runs-on: ubuntu-24.04
 
     env:
       # Same Supabase project as the SPA; Next reads the NEXT_PUBLIC_ names. Pages are
