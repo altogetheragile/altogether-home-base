@@ -18,6 +18,7 @@ import { coatTint, foliageTint, tintKey, tintRef, type Tint } from './art/tint';
 import { motionWanted } from './motion';
 import { TintDefs } from './art/TintDefs';
 import { KIND_SCALE, groupMembers, plantScale } from './design';
+import { parkPlans } from './parkPlans';
 import {
   project, unproject, depth as depthOf, screenBounds, groundPoints, boxFaces as boxFacesOf, boxTones,
   roofFaces as roofFacesOf, wallPanel as wallPanelOf, prop, tint, jitter, COS, type Pt,
@@ -162,7 +163,7 @@ function along(route: Pt[], t: number): Pt {
 export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlaceItem, placing, onPlace, selected, onSelect,
   tool = 'none', onAddConnector, newConn, building, onPart,
   onSetSpot, onSetMemberSpot, onNest, onUnnest, onSetSize, onSetRot, onMoveCopy, onRemovePlant,
-  selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false, camera = null }: {
+  selectedConn, onSelectConn, onStartHere, onImprove, improving, incrementOnly = false, plans = false, camera = null }: {
   state: ZooGameState;
   height?: number;
   className?: string;
@@ -231,12 +232,16 @@ export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlac
   /** Show what has been delivered and nothing else - no building sites. The Review turns it on:
    *  the Increment is the thing being inspected, and a site is not part of it. */
   incrementOnly?: boolean;
+  /** Draw what is planned on top: each plot named with what it is waiting for, Ready items as
+   *  outlines where they will stand, the forecast lit. A layer, never part of the Increment. See
+   *  `parkPlans`. */
+  plans?: boolean;
 }) {
   // This drawing's own id for the shape landscape is cut to. Two parks on one page - the Increment
   // tab and the Review - would otherwise share one clip path, and share whichever was drawn last.
   const grassClip = `grass-${useId().replace(/[^a-zA-Z0-9-]/g, '')}`;
-  const scene = useMemo(() => build(state, height, turn, incrementOnly, grassClip, width ?? 0),
-    [state, height, turn, incrementOnly, grassClip, width]);
+  const scene = useMemo(() => build(state, height, turn, incrementOnly, grassClip, width ?? 0, plans),
+    [state, height, turn, incrementOnly, grassClip, width, plans]);
   const svgRef = useRef<SVGSVGElement>(null);
   const editable = !!onPlaceItem;
   const laying = tool === 'connect' && !!onAddConnector;
@@ -733,7 +738,11 @@ export function IsoZoo({ state, height = 460, width, className, turn = 0, onPlac
   );
 }
 
-function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false, grassClip = 'park-grass', targetW = 0) {
+/** The forecast, lit on the plans layer: amber, the colour of something under way. */
+const PLAN_LIT = '#f59e0b';
+const PLAN_LIT_EDGE = '#b45309';
+
+function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = false, grassClip = 'park-grass', targetW = 0, plans = false) {
   // WHAT is on the park, how big it is and where it stands are decided in one place, shared with
   // the plan view - see parkModel. This file's job is to draw it from the corner, nothing else.
   // "Show the Increment only" takes the sites away: what is left is what has actually been
@@ -975,6 +984,38 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
         strokeDasharray={open ? undefined : '10 8'} />,
     );
   });
+
+  // What is planned, as outlines on the ground where each thing will stand. Dashed, because none
+  // of it is built; the forecast filled, because that is what this Sprint is building.
+  const planned = plans ? parkPlans(state, standing.map((st) => posOf(st.item))) : null;
+  planned?.outlines.forEach((o) => {
+    nodes.push(
+      <polygon key={`plan-${o.id}`} data-part="plan-outline" data-item={o.id} data-forecast={o.forecast ? 'yes' : 'no'}
+        points={ground(o.x - o.w / 2, o.y - o.h / 2, o.x + o.w / 2, o.y + o.h / 2)} pointerEvents="none"
+        fill={o.forecast ? PLAN_LIT : 'none'} fillOpacity={o.forecast ? 0.45 : 0}
+        stroke={o.forecast ? PLAN_LIT_EDGE : INK} strokeOpacity={o.forecast ? 1 : 0.55} strokeWidth={2} strokeDasharray="7 5">
+        <title>{`${o.name}: ${o.forecast ? 'being built this Sprint' : 'Ready, not built yet'}`}</title>
+      </polygon>,
+    );
+  });
+  // Each plot's name and what it is waiting for, drawn over everything so a tree cannot hide it.
+  // The forecast by name, on the outline it lights: "this Sprint we are building these".
+  const forecastNames = planned ? planned.outlines.filter((o) => o.forecast).map((o) => {
+    const c = P(o.x, o.y);
+    return (
+      <text key={`plan-name-${o.id}`} data-part="plan-name" x={c.x} y={c.y + 4} textAnchor="middle" fontSize={11} fontWeight={700}
+        fill={PLAN_LIT_EDGE} stroke="#fffdf6" strokeWidth={3} paintOrder="stroke" strokeLinejoin="round" pointerEvents="none">{o.name}</text>
+    );
+  }) : [];
+  const planLabels = planned ? [...forecastNames, ...planned.plots.map(({ zone, plot, label }) => {
+    const c = P((plot.x0 + plot.x1) / 2, (plot.y0 + plot.y1) / 2);
+    return (
+      <g key={`plan-label-${zone}`} data-part="plan-label" data-plot={zone} pointerEvents="none">
+        <text x={c.x} y={c.y} textAnchor="middle" fontSize={13} fontWeight={700} fill={INK}
+          stroke="#fffdf6" strokeWidth={4} paintOrder="stroke" strokeLinejoin="round">{label}</text>
+      </g>
+    );
+  })] : [];
 
   // A line of trees along the boundary, standing on the same points the boundary is drawn through.
   // Not decoration for its own sake: a green edge fading into a green middle reads as a blob, and
@@ -2042,7 +2083,7 @@ function build(state: ZooGameState, targetH: number, turn = 0, incrementOnly = f
       ...(paths.length ? [<defs key="walks">{paths}</defs>] : []),
       <TintDefs key="tints" where={grassClip} tints={tints.values()} />,
       <defs key="ink"><InkDefs radius={Math.max(0.45, u * 2.6)} /></defs>,
-      ...nodes.filter(Boolean), ...pieces.map((p) => p.el),
+      ...nodes.filter(Boolean), ...pieces.map((p) => p.el), ...planLabels,
     ],
     label: `The zoo from above: ${encs.length} habitat${encs.length === 1 ? '' : 's'}, ${live.filter((i) => i.category === 'exhibit').length} exhibits, ${visitors} visitors`,
     // What a pointer can take hold of, and the frame needed to work out where it is pointing. The

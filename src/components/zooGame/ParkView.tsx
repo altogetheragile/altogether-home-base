@@ -286,6 +286,12 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   // of the time you want to see the site you are standing work on.
   const [ownIncrementOnly, setIncrementOnly] = useState(false);
   const incrementOnly = state.phase === 'review' || ownIncrementOnly;
+  // What is planned, drawn over the park. On by default before anything is built - Refinement and
+  // Planning, when the park is otherwise empty grass - and off when the Increment is what you are
+  // looking at. Planned work is never part of the Increment, so the Review cannot have it on.
+  const [ownPlans, setPlans] = useState<boolean | null>(null);
+  const plansAllowed = state.phase !== 'review';
+  const plans = plansAllowed && (ownPlans ?? (state.phase === 'refine' || state.phase === 'planning'));
   // While a pathway is on the bench the bench holds the pen; otherwise it is the park's own toggle.
   const effectiveTool: 'none' | 'connect' = !canConnect ? 'none' : (drawRoute ? (drawing ? 'connect' : 'none') : (tool ?? 'none'));
   const stopDrawing = () => { setTool('none'); onDrawing?.(false); };
@@ -397,7 +403,9 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
               <p className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                 {onPlaceItem
                   ? <><Move className="h-3.5 w-3.5" /> The zoo as a visitor would see it. Drag a habitat, building or planting to arrange it.</>
-                  : <><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands.</>}
+                  : plans
+                    ? <><Eye className="h-3.5 w-3.5" /> The zoo as it stands, with what is planned drawn dashed. Nothing dashed is built, or part of the Increment.</>
+                    : <><Eye className="h-3.5 w-3.5" /> A view of the zoo as it stands.</>}
                 {/* ...and if the zoo is standing still, say why. The visitors walk and the animals
                     pace, both of which stop when the machine is set to reduce motion - and a zoo
                     that has quietly stopped, with nothing anywhere saying so, is the game knowing
@@ -420,6 +428,14 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   <input type="checkbox" className="h-3 w-3 accent-primary" checked={incrementOnly}
                     onChange={(e) => setIncrementOnly(e.target.checked)} />
                   Show the Increment only
+                </label>
+              )}
+              {plansAllowed && (
+                <label data-part="show-plans" className={cn(FOCUS, 'flex cursor-pointer items-center gap-1.5 rounded-md border border-border px-2 py-1 text-[11px] font-medium')}
+                  title="Name each area with what it is waiting for, and outline the Ready work where it will stand. None of it is built.">
+                  <input type="checkbox" className="h-3 w-3 accent-primary" checked={plans}
+                    onChange={(e) => setPlans(e.target.checked)} />
+                  Show plans
                 </label>
               )}
               <ZoomControl zoom={zoom} onZoom={setZoom} />
@@ -557,7 +573,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   export took a picture of a 14px download arrow, very crisply. */}
               <FlyThrough state={state} of="the zoo">{(camera) => (
               <div data-part="park-drawing" style={{ width: `${zoom * 100}%`, minWidth: '100%' }}>
-                <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly} camera={camera}
+                <IsoZoo state={state} height={520 * zoom} turn={turn} incrementOnly={incrementOnly} plans={plans} camera={camera}
                   onPlaceItem={onPlaceItem} placing={placing} onPlace={onPlace} selected={building} onSelect={onOpenBuild}
                   tool={effectiveTool} newConn={newConn}
                   building={edit ? building : null} onPart={edit ? onPart : undefined}
