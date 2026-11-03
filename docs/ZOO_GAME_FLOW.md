@@ -262,6 +262,11 @@ Review**) comes before step 3.
    The Definition of Done opens when Priya asks for it, its lines marked as a suggestion and the
    library of further lines open, until the Scrum Team agrees one. Once a Sprint's worth is Ready,
    Refinement says "Enough to start" and what is left to refine goes quiet and says "Later".
+   The park has a plans layer (`parkPlans.ts`, "Show plans" on the Increment tab, on by default in
+   Refinement and Planning, never at the Review): each plot says what its area is waiting for,
+   Ready work is a dashed outline where it will stand, and the forecast is lit and named. It is a
+   layer rather than part of the Increment, because the Increment is only what is Done (Al,
+   3 November 2026).
 4. **The flow, as data.** A `ZooFlow` type, the four presets, and `applyFlow(state, flow)`, which
    does the "done for them" steps in the engine and records which steps were left out. Pure and
    tested, with no screens yet.
