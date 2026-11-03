@@ -269,7 +269,13 @@ Review**) comes before step 3.
    3 November 2026).
 4. **The flow, as data.** A `ZooFlow` type, the four presets, and `applyFlow(state, flow)`, which
    does the "done for them" steps in the engine and records which steps were left out. Pure and
-   tested, with no screens yet.
+   tested, with no screens yet. **Built** (`flow.ts`). A step the flow does after one the team does
+   itself is kept on the game (`state.flow`) and done when the game gets there: the Product Backlog
+   when the brief is answered, the Sprint Goal on walking into Sprint 1's Planning. A planned
+   Sprint 1 brings the Product Goal and the Sprint Goal with it, and never starts from epics only.
+   "None" for the Definition of Done is agreed as none, so nothing asks for one. Refinement is the
+   team's whenever it refines the starter itself, whatever the flow says about refining during a
+   Sprint. Nothing sets a flow until the lobby does, in step 5.
 5. **The lobby picks a flow.** "Set up the game" offers the presets. A shared game with no trainer
    uses the whole flow.
 6. **The trainer role.** The new account role, granted by admins, with every admin counted as a

@@ -2790,10 +2790,42 @@ export function agreeForecast(state: ZooGameState): ZooGameState {
 // starts by asking a learner to agree what Done means is asking them to write a rule for a job they
 // have not done yet.
 
+/** What a trainer's flow can hand over with a planned Sprint 1 (`flow.ts`). Nothing: "Start
+ *  building", as it always was. */
+export interface BoardStart {
+  /** Every area split and sized, not just the first. */
+  refined?: boolean;
+  /** A Definition of Done, agreed. Absent: none, which is the point of starting on the board. */
+  definitionOfDone?: string[];
+  /** The trainer's Sprint Goal. Absent: Priya's. */
+  sprintGoal?: string;
+}
+
+/** The whole of the Product Owner's starter refined: every epic split into its pieces and every
+ *  piece sized, the way a trainer hands over a Product Backlog for a short session. A need is left
+ *  a need - what meets it is the Developers' decision, and refining cannot make it for them.
+ *  Sized at its true size, as `startOnTheBoard` sizes the first area: the sizing happened before
+ *  the learner arrived. */
+export function refineAll(state: ZooGameState): ZooGameState {
+  let s = state;
+  for (let epic = s.backlog.find((it) => it.category === 'epic'); epic; epic = s.backlog.find((it) => it.category === 'epic')) {
+    const split = splitEpic(s, epic.id, (epic.epicMembers ?? []).map((m) => m.id));
+    if (split === s) break;
+    s = split;
+  }
+  for (const it of s.backlog) {
+    if (it.unsized && it.category !== 'epic' && it.category !== 'need') s = estimateItem(s, it.id, it.trueSize ?? 5);
+  }
+  // Nobody's day paid for it: it was done before the game started.
+  return { ...s, refinePenalty: state.refinePenalty };
+}
+
 /** Sprint 1, already planned, with the clock about to run. One button's worth of setup. */
-export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_BRIEF): ZooGameState {
-  // Priya's Product Backlog, ordered by what this audience values.
+export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_BRIEF, given: BoardStart = {}): ZooGameState {
+  // Priya's Product Backlog, ordered by what this audience values. A trainer's flow can hand it
+  // over refined all the way down.
   let s = writeBacklog(state, brief, { firstAreaRefined: true });
+  if (given.refined) s = refineAll(s);
 
   // The Developers sized what they took. Sizing is theirs and it happened before the learner
   // arrived, which is exactly what "it arrives planned" means.
@@ -2850,7 +2882,7 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
   }
 
   // Priya's Goal, and the team agreed it before the learner sat down.
-  const goal = suggestSprintGoal(s.backlog.filter((it) => take.includes(it.id)));
+  const goal = given.sprintGoal?.trim() || suggestSprintGoal(s.backlog.filter((it) => take.includes(it.id)));
   s = { ...s, sprintGoal: goal, sprintGoalAgreed: ['product_owner', 'developer', 'scrum_master'] };
 
   // No Definition of Done, BEFORE the Sprint is planned rather than after. Planning writes down what
@@ -2858,7 +2890,10 @@ export function startOnTheBoard(state: ZooGameState, brief: ZooBrief = DEFAULT_B
   // which this then deleted. So Sprint 1's own log said "Nobody agreed a Definition of Done. The 3
   // that were there stood" about three lines that were not there for a moment of it, and a learner
   // who later adopted one was told adopting had changed nothing.
+  //
+  // ...unless a trainer's flow gave them one, in which case it was agreed before they sat down too.
   s = { ...s, definitionOfDone: [], dodAgreed: false };
+  if (given.definitionOfDone?.length) s = setDefinitionOfDone(s, given.definitionOfDone);
   s = planSprint(s, take);
 
   // The Developers put their own Sprint Backlog in the order they will work in: the pen before the
