@@ -650,6 +650,11 @@ export interface ZooGameState {
    *  A practice that is not here is ABSENT from the game - not disabled, not padlocked. Optional
    *  because a game saved before the ladder existed has them all, and is treated as such. */
   adopted?: string[];
+  /** The trainer's flow the game was set up with (`flow.ts`), kept so the steps it does for the
+   *  team later in Sprint 1 are done when the game gets there. Absent: the whole of Scrum. */
+  flow?: ZooFlowChoices;
+  /** What the flow left out, with the trainer card each one suggests. */
+  flowLeftOut?: FlowLeftOut[];
   /** The areas whose GROUND the zoo has. The first area is the one it was given; everything after
    *  it is opened by the Product Owner, paid for out of what the zoo is worth to its visitors.
    *  Optional because a game saved before ground was bought has none, and reads as the first area
@@ -966,3 +971,41 @@ export type ZooAction =
   | { type: 'LOAD_GAME'; state: ZooGameState }
   | { type: 'PO_REFINE'; decisions: PoDecisions }
   | { type: 'RESET' };
+
+/** A trainer's flow: where the game starts, as a set of choices that each leave a step for the team
+ *  or do it for them before they arrive (docs/ZOO_GAME_FLOW.md). Nothing here changes the rules of
+ *  Scrum. It changes what the team is handed. */
+export interface ZooFlowChoices {
+  productGoal: 'team' | 'given';
+  /** The trainer's sentence. Empty or absent: the game's own Product Goal. */
+  productGoalText?: string;
+  /** How much of the Product Owner's starter arrives refined. */
+  backlog: 'epics' | 'first-area' | 'refined';
+  /** `none`: the team starts without one, and nothing asks for it. */
+  definitionOfDone: 'team' | 'given' | 'none';
+  /** The trainer's lines. Absent: the game's suggested three. */
+  definitionOfDoneLines?: string[];
+  sprintGoal: 'team' | 'given';
+  /** The trainer's sentence. Absent: Priya's, from the top of the Product Backlog. */
+  sprintGoalText?: string;
+  /** `given`: Sprint 1 starts planned, on the board. It brings the Sprint Goal with it. */
+  forecast: 'team' | 'given';
+  /** Refining during a Sprint. "Not yet" is the ladder's rung, so a Retrospective offers it. A team
+   *  that refines the starter itself before Sprint 1 has it anyway. */
+  refinementInSprint: boolean;
+  /** Days in a Sprint. Absent: the game's own. */
+  sprintDays?: number;
+  /** Off: nothing turns up by chance, only the trainer's cards. */
+  chance: boolean;
+  /** On: what the flow did for the team is handed over at Retrospectives, in the ladder's order. */
+  ladder: boolean;
+}
+
+/** A step the flow did for the team or left out, and the trainer card it suggests. The card is
+ *  suggested, not played: when is the trainer's call. */
+export interface FlowLeftOut {
+  step: 'productGoal' | 'backlog' | 'definitionOfDone' | 'sprintGoal' | 'forecast';
+  /** `given`: done for the team. `none`: left out altogether. */
+  how: 'given' | 'none';
+  card?: string;
+}
