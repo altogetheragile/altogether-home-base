@@ -47,13 +47,15 @@ export function ActionBar({ left, hint, className, children }: {
 
   const inner = (
     <>
-      {left && <div className="flex min-w-0 items-center gap-2">{left}</div>}
+      {/* Back keeps its room. It used to shrink to nothing when the words beside the button ran
+          long, and the words were drawn over it ("←Back" on top of "7 items have no steps"). */}
+      {left && <div className="flex shrink-0 items-center gap-2">{left}</div>}
       {/* What the game is saying comes first: it is news, and the hint is only ever an explanation
           of the button it sits next to. Neither pushes the button out of the corner. */}
       {notes.length > 0
         ? <NoteStrip notes={notes} />
         : hint && <span className="hidden min-w-0 max-w-[52ch] truncate text-[11px] text-muted-foreground sm:block">{hint}</span>}
-      <div className="flex shrink-0 items-center gap-2.5">{children}</div>
+      <div className="flex min-w-0 items-center gap-2.5 [&_button]:shrink-0">{children}</div>
     </>
   );
 

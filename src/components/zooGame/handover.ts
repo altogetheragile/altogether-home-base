@@ -1,5 +1,5 @@
 import type { ZooGameState } from './types';
-import { availableItems, isReady, readyHorizon, sprintCapacity } from './engine';
+import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY } from './engine';
 
 // Priya hands each step over, in her own voice.
 //
@@ -31,24 +31,24 @@ export function handover(state: ZooGameState): Handover | null {
     // explain what she is handing over: it is the Product Backlog the team has been working from.
     if (state.sprintNumber !== 1 || state.velocity.length > 0) return null;
     const cap = sprintCapacity(state).points;
-    if (readyHorizon(state) < 1) {
+    if (!enoughToStart(state)) {
       const ready = availableItems(state).filter((it) => isReady(it, state)).reduce((n, it) => n + it.estimate, 0);
       return {
         key: 'refinement',
-        says: 'Here is my starter, one epic for each area, in the order I would like them. Split enough off the top for one Sprint and size it, and we can plan.',
-        asks: 'Split and size a Sprint’s worth from the top of the Product Backlog.',
-        progress: `${pts(ready)} Ready of about ${pts(cap)}`,
+        says: 'Here is my starter, one epic for each area, in the order I would like them. Split enough off the top to get us started and size it, and we can plan. The rest we refine as we go.',
+        asks: 'Split and size enough from the top of the Product Backlog to start.',
+        progress: `${pts(ready)} Ready of about ${pts(Math.round(cap * START_READY))} to start`,
       };
     }
     if (!state.dodAgreed) {
       return {
         key: 'dod',
-        says: 'That is a Sprint’s worth ready. One more thing before we plan: what does Done mean? I want us all to know when something is finished.',
+        says: 'That is enough ready to start. One more thing before we plan: what does Done mean? I want us all to know when something is finished.',
         asks: 'Agree the Definition of Done as a Scrum Team, or start without one.',
       };
     }
     return state.definitionOfDone.length
-      ? { key: 'start', says: 'A Sprint’s worth ready, and we agree what Done means. Let’s plan the first Sprint.', asks: 'Go to Sprint Planning.' }
+      ? { key: 'start', says: 'Enough ready to start, and we agree what Done means. Let’s plan the first Sprint.', asks: 'Go to Sprint Planning.' }
       : { key: 'start', says: 'No Definition of Done, then. We will find out at the Review what Done meant. Let’s plan the first Sprint.', asks: 'Go to Sprint Planning.' };
   }
   if (state.phase === 'planning' && (state.planningTopic ?? 'why') === 'why') {
