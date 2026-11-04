@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { initialZooState, DEFAULT_BRIEF } from './config';
-import { writeBacklog, splitEpic, estimateItem, setDefinitionOfDone } from './engine';
+import { writeBacklog, splitEpic, estimateItem, setDefinitionOfDone, sprintCapacity, readyHorizon, START_READY } from './engine';
 import type { ZooGameState } from './types';
 import { handover } from './handover';
 import { journey } from './journey';
@@ -22,12 +22,23 @@ const aSprintReady = () => {
 };
 
 describe('Priya hands each step over', () => {
-  it('hands over her starter, and asks for a Sprint\'s worth with how far along it is', () => {
+  it('hands over her starter, and asks for just enough to start with how far along it is', () => {
     const h = handover(written())!;
     expect(h.key).toBe('refinement');
     expect(h.says).toMatch(/one epic for each area/);
-    expect(h.asks).toMatch(/Sprint’s worth/);
-    expect(h.progress).toMatch(/^0 points Ready of about \d+ points$/);
+    expect(h.says).toMatch(/The rest we refine as we go/);
+    expect(h.asks).toMatch(/enough .* to start/);
+    expect(h.progress).toMatch(/^0 points Ready of about \d+ points to start$/);
+  });
+
+  it('counts half a Sprint as enough to start, not a whole one', () => {
+    // Al, 4 November 2026: "just enough refinement to get started and then more refinement in
+    // initial Sprints." A whole Sprint's worth meant 35 points of refining before anything was built.
+    const w = written();
+    const cap = sprintCapacity(w).points;
+    const half = { ...w, backlog: [{ ...w.backlog[0], id: 'x', category: 'path', unsized: false, estimate: Math.ceil(cap * START_READY), acceptance: ['a'], epicMembers: undefined, status: 'backlog', zone: 'Grounds' }, ...w.backlog] } as ZooGameState;
+    expect(readyHorizon(half)).toBeLessThan(1);
+    expect(handover(half)?.key).toBe('dod');
   });
 
   it('asks what Done means once a Sprint\'s worth is Ready, as the journey line does', () => {

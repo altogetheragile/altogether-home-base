@@ -2,7 +2,7 @@ import type { ZooGameState, PbiDraft } from './types';
 import { SprintLengthPicker } from './SprintLengthPicker';
 import { ActionBar } from './ActionBar';
 import { ExplainButton } from './Explain';
-import { availableItems, readyHorizon } from './engine';
+import { availableItems, readyHorizon, START_READY } from './engine';
 import { SPRINT_LENGTH_OPTIONS } from './config';
 import { ProductBacklogSidebar } from './Board';
 import { GroundPanel } from './GroundPanel';
@@ -125,9 +125,9 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const figures = (
     <div className="flex flex-wrap items-center gap-2">
       <Figure value={items.length} label="in the Product Backlog" tone="quiet" />
-      <Figure value={`${horizon}`} label={`Sprint${horizon === 1 ? '' : 's'} ready`} tone={horizon > 3 ? 'attention' : horizon >= 1 ? 'done' : 'attention'}
+      <Figure value={`${horizon}`} label={`Sprint${horizon === 1 ? '' : 's'} ready`} tone={horizon > 3 ? 'attention' : horizon >= START_READY ? 'done' : 'attention'}
         title="How far ahead the Product Backlog is prepared: Ready points against your capacity. Aim for a Sprint or two - past three is analysis you may never use." />
-      {unsized > 0 && <Figure value={unsized} label="to size" tone={horizon >= 1 ? 'quiet' : 'coach'} />}
+      {unsized > 0 && <Figure value={unsized} label="to size" tone={horizon >= START_READY ? 'quiet' : 'coach'} />}
       <Figure value={ready.length} label="Ready" tone="done" icon={CheckCircle2} />
     </div>
   );
@@ -148,7 +148,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Ready to start the first Sprint?' : 'What is ready for the Sprints ahead?'}</h2>
           <ExplainButton cards={['refinement', 'product-backlog', 'pbi']} phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
-        <p className="text-sm text-muted-foreground">{first ? 'A Sprint\u2019s worth ready at the top is enough to begin.' : 'Split what is too big, size what is not sized, and order it by value.'}</p>
+        <p className="text-sm text-muted-foreground">{first ? 'Just enough ready at the top to start. The rest is refined during the Sprints.' : 'Split what is too big, size what is not sized, and order it by value.'}</p>
       </header>
 
       {/* This screen asks for two things in order, and nothing said so. Numbering them is the whole
@@ -252,9 +252,9 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
         <GroundPanel state={state} onOpenGround={onOpenGround} />
 
         {first ? (
-          <Step n={3} title="Then get the top ready" done={horizon >= 1} right={figures}>
+          <Step n={3} title="Then get the top ready" done={horizon >= START_READY} right={figures}>
             {/* Said, so nobody carries on refining for the sake of it. */}
-            {horizon >= 1 && (
+            {horizon >= START_READY && (
               <p data-part="enough-to-start" className="mt-1.5 text-[12px] leading-snug text-emerald-800 dark:text-emerald-300">
                 <strong>Enough to start.</strong> The rest is refined during the Sprints, when you know more.
               </p>

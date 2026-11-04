@@ -2729,6 +2729,15 @@ export function sprintCapacity(state: ZooGameState): { points: number; estimated
 /** How far ahead the Product Backlog is actually prepared, in Sprints' worth of Ready work. Refinement aims
  *  to keep a couple of Sprints ready - enough that Planning has a real choice, not so much that the
  *  team has analysed work it may never build. */
+/** How much Ready work is enough to start the first Sprint, in Sprints' worth. Not a whole Sprint:
+ *  just enough to plan towards a Sprint Goal, with the rest refined during the Sprint, when the
+ *  team knows more (Al, 4 November 2026: "just enough refinement to get started and then more
+ *  refinement in initial Sprints"). */
+export const START_READY = 0.5;
+
+/** Whether the first Refinement has done enough to plan. */
+export const enoughToStart = (state: ZooGameState): boolean => readyHorizon(state) >= START_READY;
+
 export function readyHorizon(state: ZooGameState): number {
   const pts = availableItems(state).filter((it) => isReady(it, state)).reduce((n, it) => n + it.estimate, 0);
   const cap = sprintCapacity(state).points;
@@ -4736,8 +4745,8 @@ export const COACH_NUDGES: CoachNudge[] = [
     when: (c) => c.state.phase === 'refine' && c.state.sprintNumber === 1 && c.epicCount > 0 && c.exhibitsReady < 3,
     text: 'The paths and benches are ready to build, and so is the first area - that is already a Sprint\u2019s worth. The other areas are still epics, and they can stay that way: you will split them when a Sprint needs them, which is how a Product Backlog actually gets built. Go and plan.' },
   { id: 'refine-enough', where: 'Refinement, when there is enough ready work to start', phases: ['refine'],
-    when: (c) => c.state.phase === 'refine' && c.horizon >= 1 && c.horizon <= 3,
-    text: 'You have about {horizon} Sprints of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Product Backlog better than more analysis now.' },
+    when: (c) => c.state.phase === 'refine' && c.horizon >= START_READY && c.horizon <= 3,
+    text: 'You have about {horizon} of a Sprint of ready work - enough to start. Go and plan: what you learn from building will shape the rest of the Product Backlog better than more analysis now.' },
   { id: 'refine-ahead', where: 'The Sprint board, when less than a Sprint of ready work is left', phases: ['sprint'],
     when: (c) => c.state.phase === 'sprint' && c.horizon < 1 && c.inSprintCount > 0,
     text: 'Less than a Sprint of ready work is left. Get the whole Scrum Team round the Product Backlog while this Sprint runs - the PO brings the value, the Developers bring what it would take. It costs build time, which is the trade-off, and it is how the next Planning has anything to choose from.' },

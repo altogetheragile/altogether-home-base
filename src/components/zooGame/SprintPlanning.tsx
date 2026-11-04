@@ -733,7 +733,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
 
       {/* One primary action, always in the same place. */}
       <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>
-        <div className="flex items-center gap-2.5">
+        <div className="flex min-w-0 items-center gap-2.5">
           {step === 'why' && (
             <>
               {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">{state.sprintGoal.trim() ? 'A Sprint Goal is an objective, not a word' : 'Write the Sprint Goal to continue'}</span>}
@@ -751,7 +751,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               {/* One Developer proposes the forecast and the others agree it. Changing it is
                   proposing it again, so everybody is asked again. */}
               {hasWhat && forecastWaiting.length > 0 && (
-                <span data-part="forecast-agreement" className="text-[11px] text-muted-foreground">
+                <span data-part="forecast-agreement" className="min-w-0 truncate text-[11px] text-muted-foreground">
                   {proposer ? `${proposer.id === viewer ? 'You' : proposer.name} proposed this forecast. ` : ''}
                   Waiting on {forecastWaiting.map((p) => (p.id === viewer ? 'you' : p.name)).join(' and ')}
                 </span>
@@ -770,8 +770,10 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   refusing taught that a Sprint cannot begin until every step is written, which is
                   the up-front planning the whole game exists to argue with. */}
               {unplanned > 0 ? (
-                <span className="text-[11px] text-muted-foreground">
-                  {unplanned} item{unplanned === 1 ? ' has' : 's have'} no steps yet. You can start anyway - the plan is yours to finish in the Sprint.
+                // Short, with the rest on hover: the pill is a button and a few words, not a paragraph.
+                <span data-part="unplanned" className="min-w-0 truncate text-[11px] text-muted-foreground"
+                  title="You can start anyway: the plan is yours to finish in the Sprint.">
+                  {unplanned} without steps yet. Fine to start.
                 </span>
               ) : (
                 // What the three topics just produced, said at the moment it comes into being. The

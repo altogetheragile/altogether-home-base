@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask, EpicMember } from './types';
-import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon, acSettled } from './engine';
+import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon, acSettled, START_READY } from './engine';
 import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
 import { dodVerdicts } from './dodChecks';
@@ -612,11 +612,11 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null); // two-step delete guard
   const items = availableItems(state);
   const horizon = readyHorizon(state); // Sprints' worth of Ready work - refinement aims to keep 1-3
-  // "Enough to start, and no more" (docs/ZOO_GAME_FLOW.md). Once a Sprint's worth is Ready, what is
+  // "Enough to start, and no more" (docs/ZOO_GAME_FLOW.md). Once enough is Ready to start (`START_READY`), what is
   // still to refine stops asking: it is quiet and says "Later" rather than red and "Not ready".
   // Refining the whole Product Backlog before the first Sprint is the up-front planning the game
   // exists to argue against. It can still be refined; the screen just stops telling you to.
-  const enough = mode === 'refine' && horizon >= 1;
+  const enough = mode === 'refine' && horizon >= START_READY;
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -642,7 +642,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
     // right - the Guide allows refining here ("The Scrum Team may refine these items during this
     // process"), but a Product Backlog refined during the last Sprint would not need it.
     const status = why && enough ? (
-      <span data-part="later" title={`${why}. It does not need to be yet: a Sprint\u2019s worth is Ready above it, and the rest is refined during the Sprints.`}
+      <span data-part="later" title={`${why}. It does not need to be yet: enough is Ready above it to start, and the rest is refined during the Sprints.`}
         className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
         <Clock className="h-3 w-3" /> Later
       </span>
@@ -833,7 +833,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
         {mode === 'view'
           ? 'Ordered by the Product Owner, most valuable first. This is what a Sprint Goal is built from - read it, then select the work in topic two.'
           : mode === 'refine'
-          ? 'Ordered by you (the PO). Size the unsized items and order the list, so the top items are Ready to plan. You do not have to finish this list. Take a Sprint\u2019s worth off the top and go; the rest gets built out through the Sprints, where refining happens alongside the build and takes a little of the Sprint.'
+          ? 'Ordered by you (the PO). Size the unsized items and order the list, so the top items are Ready to plan. You do not have to finish this list. Get just enough off the top Ready to start and go; the rest gets built out through the Sprints, where refining happens alongside the build and takes a little of the Sprint.'
           : mode === 'plan'
             ? 'Ordered by you (the PO). The Developers select the ready ones they forecast they can finish, and those become the Sprint Backlog.'
             : 'Pull a Ready item in by agreement, if it will not put the Sprint Goal at risk. Refining here is the whole Scrum Team\u2019s work and costs the day\u2019s build time - what it prepares is later Sprints.'}
