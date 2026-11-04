@@ -26,7 +26,7 @@ function useMinWidth(px: number): boolean {
   );
 }
 
-export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, min = [20, 20], first, second, clip, stackedClassName, className, firstClassName, secondClassName }: {
+export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, min = [20, 20], first, second, clip, page, stackedClassName, className, firstClassName, secondClassName }: {
   /** Names the screen, so each remembers its own split. */
   id: string;
   /** `horizontal`: side by side, with a vertical bar. `vertical`: one over the other. */
@@ -42,6 +42,9 @@ export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, m
   second?: ReactNode;
   /** Clip each pane at the bar, for panes of a fixed height that scroll inside themselves. */
   clip?: boolean;
+  /** Side by side on a page that scrolls as a whole: the panes are as tall as what is in them,
+   *  rather than the height of the screen, so a pane can hold something sticky. */
+  page?: boolean;
   /** The layout when stacked, which is the layout the screen had before. */
   stackedClassName?: string;
   className?: string;
@@ -61,7 +64,8 @@ export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, m
   const overflow = clip ? 'hidden' : 'visible';
   const across = direction === 'horizontal';
   return (
-    <PanelGroup direction={direction} autoSaveId={`zoo-split:${id}`} className={cn('min-h-0', className)} data-part="split-panes" data-split={id}>
+    <PanelGroup direction={direction} autoSaveId={`zoo-split:${id}`} className={cn('min-h-0', className)} data-part="split-panes" data-split={id}
+      style={page ? { height: 'auto', overflow: 'visible' } : undefined}>
       {/* Visible overflow unless asked, so a pane's own shadows and menus are not clipped at the bar. */}
       <Panel id={`${id}-a`} order={1} defaultSize={sizes[0]} minSize={min[0]} style={{ overflow }} className={cn('min-w-0', firstClassName)}>
         {first}

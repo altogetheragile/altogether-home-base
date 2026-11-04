@@ -97,7 +97,7 @@ await shot('daily-scrum');
 for (let d = 0; d < 8; d++) {
   await click('End [Dd]ay|Keep the plan|Carry on regardless|Adapt the plan|Start Day', 2200);
   const h = ((await p.$$eval('h1,h2', xs => xs.map(x => x.innerText.trim())))[0] ?? '');
-  if (/What did we get Done/.test(h)) break;
+  if (/Sprint Goal (met|not met)|There was no Sprint Goal/.test(h)) break;
 }
 await shot('review-1-done', 1500);
 await click('Next: the visitors', 1500); await shot('review-2-visitors');

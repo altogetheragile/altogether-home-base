@@ -2,7 +2,8 @@ import { useState } from 'react';
 import type { ZooGameState, ChatKind } from './types';
 import type { SegmentId } from './simulation/types';
 import { whatVisitorsCanReach } from './parkNetwork';
-import { Bubble } from './TeamChat';
+import { TeamChat } from './TeamChat';
+import { SplitPanes } from './SplitPanes';
 import { whatGotOut } from './engine';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, yourReviewTurn } from './engine';
 import { PbiCard } from './PbiCard';
@@ -19,7 +20,7 @@ import { EventStage } from './EventStage';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS, PADDING, SURFACE, TEXT, TONE } from './ui/tokens';
-import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check } from 'lucide-react';
+import { Users, Quote, Lightbulb, CheckCircle2, CircleDashed, Check, ChevronRight } from 'lucide-react';
 
 type Step = 'done' | 'visitors' | 'next';
 const STEPS: { key: Step; label: string; question: string; lead: string }[] = [
@@ -64,11 +65,16 @@ const SEG_LABEL: Record<SegmentId, string> = { families: 'Families', enthusiasts
 const SEG_COLOR: Record<SegmentId, string> = { families: 'bg-orange-500', enthusiasts: TONE.coach.solid, comfortSeekers: 'bg-amber-700' };
 const barTone = (v: number) => (v >= 67 ? 'bg-emerald-500' : v >= 34 ? 'bg-amber-500' : 'bg-rose-500');
 
-/** The Sprint Review, as a conversation.
+/** The Sprint Review, as a conversation, in the team chat.
  *
  *  Priya gives the verdict on the Sprint Goal and the stakeholders answer the Increment - not her.
- *  Nothing anybody says here signs anything off, which the opening line says out loud, because an
+ *  Nothing anybody says here signs anything off, which the heading says out loud, because an
  *  approval meeting is what this event turns into when nobody says otherwise.
+ *
+ *  It was a card in the middle of the Review, above everything the Review is inspecting, so the
+ *  first thing on the screen was a conversation about results you had not seen yet. Now it is the
+ *  team chat beside the Review, where the Sprint's conversation already was: the room talks while
+ *  you look, and your turn is pinned at the top of it the way a question is during the Sprint.
  *
  *  Your three replies are two halves of the job and one anti-pattern. Asking the room to approve
  *  it is not blocked: it is answered with what a Review is for, which teaches more than a disabled
@@ -78,26 +84,16 @@ function TheRoom({ state, onSay }: { state: ZooGameState; onSay?: (text: string,
   const thread = (state.chat ?? []).filter((m) => m.kind === 'review');
   const spoken = thread.some((m) => m.who === 'you');
   const yours = spoken ? [] : yourReviewTurn(state);
-  if (!thread.length) return null;
-  return (
-    <section data-part="review-room" className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
-      <div className="flex flex-wrap items-baseline gap-x-2">
-        <span className="text-sm font-semibold">Round the room</span>
-        <span className="text-[11px] text-muted-foreground">
-          the Scrum Team and the people the zoo is for - nothing here is a sign-off
-        </span>
-      </div>
-      <ul className="flex flex-col gap-2">
-        {thread.map((m) => <Bubble key={m.id} msg={m} />)}
-      </ul>
+  const turn = (told || (yours.length > 0 && onSay)) ? (
+    <div className="shrink-0 space-y-1.5">
       {told && (
         <p data-part="review-not-a-gate" className={cn(TONE.attention.text, 'text-[12px] leading-snug')}>
           {told}
         </p>
       )}
       {yours.length > 0 && onSay && (
-        <div data-part="review-your-turn" className="space-y-1.5 border-t border-border pt-2">
-          <div className="text-[11px] font-semibold text-muted-foreground">Your turn</div>
+        <div data-part="review-your-turn" className="space-y-1.5 rounded-lg border-2 border-primary bg-primary/[0.07] px-3 py-2">
+          <div className="text-[10px] font-bold uppercase tracking-wide text-primary">Your turn</div>
           <div className="flex flex-wrap gap-1.5">
             {yours.map((o) => (
               <button key={o.key} type="button" title={o.text}
@@ -109,7 +105,57 @@ function TheRoom({ state, onSay }: { state: ZooGameState; onSay?: (text: string,
           </div>
         </div>
       )}
+    </div>
+  ) : null;
+  return (
+    <section data-part="review-room"
+      className={cn(SURFACE.card, PADDING.default, 'flex min-h-0 flex-col gap-1.5', 'max-h-[70vh] xl:sticky xl:top-0 xl:h-[calc(100dvh-17rem)] xl:max-h-none')}>
+      <div className="shrink-0">
+        <div className="text-sm font-semibold">Round the room</div>
+        <div className="text-[11px] text-muted-foreground">
+          the Scrum Team and the people the zoo is for - nothing here is a sign-off
+        </div>
+      </div>
+      <TeamChat state={state} rail={turn} className="min-h-0 flex-1" />
     </section>
+  );
+}
+
+/** What the Sprint Goal came to: the headline of the Review. It was a box halfway down the first
+ *  step, under the bet, the Product Goal's progress bar and its measures, so the one thing the
+ *  Sprint promised was the fourth thing you read about it. */
+function GoalHeadline({ state }: { state: ZooGameState }) {
+  const goal = state.sprintGoal.trim();
+  if (!goal) {
+    return (
+      <div data-part="review-goal" data-met="none" className="flex items-start gap-3">
+        <CircleDashed className="mt-1 h-7 w-7 shrink-0 text-muted-foreground" />
+        <div>
+          <h2 className="text-3xl font-bold leading-tight tracking-tight">There was no Sprint Goal</h2>
+          <p className="text-sm text-muted-foreground">
+            So there is nothing to call met or not met. The Sprint Goal is the one thing a Sprint promises, and this one
+            promised nothing in particular.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  const met = !!state.sprintGoalMet;
+  return (
+    <div data-part="review-goal" data-met={met ? 'yes' : 'no'} className="flex items-start gap-3">
+      {met ? <CheckCircle2 className={cn(TONE.done.text, 'mt-1 h-7 w-7 shrink-0')} /> : <CircleDashed className={cn(TONE.attention.text, 'mt-1 h-7 w-7 shrink-0')} />}
+      <div className="min-w-0">
+        <h2 className={cn('text-3xl font-bold leading-tight tracking-tight', met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+          Sprint Goal {met ? 'met' : 'not met'}
+        </h2>
+        <p className="text-base font-medium">{goal}</p>
+        <p className="text-[12px] text-muted-foreground">
+          {met
+            ? 'The work the Goal depended on was delivered. Dropping less-essential scope to protect the Goal is a win, not a miss.'
+            : 'Work the Goal depended on was left unfinished. Inspect why, and adapt: protect the Goal by forecasting less, or marking fewer items essential.'}
+        </p>
+      </div>
+    </div>
   );
 }
 
@@ -153,7 +199,20 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   const waiting = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
     && it.status === 'committed' && it.started && it.design);
   const finished = [...waiting, ...unreleased];
+  // What this Sprint added to the Increment, and how much of it a visitor can walk into.
+  const doneNow = state.backlog.filter((it) => it.sprintNumber === state.sprintNumber
+    && (it.status === 'done' || it.status === 'open'));
+  const liveNow = doneNow.filter((it) => it.status === 'open');
 
+  // What is folded under "More detail", by name, and anything in it that went wrong said first.
+  const inMore = [
+    ...(escaped.length ? ['something got out'] : []),
+    ...(stranded.length ? ['work nobody could reach'] : []),
+    ...(verdict ? [`your bet ${verdict.met ? 'came off' : 'did not'}`] : []),
+    'Product Goal progress',
+    ...(ledger ? ['what it was worth'] : []),
+    'velocity',
+  ];
   const [step, setStep] = useState<Step>('done');
   const [taken, setTaken] = useState(0); // signals turned into Product Backlog items in this Review
   const [declined, setDeclined] = useState(0);
@@ -166,6 +225,14 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   const goTo = (k: Step) => setStep(k);
   return (
     <div className="flex h-full min-h-0 w-full flex-col gap-3">
+      {/* The Review beside the room. Side by side where there is the width for it, with the bar
+          between them yours to drag; below that the room follows the Review. The Review still
+          scrolls as a page, and the room stays in view beside it while you read. */}
+      <SplitPanes id="review" from="xl" sizes={[72, 28]} min={[45, 18]} page
+        stackedClassName="flex flex-col gap-3"
+        firstClassName="flex flex-col" secondClassName="flex flex-col"
+        second={<TheRoom state={state} onSay={onSay} />}
+        first={<div data-part="review-main" className="flex min-w-0 flex-col gap-3">
       {/* The Review has a real agenda, so it walks: what was Done, what the visitors made of it,
           and what we do about it. One question at a time, as everywhere else. */}
       <header className="space-y-2">
@@ -173,46 +240,48 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           <StepTrack steps={STEPS} current={step} done={(k) => STEPS.findIndex((x) => x.key === k) < seen} onGo={goTo} />
           <ExplainButton cards={STEP_CARDS[step]} phase="review" teachCard={teachCard} onMarkTaught={onMarkTaught} />
         </div>
-        <div>
-          <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
-          <p className="text-sm text-muted-foreground">{current.lead}</p>
-        </div>
+        {/* The Review opens on what the Sprint promised, met or not. The other two steps open on
+            their own question. */}
+        {step === 'done' ? <GoalHeadline state={state} /> : (
+          <div>
+            <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
+            <p className="text-sm text-muted-foreground">{current.lead}</p>
+          </div>
+        )}
       </header>
-
-      {/* The people the Review is held for. The game had the results and the progress; what it
-          never had was anybody in the room with an opinion about either, which teaches that a
-          Review is a report. */}
-      <TheRoom state={state} onSay={onSay} />
 
       <EventStage state={state} at={step} walk title="The Increment &middot; everything delivered so far"
         note="Not this Sprint's work alone - the whole zoo, which is what an Increment is.">
       {step === 'done' && (<>
 
-      {/* The bet, answered. This is the Sprint's own question, and the Review is the only place it
-          can be settled: what the team predicted their work would do to the people the zoo is for,
-          and what the visitors actually did. Right or wrong is not the point of it - either way
-          they know something about these visitors they did not know last Sprint. */}
-      {verdict && (
-        <section className={cn('rounded-lg border px-3 py-2.5',
-          verdict.met ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
-          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5',
-            verdict.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
-            Your bet &middot; {verdict.met ? 'it came off' : 'it did not'}
-            <ExplainButton cards={['empiricism', 'sprint-review']} compact />
-          </div>
-          <p className="text-sm">
-            You said <strong>{betLine(verdict.bet)}</strong>.{' '}
-            {verdict.moved === 0
-              ? 'It did not move at all.'
-              : <>It {verdict.moved > 0 ? 'rose' : 'fell'} by <strong>{Math.abs(verdict.moved)}</strong>, from {verdict.bet.from} to {verdict.now}.</>}
-          </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            {verdict.met
-              ? 'You predicted what this work would do to the people it was for, and you were right. That is worth more than the points.'
-              : 'A bet you get wrong is worth as much as one you get right: you know something about these visitors now that you did not know when you made it.'}
-          </p>
-        </section>
-      )}
+      {/* What got Done, straight after the verdict: the Increment this Sprint added to, and the work
+          finished and still shut, which is the Product Owner's to act on. Everything else the first
+          step used to open with is folded under "More detail", named so you can tell what is in it
+          without opening it. */}
+      <section data-part="review-done" className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h3 className="text-sm font-semibold">What got Done</h3>
+          <span className="text-[11px] text-muted-foreground">
+            {doneNow.length} item{doneNow.length === 1 ? '' : 's'} &middot; {velocity} of the {tookOn} pts taken on
+          </span>
+        </div>
+        {doneNow.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nothing met the Definition of Done this Sprint.</p>
+        ) : (
+          <>
+            {liveNow.length > 0 && (
+              <div className="grid gap-1.5 sm:grid-cols-2">
+                {liveNow.map((it) => <PbiCard key={it.id} item={it} state="live" />)}
+              </div>
+            )}
+            {liveNow.length < doneNow.length && (
+              <p className="text-[12px] text-muted-foreground">
+                {liveNow.length ? 'And ' : ''}{doneNow.length - liveNow.length} Done and not open to visitors yet, below.
+              </p>
+            )}
+          </>
+        )}
+      </section>
 
       {/* Work that is Done and still shut. It sits directly under the picture, because it is the
           honest caption for it: what you are looking at is not everything the Sprint finished.
@@ -262,6 +331,39 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           </ul>
           {/* Releasing is the Product Owner's, so a Developer pressing this is refused by the same
               gate as anywhere else, and told whose call it is. Nothing extra is said here. */}
+        </section>
+      )}
+
+      <details data-part="review-more" className="group rounded-lg border border-border bg-muted/20">
+        <summary className={cn(FOCUS, 'flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-1 rounded-lg px-3 py-2 [&::-webkit-details-marker]:hidden')}>
+          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-90" />
+          <span className="text-sm font-semibold">More detail</span>
+          <span className="text-[11px] text-muted-foreground">{inMore.join(' \u00b7 ')}</span>
+        </summary>
+        <div className="space-y-3 px-3 pb-3">
+      {/* The bet, answered. This is the Sprint's own question, and the Review is the only place it
+          can be settled: what the team predicted their work would do to the people the zoo is for,
+          and what the visitors actually did. Right or wrong is not the point of it - either way
+          they know something about these visitors they did not know last Sprint. */}
+      {verdict && (
+        <section className={cn('rounded-lg border px-3 py-2.5',
+          verdict.met ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5',
+            verdict.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+            Your bet &middot; {verdict.met ? 'it came off' : 'it did not'}
+            <ExplainButton cards={['empiricism', 'sprint-review']} compact />
+          </div>
+          <p className="text-sm">
+            You said <strong>{betLine(verdict.bet)}</strong>.{' '}
+            {verdict.moved === 0
+              ? 'It did not move at all.'
+              : <>It {verdict.moved > 0 ? 'rose' : 'fell'} by <strong>{Math.abs(verdict.moved)}</strong>, from {verdict.bet.from} to {verdict.now}.</>}
+          </p>
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            {verdict.met
+              ? 'You predicted what this work would do to the people it was for, and you were right. That is worth more than the points.'
+              : 'A bet you get wrong is worth as much as one you get right: you know something about these visitors now that you did not know when you made it.'}
+          </p>
         </section>
       )}
 
@@ -335,19 +437,6 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           </div>
         )}
       </section>
-      {state.sprintGoal.trim() && (
-        <div className={cn('flex items-start gap-2.5 rounded-lg border px-4 py-3',
-          state.sprintGoalMet ? 'border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/50 dark:bg-emerald-950/20' : 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20')}>
-          {state.sprintGoalMet ? <CheckCircle2 className={cn(TONE.done.text, "mt-0.5 h-5 w-5 shrink-0")} /> : <CircleDashed className={cn(TONE.attention.text, "mt-0.5 h-5 w-5 shrink-0")} />}
-          <div>
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Sprint Goal · {state.sprintGoalMet ? 'met' : 'not met'}</div>
-            <p className="text-sm font-medium">{state.sprintGoal}</p>
-            {state.sprintGoalMet
-              ? <p className="text-[11px] text-muted-foreground">The work the Goal depended on was delivered - dropping less-essential scope to protect the Goal is a win, not a miss.</p>
-              : <p className="text-[11px] text-muted-foreground">Work the Goal depended on was left unfinished. Inspect why, and adapt - protect the Goal by forecasting less, or marking fewer items essential.</p>}
-          </div>
-        </div>
-      )}
 
       {/* Slices, not layers. Points delivered says how much was built; zones open says how much of it
           anybody can visit, and the gap between the two is the lesson. The card explains it. */}
@@ -514,6 +603,8 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         {!state.dodAgreed && 'With no agreed Definition of Done this number is a guess: the items were finished to whatever standard whoever built them had in mind. '}
         Velocity is measured, not fixed: next Sprint&rsquo;s forecast is your average over the last {sprintCapacity(state).measuredSprints} Sprint{sprintCapacity(state).measuredSprints === 1 ? '' : 's'} of this length (<strong>{sprintCapacity(state).points} pts</strong>).{sprintCapacity(state).discarded > 0 && ' Sprints run at a different length are left out - their delivery says nothing about this one.'}
       </p>
+        </div>
+      </details>
       </>)}
 
       {/* ---- The visitors ---- */}
@@ -722,6 +813,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
 
       </>)}
       </EventStage>
+      </div>} />
 
       <ActionBar left={step !== 'done' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button> : undefined}>
         {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
