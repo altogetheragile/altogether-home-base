@@ -14,6 +14,7 @@ import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
 import { DodEditor } from './DodEditor';
 import { ItemTakeover } from './BacklogBench';
 import { PriyaHandover } from './PriyaHandover';
+import { SplitPanes } from './SplitPanes';
 import { handover } from './handover';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
@@ -162,8 +163,11 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {/* What Priya is asking for, first on a narrow screen. In the right-hand column it would come
           after the whole Product Backlog, which is a long way down to find out what to do. */}
       <PriyaHandover state={state} className="lg:hidden" />
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:items-start">
-        <div className="min-w-0">
+      {/* The bar between them drags, so whoever needs the room has it: the Product Backlog when
+          splitting, the agreements when writing the Definition of Done. */}
+      <SplitPanes id="refine" sizes={[60, 40]} min={[35, 25]} stackedClassName="grid gap-3"
+        firstClassName="min-w-0" secondClassName="min-w-0 space-y-3"
+        first={<>
         {/* One scrollbar for the screen, not one per column. The list used to scroll inside itself,
             which was fine when it was the whole screen and wrong beside a second column: the two
             columns then ended at different heights, and the agreements on the right needed the page
@@ -173,8 +177,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
   
-        </div>
-        <div className="min-w-0 space-y-3">
+        </>}
+        second={<>
         <PriyaHandover state={state} className="hidden lg:block" />
         {/* The card on the right has two faces. The agreements before the first Sprint, and the
             item you picked - the same bench the Product Backlog tab uses for the rest of the game.
@@ -259,9 +263,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
         ) : (
           <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
         )}
-  
-        </div>
-      </div>
+
+        </>} />
       {benchItem && (
         <ItemTakeover state={state} item={benchItem} onEstimate={onEstimate} onRefinePbi={onRefinePbi}
           onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution} onSetUseStories={onSetUseStories}

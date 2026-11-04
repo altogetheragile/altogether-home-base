@@ -1,3 +1,4 @@
+import { SplitPanes } from './SplitPanes';
 import { useState } from 'react';
 import type { ZooGameState, ChatKind } from './types';
 import { SprintLengthPicker } from './SprintLengthPicker';
@@ -308,8 +309,10 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
           Sprint is what the screen is ASKING for, and stacked in one column on a wide screen it was
           the Definition of Done that took the page and the question that went below the fold. */}
       {step === 'adapt' && (
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,30rem)] lg:items-start">
-      <div className="space-y-3">
+      // The bar between them drags: the Definition of Done needs the width when it is being written.
+      <SplitPanes id="retro-adapt" sizes={[55, 45]} min={[30, 25]} stackedClassName="grid gap-3"
+        firstClassName="min-w-0 space-y-3" secondClassName="min-w-0 space-y-3"
+      first={<>
       <div className="space-y-1">
         <h3 className="text-sm font-semibold">Pick one improvement</h3>
         <p className="text-[11px] text-muted-foreground">
@@ -342,9 +345,9 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
         </div>
       )}
 
-      </div>
+      </>}
 
-      <div className="space-y-3">
+      second={<>
       {/* Not a scroll box. The Definition of Done is the Increment's commitment and the whole point
           of inspecting it here is to read it; a list that scrolls inside a card on a page that also
           scrolls is a list nobody reads to the end of. */}
@@ -363,8 +366,8 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
       {onSetSprintDays && (
         <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="retro" />
       )}
-      </div>
-      </div>
+
+      </>} />
       )}
       </div>
 

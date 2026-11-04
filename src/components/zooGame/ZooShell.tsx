@@ -1,3 +1,4 @@
+import { SplitPanes } from './SplitPanes';
 import { useEffect, useState, type ReactNode } from 'react';
 import type { ZooGameState, ZooConnector } from './types';
 import { ParkView, type EditApi } from './ParkView';
@@ -553,116 +554,122 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               screen: the board scrolls in its columns, what is being asked scrolls in its panel, and
               the park stays where it is. Reported from a live game - a full To Do column pushed the
               messages and the studio off the bottom of it. */}
-          <div className={cn('flex min-h-0 w-full flex-1 flex-col gap-3',
-            onSprint ? 'max-w-none xl:grid xl:grid-rows-1 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] xl:items-stretch'
-              : cn('mx-auto max-w-[1600px]', DOCK_GUTTER))}>
-            {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
-            {onSprint && (
-              // Stacked, the park keeps its own height under the board and the pane scrolls past it;
-              // side by side, it fills its half.
-              <div className="relative flex min-h-0 min-w-0 shrink-0 flex-col rounded-lg border-2 border-border bg-card p-2 xl:shrink">
-                {/* Placement, and nothing else: the object itself is built in the takeover.
-                    Straight down, because a metre is a metre wherever it is on the screen and a
-                    thing is where you drop it. The isometric view is the zoo as a visitor meets it,
-                    and it lives on the Increment tab where nobody is trying to build in it. */}
-                {/* Above the park, not under it. The day's dock floats over the bottom right corner
-                    and covered whichever group ended up there - "the main navigation button
-                    obscures the build menus". Nothing floats over the top. */}
-                {edit && canBuild && (
-                  <ParkOptions className="mb-2 shrink-0 border-b border-border pb-2" state={state}
-                    item={inHand ?? null} inside={insideItem ?? null}
-                    drawing={drawing} onDrawing={onDrawing}
-                    api={{
-                      onDesign: edit.onDesign,
-                      onAddInside: edit.onAddInside,
-                      onSetEnclosure: edit.onSetEnclosure,
-                      onSetServices: edit.onSetServices,
-                      onTurn,
-                      onUnplace: (id) => setMoving(id),
-                      // The first act of building, on the same toolbar as everything that follows
-                      // it: one row, in the order the work happens.
-                      onChooseStructure: edit.onChooseStructure,
-                      onRemoveInside: edit.onRemoveInside,
-                      // The chip names what is selected and says how far off it is. Ready, it is the
-                      // offer to the Product Owner - which used to be a pill floating under the
-                      // object on the park, at the other end of the screen from the controls that
-                      // got it there.
-                      onAskToCheck,
-                      onOpenCard: () => setCriteriaOpen((v) => !v),
-                      // Going inside puts the pen away. The pen belongs to the park - it draws the
-                      // way IN to a habitat - and inside one it is only in the way: the strip stops
-                      // offering it, so the tool stayed out invisibly, every press inside the pen
-                      // was read as drawing a run, and moving a pool or a tree stopped working.
-                      // Reported from playing it: the path tool stayed active during Look Inside.
-                      onInside: (id) => { setInside(id); if (id) onDrawing?.(false); },
-                      // A planting item is a clump: another plant, what each one is, and taking one
-                      // out. The park has always drawn and moved them; this is where they arrive.
-                      onAddCopy,
-                      onSetCopyPiece,
-                      onRemovePlant,
-                      onRemoveRun,
-                    }} />
-                )}
-                {/* Room at the foot for the day's dock, so the park stops above it rather than
-                    running underneath. It is fixed to the bottom right of the window and the park is
-                    the right-hand pane, so it lay over the one corner you draw a run into: "the
-                    navigation button obscures the park and cannot draw a path properly". The same
-                    measure every other pane leaves for it. */}
-                <div className="relative min-h-0 flex-1 overflow-hidden"
-                  style={{ paddingBottom: DOCKED_BAR_H }}>
-                  {/* What it has to be, docked on the park rather than in a window over it. Inside a
-                      habitat it collapses to a pill, because in there the whole picture is the pen. */}
-                  {inHand && (inHand.acceptance ?? []).length > 0 && (
-                    <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem} quiet={drawing}
-                      corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck}
-                      // The strip's chip says how far off this item is, so the panel does not also
-                      // leave a pill saying it over the park: the chip IS the pill now, and it opens
-                      // the detail. Only while there is a strip to press - the inspector keeps its
-                      // own pill everywhere else.
-                      open={edit && canBuild ? criteriaOpen : undefined}
-                      onOpenChange={edit && canBuild ? setCriteriaOpen : undefined} />
+          {/* The bar between the work and the park drags, so either can have the room. */}
+          {onSprint ? (
+            <SplitPanes id="sprint" from="xl" sizes={[50, 50]} min={[30, 25]} className="w-full flex-1"
+              stackedClassName="flex min-h-0 w-full flex-1 flex-col gap-3"
+              firstClassName="flex min-h-0 min-w-0 flex-col" secondClassName="flex min-h-0 min-w-0 flex-col"
+              first={home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
+              second={
+                // Stacked, the park keeps its own height under the board and the pane scrolls past it;
+                // side by side, it fills its half.
+                <div className="relative flex min-h-0 min-w-0 shrink-0 flex-col rounded-lg border-2 border-border bg-card p-2 xl:shrink">
+                  {/* Placement, and nothing else: the object itself is built in the takeover.
+                      Straight down, because a metre is a metre wherever it is on the screen and a
+                      thing is where you drop it. The isometric view is the zoo as a visitor meets it,
+                      and it lives on the Increment tab where nobody is trying to build in it. */}
+                  {/* Above the park, not under it. The day's dock floats over the bottom right corner
+                      and covered whichever group ended up there - "the main navigation button
+                      obscures the build menus". Nothing floats over the top. */}
+                  {edit && canBuild && (
+                    <ParkOptions className="mb-2 shrink-0 border-b border-border pb-2" state={state}
+                      item={inHand ?? null} inside={insideItem ?? null}
+                      drawing={drawing} onDrawing={onDrawing}
+                      api={{
+                        onDesign: edit.onDesign,
+                        onAddInside: edit.onAddInside,
+                        onSetEnclosure: edit.onSetEnclosure,
+                        onSetServices: edit.onSetServices,
+                        onTurn,
+                        onUnplace: (id) => setMoving(id),
+                        // The first act of building, on the same toolbar as everything that follows
+                        // it: one row, in the order the work happens.
+                        onChooseStructure: edit.onChooseStructure,
+                        onRemoveInside: edit.onRemoveInside,
+                        // The chip names what is selected and says how far off it is. Ready, it is the
+                        // offer to the Product Owner - which used to be a pill floating under the
+                        // object on the park, at the other end of the screen from the controls that
+                        // got it there.
+                        onAskToCheck,
+                        onOpenCard: () => setCriteriaOpen((v) => !v),
+                        // Going inside puts the pen away. The pen belongs to the park - it draws the
+                        // way IN to a habitat - and inside one it is only in the way: the strip stops
+                        // offering it, so the tool stayed out invisibly, every press inside the pen
+                        // was read as drawing a run, and moving a pool or a tree stopped working.
+                        // Reported from playing it: the path tool stayed active during Look Inside.
+                        onInside: (id) => { setInside(id); if (id) onDrawing?.(false); },
+                        // A planting item is a clump: another plant, what each one is, and taking one
+                        // out. The park has always drawn and moved them; this is where they arrive.
+                        onAddCopy,
+                        onSetCopyPiece,
+                        onRemovePlant,
+                        onRemoveRun,
+                      }} />
                   )}
-                  <ParkPlan state={state} height={620} selected={building ?? null} inside={inside}
-                    frame={frame}
-                    // Picking a thing up on the park opens it, the way picking its card up does.
-                    // Reported from playing it: "when I click the bridge it does not automatically
-                    // open - I have to click the card." Once something had been kept as a draft or
-                    // placed, the takeover stayed shut however often you pressed the thing itself.
-                    onSelect={(id) => onOpenBuild?.(id)}
-                    onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn} onSetMemberSpot={onSetMemberSpot} onMoveInside={onMoveInside} onMoveCopy={onMoveCopy}
-                    placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
-                    onPlace={(id, pos, _drawn, into) => {
-                      // An animal dropped inside a habitat moves in; everything else stands where
-                      // it was dropped. Both are the same gesture - carry it and let go.
-                      if (into) { onPutIn?.(id, into); setMoving(null); return; }
-                      onCommitBuild?.(id); onPlaceItem?.(id, pos); setMoving(null);
-                    }}
-                    tool={drawing && !inside ? 'path' : 'none'} pathStyle={drawRoute?.style}
-                    // Whose run it is. A habitat holds the pen too, now that being walkable to is one
-                    // of its own criteria: the run a player draws to their pen belongs to that pen,
-                    // so it counts as its work and the Developers do not lay a second one beside it.
-                    //
-                    // ...and so does a building, for exactly the same reason. A kiosk is asked "can I
-                    // walk to it from the way in?" like everything else and was given no pen to draw
-                    // one with, so the only criterion the park answers for it could not be met by
-                    // hand at all. Reported from playing it: "all buildings need to be connected by
-                    // paths. Only the enclosures has this as part of the PBI."
-                    runFor={inHand && (inHand.category === 'path' || inHand.category === 'enclosure'
-                      || inHand.category === 'amenity') ? inHand.id : undefined}
-                    onAddConnector={onAddConnector}
-                    // Laying a path bends the run it is carrying on from, and a joint can be
-                    // dragged afterwards. Both go through the same update.
-                    onUpdateConnector={onUpdateConnector} />
+                  {/* Room at the foot for the day's dock, so the park stops above it rather than
+                      running underneath. It is fixed to the bottom right of the window and the park is
+                      the right-hand pane, so it lay over the one corner you draw a run into: "the
+                      navigation button obscures the park and cannot draw a path properly". The same
+                      measure every other pane leaves for it. */}
+                  <div className="relative min-h-0 flex-1 overflow-hidden"
+                    style={{ paddingBottom: DOCKED_BAR_H }}>
+                    {/* What it has to be, docked on the park rather than in a window over it. Inside a
+                        habitat it collapses to a pill, because in there the whole picture is the pen. */}
+                    {inHand && (inHand.acceptance ?? []).length > 0 && (
+                      <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem} quiet={drawing}
+                        corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck}
+                        // The strip's chip says how far off this item is, so the panel does not also
+                        // leave a pill saying it over the park: the chip IS the pill now, and it opens
+                        // the detail. Only while there is a strip to press - the inspector keeps its
+                        // own pill everywhere else.
+                        open={edit && canBuild ? criteriaOpen : undefined}
+                        onOpenChange={edit && canBuild ? setCriteriaOpen : undefined} />
+                    )}
+                    <ParkPlan state={state} height={620} selected={building ?? null} inside={inside}
+                      frame={frame}
+                      // Picking a thing up on the park opens it, the way picking its card up does.
+                      // Reported from playing it: "when I click the bridge it does not automatically
+                      // open - I have to click the card." Once something had been kept as a draft or
+                      // placed, the takeover stayed shut however often you pressed the thing itself.
+                      onSelect={(id) => onOpenBuild?.(id)}
+                      onPlaceItem={onPlaceItem} onSetSize={onSetSize} onTurn={onTurn} onSetMemberSpot={onSetMemberSpot} onMoveInside={onMoveInside} onMoveCopy={onMoveCopy}
+                      placing={placingId && inHand ? { id: placingId, ...footprintFor(inHand) } : null}
+                      onPlace={(id, pos, _drawn, into) => {
+                        // An animal dropped inside a habitat moves in; everything else stands where
+                        // it was dropped. Both are the same gesture - carry it and let go.
+                        if (into) { onPutIn?.(id, into); setMoving(null); return; }
+                        onCommitBuild?.(id); onPlaceItem?.(id, pos); setMoving(null);
+                      }}
+                      tool={drawing && !inside ? 'path' : 'none'} pathStyle={drawRoute?.style}
+                      // Whose run it is. A habitat holds the pen too, now that being walkable to is one
+                      // of its own criteria: the run a player draws to their pen belongs to that pen,
+                      // so it counts as its work and the Developers do not lay a second one beside it.
+                      //
+                      // ...and so does a building, for exactly the same reason. A kiosk is asked "can I
+                      // walk to it from the way in?" like everything else and was given no pen to draw
+                      // one with, so the only criterion the park answers for it could not be met by
+                      // hand at all. Reported from playing it: "all buildings need to be connected by
+                      // paths. Only the enclosures has this as part of the PBI."
+                      runFor={inHand && (inHand.category === 'path' || inHand.category === 'enclosure'
+                        || inHand.category === 'amenity') ? inHand.id : undefined}
+                      onAddConnector={onAddConnector}
+                      // Laying a path bends the run it is carrying on from, and a joint can be
+                      // dragged afterwards. Both go through the same update.
+                      onUpdateConnector={onUpdateConnector} />
+                  </div>
+  
+                  {/* Everything is built on the park. One strip under it says what the selected thing
+                      has, whether it was put down a moment ago or a Sprint ago - building something
+                      and changing it later are the same act, so they are the same controls. */}
+                  {/* How a thing gets made is the Developers'. A Product Owner watching sees the park
+                      and what the work has to be, and no controls. */}
                 </div>
-
-                {/* Everything is built on the park. One strip under it says what the selected thing
-                    has, whether it was put down a moment ago or a Sprint ago - building something
-                    and changing it later are the same act, so they are the same controls. */}
-                {/* How a thing gets made is the Developers'. A Product Owner watching sees the park
-                    and what the work has to be, and no controls. */}
-              </div>
-            )}
-          </div>
+              } />
+          ) : (
+            <div className={cn('mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col gap-3', DOCK_GUTTER)}>
+              {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
+            </div>
+          )}
         </div>
 
         {/* The Increment: the park, all the time, at the width it deserves. */}

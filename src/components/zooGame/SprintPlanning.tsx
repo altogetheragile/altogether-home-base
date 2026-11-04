@@ -1,3 +1,4 @@
+import { SplitPanes } from './SplitPanes';
 import { PriyaHandover } from './PriyaHandover';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
@@ -574,7 +575,10 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         const nextUnplanned = chosen.find((it) => it.id !== planFor?.id && !(it.tasks ?? []).some((t) => t.label.trim()));
         const steps = (it: typeof chosen[number]) => (it.tasks ?? []).filter((t) => t.label.trim());
         return (
-        <div className="grid h-full min-h-0 grid-rows-1 gap-3 lg:grid-cols-[minmax(0,20rem)_minmax(0,1fr)]">
+        // The bar between the list and the plan drags, so a long plan can have the width.
+        <SplitPanes id="planning-how" sizes={[30, 70]} min={[18, 40]} clip className="h-full"
+          stackedClassName="grid h-full min-h-0 grid-rows-1 gap-3" firstClassName="flex min-h-0 min-w-0 flex-col" secondClassName="flex min-h-0 min-w-0 flex-col"
+          first={<>
           <div className="min-h-0 space-y-2 overflow-y-auto pr-1">
             <div>
               <h3 className="text-sm font-semibold">
@@ -645,7 +649,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               </div>
             </section>
           </div>
-
+          </>}
+          second={<>
           {/* The plan for the one you picked. */}
           {planFor ? (
             <section className="flex min-h-0 min-w-0 flex-col gap-2 overflow-y-auto rounded-lg border-2 border-primary/40 p-3">
@@ -721,7 +726,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               Nothing is in the Sprint Backlog yet. Go back to topic two and take some work.
             </section>
           )}
-        </div>
+        </>} />
         );
       })()}
       </div>
