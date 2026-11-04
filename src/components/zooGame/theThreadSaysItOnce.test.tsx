@@ -150,8 +150,12 @@ describe('the board and the message centre', () => {
       .toMatch(/flex-1/);
     expect(centre.className, 'it keeps its content’s height, so the board gets what is left')
       .toMatch(/basis-0/);
-    // Its sibling above is the board pane, and it shares the rule.
-    expect(centre.previousElementSibling?.className, 'the board does not share the pane evenly')
-      .toMatch(/flex-1/);
+    // Its pane and the board's share the rule, either side of the bar that drags (SplitPanes),
+    // which is where they start on a wide screen.
+    const pane = centre.parentElement!;
+    expect(pane.className).toMatch(/flex-1/);
+    expect(pane.className).toMatch(/basis-0/);
+    expect(pane.previousElementSibling?.className, 'the board does not share the pane evenly')
+      .toMatch(/flex-1 basis-0/);
   });
 });

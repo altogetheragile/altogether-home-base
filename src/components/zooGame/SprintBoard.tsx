@@ -1,3 +1,4 @@
+import { SplitPanes } from './SplitPanes';
 import { useEffect, useRef, useState, type DragEvent, type ReactNode, type PointerEvent as ReactPointerEvent } from 'react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -509,6 +510,12 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       {/* Room at the foot for the floating action bar - but only where the bar is actually over
           this pane. Beside the park it floats over the park, and the space it was given here was
           64px of nothing under the message centre and the bench. */}
+      {/* The bar between the board and the messages drags, up and down: the two halves start the
+          same height, and whoever is busier with one can give it the room. */}
+      <SplitPanes id="sprint-board" direction="vertical" from="xl" sizes={[55, 45]} min={[25, 20]} clip
+        className="flex-1" stackedClassName="contents"
+        firstClassName="flex min-h-0 flex-1 basis-0 flex-col" secondClassName="flex min-h-0 flex-1 basis-0 flex-col"
+        first={
       <div className={cn('flex min-h-0 flex-1 gap-3 pb-16 pr-0.5 xl:pb-0',
         state.dayStage === 'dailyScrum' ? 'flex-row' : 'flex-col')}>
       <div className={cn('flex min-h-0 flex-col gap-3',
@@ -881,6 +888,8 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
 
 
       </div>
+        }
+        second={!dayStarting && state.dayStage !== 'dailyScrum' && <div data-part="message-centre" className="flex min-h-0 flex-1 basis-0 flex-col">{rail}</div>} />
 
       {/* The Daily Scrum takes the screen, like every other event. It was a column beside the board
           so the Developers could drag the Sprint Backlog while they talked - a good idea that ran
@@ -997,9 +1006,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           usually not close: a board holding two cards had a hundred and eighty pixels and the
           thread had three hundred and sixty. Asked for: "I want the message window and the board
           to be similar in height and width." */}
-      {!dayStarting && state.dayStage !== 'dailyScrum' && (
-        <div data-part="message-centre" className="flex min-h-0 flex-1 basis-0 flex-col">{rail}</div>
-      )}
+      {/* (Under the board, above: the bar between them drags.) */}
 
       {/* An item's detail, in the one place it lives. */}
       <CardDialog state={state} item={cardId ? state.backlog.find((it) => it.id === cardId) ?? null : null}
