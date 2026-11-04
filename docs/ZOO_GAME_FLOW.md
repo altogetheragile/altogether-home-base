@@ -308,15 +308,17 @@ Two migrations, each shown before it runs against production.
 
 Other changes waiting on Al, as of 1 November 2026, separate from this design.
 
-**Asked, waiting on an answer:**
+**Agreed 4 November 2026:**
 
-- **The Daily Scrum buttons.** Remove "Hold the Daily Scrum", which only repeats "We will work
-  around it", and rename "Carry on regardless" to say what it does: nobody deals with the blocker.
-- **The message board.** Make the kinds of message look different: what needs you (bold, pinned
-  until answered, with a count), what is waiting on someone else (quiet, "waiting on Priya"), and
-  the team talking (chat bubbles, with room to read them).
-- **The Sprint Review.** Open with the Sprint Goal as the headline, met or not met. Then what got
-  Done. Everything else folds under "More detail", and "Round the room" moves into the team chat.
+- **The Daily Scrum buttons.** Built (#976). "Hold the Daily Scrum" is gone, since it only repeated
+  "We will work around it", and "Carry on regardless" is now "Nobody deals with it".
+- **The message board.** Already built on 1 November (3d9b20c7): what needs you is a solid "Your
+  move" card that stays until answered, with "1 of N"; what waits on someone else is quiet and
+  dashed, "Waiting on Product Owner"; the team talks in chat bubbles.
+- **The Sprint Review.** Built. It opens with "Sprint Goal met" or "not met" as the headline, then
+  What got Done. The bet, the Product Goal's progress, what it was worth and the velocity fold under
+  "More detail", which names what is in it. "Round the room" is the team chat, beside the Review.
+  The header gives the same verdict after the Sprint, where it used to say "Goal safe".
 
 **Planned earlier, not started:**
 

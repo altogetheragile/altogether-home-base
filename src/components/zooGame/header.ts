@@ -84,6 +84,12 @@ export function goalLine(state: ZooGameState): { line: string; risk: boolean; is
   // At Planning the Goal is the headline. Nothing has been built, so a progress line has nothing to
   // say - and the Goal is the thing every choice on that screen is meant to serve.
   if (state.phase === 'planning') return { line: state.sprintGoal.trim(), risk: false, isGoal: true };
+  // Once the Sprint is over the question is settled, and the pulse cannot answer it: the unfinished
+  // work has gone back to the Product Backlog, so nothing is left owed and it read "Goal safe" over
+  // a Review whose headline was "Sprint Goal not met".
+  if ((state.phase === 'review' || state.phase === 'retro') && typeof state.sprintGoalMet === 'boolean') {
+    return { line: state.sprintGoalMet ? 'Sprint Goal met' : 'Sprint Goal not met', risk: !state.sprintGoalMet };
+  }
   const pulse = goalPulse(state);
   return { line: pulse.line, risk: pulse.level === 'risk' };
 }

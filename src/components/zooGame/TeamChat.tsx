@@ -98,17 +98,18 @@ export function TeamChat({ state, rail, className }: {
   // room. It was the other way round, under a thread squeezed into a third of the column, so the
   // one thing waiting on you was the last thing on the screen and the chat was cut off mid-line.
   const thread = state.chat ?? [];
-  const foot = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   // Follow the conversation. A chat that does not scroll to the newest line is a chat you have to
   // operate, and the newest line is the one somebody is waiting on you about.
-  // Guarded, because a rendering that is not a browser has no scrolling - jsdom draws the whole
-  // thread and has no viewport to bring anything into.
-  useEffect(() => { foot.current?.scrollIntoView?.({ block: 'nearest' }); }, [thread.length]);
+  // The thread's own scroll, and nothing else's. It was `scrollIntoView`, which scrolls every
+  // ancestor that can scroll to bring the line into view: at the Sprint Review, where the chat sits
+  // beside a page, opening the event scrolled the page down past its own heading.
+  useEffect(() => { const el = list.current; if (el) el.scrollTop = el.scrollHeight; }, [thread.length]);
 
   return (
     <div data-part="team-chat" className={cn('flex min-h-0 flex-col gap-2', className)}>
       {rail}
-      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+      <div ref={list} className="min-h-0 flex-1 overflow-y-auto pr-1">
         {thread.length === 0 ? (
           <p className="py-2 text-[12px] text-muted-foreground">
             Nothing said yet. The team talks here while the Sprint runs.
@@ -130,7 +131,6 @@ export function TeamChat({ state, rail, className }: {
             })}
           </ul>
         )}
-        <div ref={foot} />
       </div>
     </div>
   );
