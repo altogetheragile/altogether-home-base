@@ -151,13 +151,13 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
 
       <div>
         <h1 className="text-2xl font-bold leading-tight tracking-tight">Day {state.dayNumber} Daily Scrum</h1>
-        {/* The Guide has this every day of the Sprint. The game lets you carry on regardless and
+        {/* The Guide has this every day of the Sprint. The game lets you skip what surfaced and
             shows what that costs - so the copy says that, rather than "it always happens" on a
             screen with a button that skips it. */}
         <p className="text-sm text-muted-foreground">
           Are we on track for the Sprint Goal? Inspect progress and adapt the plan for today. The Scrum Guide has this
           every day of a Sprint, timeboxed to 15 minutes; here it runs in the game&rsquo;s own seconds,
-          you can carry on regardless, and the cost of that is shown.
+          you can leave what surfaced with nobody dealing with it, and the cost of that is shown.
         </p>
       </div>
 
@@ -331,19 +331,16 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
               </button>
             ))}
           </div>
-          {/* Holding the event is its own act, and it was missing: with something on the table the
-              only ways out were to answer it or to skip the event altogether. Reported from playing
-              it - "there is no option to perform a Daily Scrum on the takeover". The Developers can
-              hold their Daily Scrum and leave the thing where it is; working around it is an
-              answer, and so is deciding not to decide today. */}
+          {/* Every answer above holds the Daily Scrum: the event is where it surfaced and the answer
+              is what the team does about it today. There was a "Hold the Daily Scrum" button here as
+              well, added when holding the event seemed missing, but all it did was work around it, so
+              it repeated "We will work around it" under another name. The one way out that is not an
+              answer is not dealing with it at all, and its button now says so. */}
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-            <div className="flex flex-col gap-1">
-              <Button onClick={() => { onAnswer?.('around'); onHold(); }}>Hold the Daily Scrum &rarr;</Button>
-              <span className="text-[11px] text-muted-foreground">the event happens; what surfaced is worked around and is still there tomorrow</span>
-            </div>
+            <span className="text-[11px] text-muted-foreground">Each answer holds the Daily Scrum and decides what happens to it today.</span>
             <div>
-              <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Carry on regardless</Button>
-              <span className="ml-2 text-[11px] text-muted-foreground">the event does not happen, it grows overnight, and the timebox is gone either way</span>
+              <Button variant="ghost" onClick={onSkip} className="text-muted-foreground">Nobody deals with it</Button>
+              <span className="ml-2 text-[11px] text-muted-foreground">the Daily Scrum does not happen, it grows overnight, and the timebox is gone either way</span>
             </div>
           </div>
         </>

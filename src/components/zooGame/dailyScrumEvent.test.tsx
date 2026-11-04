@@ -144,7 +144,7 @@ describe('what the Daily Scrum puts above the fold', () => {
     // The copy said the Daily Scrum "always happens" on a screen with a button that skips it.
     const c = screen(scrum({ pendingImpediment: { id: 'imp1', title: 'A blocker', detail: 'in the way' } as unknown as ZooGameState['pendingImpediment'] }));
     expect(c.textContent, 'the copy still claims what the game does not do').not.toMatch(/It always happens/i);
-    expect(c.textContent).toMatch(/carry on regardless/i);
+    expect(c.textContent).toMatch(/nobody dealing with it/i);
   });
 
   it('counts items until essentials can be marked', () => {
@@ -192,20 +192,22 @@ describe('what the Guide actually says about a block', () => {
 });
 
 describe('holding the event when something has surfaced', () => {
-  it('offers the Daily Scrum itself, not only answers to the impediment', () => {
-    // Reported from playing it: "there is no option to perform a Daily Scrum on the takeover."
-    // With something on the table the only ways out were to answer it or to skip the event
-    // altogether - and deciding not to decide today is a decision the Developers get to make.
-    const onHold = vi.fn();
+  it('holds it through the answers, with no second button that repeats one of them', () => {
+    // "Hold the Daily Scrum" worked the blocker around and held the event, which is exactly what
+    // "We will work around it" does, since every answer concludes the event. Two buttons, one act.
     const onAnswer = vi.fn();
+    const onSkip = vi.fn();
     const s = scrum({
       pendingImpediment: { id: 'imp', kind: 'block', title: 'The sign supplier changed the design',
         detail: 'The new sign does not match the zone.', itemId: undefined } as never,
     });
-    render(<MemoryRouter><DailyScrum state={s} onHold={onHold} onSkip={() => {}} onDrop={() => {}} onAnswer={onAnswer} /></MemoryRouter>);
-    const hold = screen.getByRole('button', { name: /Hold the Daily Scrum/i });
-    fireEvent.click(hold);
-    expect(onHold, 'the event could not be held').toHaveBeenCalled();
-    expect(onAnswer, 'what surfaced was left unrecorded').toHaveBeenCalledWith('around');
+    render(<MemoryRouter><DailyScrum state={s} onHold={() => {}} onSkip={onSkip} onDrop={() => {}} onAnswer={onAnswer} /></MemoryRouter>);
+    expect(screen.queryByRole('button', { name: /Hold the Daily Scrum/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /^Work around it/i }));
+    expect(onAnswer, 'working around it is an answer, and the answer holds the event').toHaveBeenCalledWith('around');
+    // The way out that is not an answer says what it does.
+    expect(screen.queryByRole('button', { name: /Carry on regardless/i })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Nobody deals with it/i }));
+    expect(onSkip).toHaveBeenCalled();
   });
 });

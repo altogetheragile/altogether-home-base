@@ -95,7 +95,7 @@ await click('Scrum', 1200); await shot('scrum-on-a-page');
 await click('End [Dd]ay', 2200);
 await shot('daily-scrum');
 for (let d = 0; d < 8; d++) {
-  await click('End [Dd]ay|Keep the plan|Carry on regardless|Adapt the plan|Start Day', 2200);
+  await click('End [Dd]ay|Keep the plan|Nobody deals with it|Adapt the plan|Start Day', 2200);
   const h = ((await p.$$eval('h1,h2', xs => xs.map(x => x.innerText.trim())))[0] ?? '');
   if (/What did we get Done/.test(h)) break;
 }
