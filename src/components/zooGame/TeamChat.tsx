@@ -37,7 +37,12 @@ const HEX: Record<ChatWho, string> = {
 /** The figure's width, so a message that does not draw one still lines up under the one above. */
 const FIGURE = 18;
 
-export function Bubble({ msg, opens = true }: { msg: ChatMessage; opens?: boolean }) {
+export function Bubble({ msg, opens = true, loud = false }: { msg: ChatMessage; opens?: boolean;
+  /** Somebody handing the team the next step, rather than a line in the conversation: said in a
+   *  white bubble in ink, at reading size. Priya's handover was a pale bubble of 12px text on a tan
+   *  page - "it is barely noticeable" - which is the wrong weight for the line that says what next. */
+  loud?: boolean;
+}) {
   const viewer = useYou();
   // Yours alone, or yours in a shared game: the line is stored as the person who said it.
   const mine = msg.who === 'you' || (!!viewer && msg.member === viewer);
@@ -50,11 +55,12 @@ export function Bubble({ msg, opens = true }: { msg: ChatMessage; opens?: boolea
           the bubbles still line up under each other. Reported from playing it, with a screenshot
           of four lines from two people: "can the messaging be combined?" */}
       {opens
-        ? <Person hex={HEX[msg.who]} style={personSize(FIGURE)} className="mb-0.5 shrink-0" title={msg.from} />
+        ? <Person hex={HEX[msg.who]} style={personSize(loud ? 30 : FIGURE)} className="mb-0.5 shrink-0" title={msg.from} />
         : <span aria-hidden className="shrink-0" style={{ width: FIGURE }} />}
       <div className={cn('min-w-0 max-w-[85%]', mine && 'text-right')}>
         {opens && (
-          <span className="block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className={cn('block font-semibold uppercase tracking-wide', loud ? 'text-[11px]' : 'text-[10px] text-muted-foreground')}
+            style={loud ? { color: HEX[msg.who] } : undefined}>
             {msg.from}
           </span>
         )}
@@ -66,8 +72,10 @@ export function Bubble({ msg, opens = true }: { msg: ChatMessage; opens?: boolea
         {/* `whitespace-pre-line`, because some messages are several lines of one thing said at
             once - a Developer's three lines at the Daily Scrum are one turn, not three. */}
         <span style={mine ? { backgroundColor: SEAT.developers.hex } : undefined}
-          className={cn('mt-0.5 inline-block whitespace-pre-line rounded-2xl px-2.5 py-1.5 text-left text-[12px] leading-snug',
-            mine ? 'rounded-br-sm text-white' : 'rounded-bl-sm bg-muted text-foreground')}>
+          className={cn('mt-0.5 inline-block whitespace-pre-line rounded-2xl text-left',
+            loud ? 'border-2 border-[hsl(var(--zoo-ink))] bg-white px-3.5 py-2 text-[15px] font-medium leading-snug shadow-[3px_3px_0_hsl(var(--zoo-ink))]'
+              : 'px-2.5 py-1.5 text-[12px] leading-snug',
+            mine ? 'rounded-br-sm text-white' : cn('rounded-bl-sm text-foreground', !loud && 'bg-muted'))}>
           {msg.text}
         </span>
       </div>

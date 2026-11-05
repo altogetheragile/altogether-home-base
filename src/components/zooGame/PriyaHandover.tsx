@@ -18,7 +18,7 @@ export function PriyaHandover({ state, className, children }: {
   return (
     <section data-part="handover" data-step={h.key} className={cn('space-y-2', className)}>
       <ul className="flex flex-col">
-        <Bubble msg={msg} />
+        <Bubble msg={msg} loud />
       </ul>
       {/* Drawn as the rail draws what needs you, because it is the same kind of thing: a solid card,
           labelled, that stays until it is done. Everybody in a shared game is on the Scrum Team, so
