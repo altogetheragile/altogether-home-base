@@ -16,7 +16,7 @@ import { ItemTakeover } from './BacklogBench';
 import { PriyaHandover } from './PriyaHandover';
 import { SplitPanes } from './SplitPanes';
 import { useSplit } from './useSplit';
-import { handover } from './handover';
+import { handover, nextToRefine } from './handover';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
  *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
@@ -48,7 +48,7 @@ function Settled({ part, children, open, onToggle, change = 'Change', body, pend
         <span className="min-w-0 flex-1">{children}</span>
         {onToggle && (
           <button type="button" onClick={onToggle} aria-expanded={!!open}
-            className={cn(FOCUS, 'shrink-0 rounded px-1 text-[11px] font-medium text-primary hover:underline')}>
+            className={cn(FOCUS, 'shrink-0 rounded px-1 text-[11px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline')}>
             {open ? 'Done' : change}
           </button>
         )}
@@ -127,6 +127,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   // The one move, with what it is done with inside the card that asks for it. Priya says what she
   // wants next (see `handover`), and the card under her line is the only thing on the screen asking.
   const step = first ? handover(state)?.key : undefined;
+  const next = nextToRefine(state);
   const dodEditor = onSetDod && (
     <div className="space-y-2">
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} suggesting={!state.dodAgreed} brief />
@@ -146,7 +147,11 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   );
   const ask = (
     <PriyaHandover state={state}>
-      {step === 'refinement' ? figures : step === 'dod' ? dodEditor : null}
+      {step === 'refinement' ? (next
+        // Which one, by name, and where: the card and the lit row say the same thing. The counts
+        // that were here are the progress line above, said once.
+        ? <p data-part="start-with" className="text-sm">Start with <strong>{next.name}</strong>, at the top. {next.category === 'epic' ? 'Split it up' : next.category === 'need' ? 'Decide what will meet it' : 'Size it'} and the rest follows in order.</p>
+        : figures) : step === 'dod' ? dodEditor : null}
     </PriyaHandover>
   );
   // What is settled, one line each. The Sprint length was step one, asked before anything else on

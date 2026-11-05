@@ -7,6 +7,7 @@ import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
+import { nextToRefine } from './handover';
 import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets, ranked } from './toolboxItems';
 import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
@@ -626,6 +627,13 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
   const later = laterFolds && enough ? items.filter((it) => !!notReady(it, state)) : [];
   const folded = later.length > 0 && !showLater;
   const shown = folded ? items.filter((it) => !later.includes(it)) : items;
+  // One thing lit. Every epic had a filled red "Split it up", every row a red or amber border, and
+  // with six of them shouting the same the one to do first did not stand out: "everything is all
+  // the same colour. The immediate activity does not pop out at me." While refining towards the
+  // first Sprint, the next item in the Product Owner's order carries the colour and says "Start
+  // here"; the rest are quiet until it is their turn.
+  const spot = laterFolds ? nextToRefine(state) : null;
+  const quiet = (it: BacklogItem) => !!spot && it.id !== spot.id;
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -650,10 +658,10 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
     // in the narrow Backlog rail. In Planning an unready item cannot be forecast until it is put
     // right - the Guide allows refining here ("The Scrum Team may refine these items during this
     // process"), but a Product Backlog refined during the last Sprint would not need it.
-    const status = why && enough ? (
-      <span data-part="later" title={`${why}. It does not need to be yet: enough is Ready above it to start, and the rest is refined during the Sprints.`}
+    const status = why && (enough || quiet(it)) ? (
+      <span data-part={enough ? 'later' : 'not-yet'} title={enough ? `${why}. It does not need to be yet: enough is Ready above it to start, and the rest is refined during the Sprints.` : why}
         className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-        <Clock className="h-3 w-3" /> Later
+        {enough ? <><Clock className="h-3 w-3" /> Later</> : <>Not ready</>}
       </span>
     ) : why ? (
       <span title={mode === 'plan' ? `${why}. You can put that right here, but a Product Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
@@ -675,13 +683,13 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
       // A need is not too big, it is undecided. Nobody can size it and nobody can start it until the
       // Developers say what they will build, and that is the button.
       : it.category === 'need' && onChooseSolution ? (
-        <Button size="sm" className="h-7 shrink-0 px-2 text-xs"
+        <Button size="sm" variant={quiet(it) ? 'outline' : 'default'} className="h-7 shrink-0 px-2 text-xs"
           onClick={() => setChoosing(it)}>What will meet this?</Button>
       )
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.
-        <Button size="sm" variant={enough ? 'outline' : 'default'} className={cn(!enough && TONE.reflect.solid, !enough && 'text-white hover:bg-rose-700', "h-7 shrink-0 px-2 text-xs")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
+        <Button size="sm" variant={enough || quiet(it) ? 'outline' : 'default'} className={cn(!enough && !spot && TONE.reflect.solid, !enough && !spot && 'text-white hover:bg-rose-700', "h-7 shrink-0 px-2 text-xs")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => (onFocus ? onFocus(it.id) : setSizing(it.id))}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Size it</Button>
       ) : mode === 'refine' ? null
@@ -716,8 +724,10 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
           label={onFocus ? `Refine ${it.name}` : undefined}
           className={cn(
             focus === it.id && 'ring-2 ring-primary ring-offset-1',
+            spot?.id === it.id && 'ring-2 ring-primary/50 ring-offset-2 shadow-md',
             mode === 'refine' || mode === 'plan'
-            ? cn('border-2', why && enough ? 'border-dashed border-border bg-muted/20'
+            ? cn('border-2', why && (enough || quiet(it)) ? 'border-dashed border-border bg-muted/20'
+              : spot?.id === it.id ? 'border-primary bg-primary/[0.07]'
               : it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
               : why ? 'border-amber-400 bg-amber-500/[0.05]'
               : 'border-emerald-400 bg-emerald-500/[0.04]')
@@ -749,6 +759,11 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
             </button>
           </>}
           badges={<>
+            {spot?.id === it.id && (
+              <span data-part="start-here" className="shrink-0 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                Start here
+              </span>
+            )}
             <CategoryChip item={it} />
             {/* Say the arithmetic, not just the fact. An item that was 5 and is now 3 with nothing
                 explaining it reads as the game losing count; "5 → 3" reads as the Developers
@@ -830,7 +845,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
         </h3>
         {mode !== 'view' && (
           <div className="flex items-center gap-1.5">
-            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
+            <Button size="sm" variant={laterFolds ? 'outline' : 'default'} className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
             <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
           </div>
         )}

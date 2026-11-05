@@ -57,3 +57,37 @@ describe('the first screen', () => {
     expect(c.querySelectorAll('[data-part="later"]').length).toBeGreaterThan(0);
   });
 });
+
+describe('the next thing to do', () => {
+  // "Everything is all the same colour. The immediate activity does not pop out at me." (5 Nov)
+  const starter = () => {
+    const s = { ...initialZooState(3), phase: 'refine' } as ZooGameState;
+    return { ...s, adopted: ['refinement'], backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState;
+  };
+
+  it('is the one item lit, and the card names it', () => {
+    const c = screen(starter());
+    const lit = c.querySelectorAll('[data-part="start-here"]');
+    expect(lit, 'more than one thing, or nothing, says start here').toHaveLength(1);
+    const row = lit[0].closest('[aria-label^="Refine "]')!;
+    const name = row.getAttribute('aria-label')!.replace(/^Refine /, '');
+    expect(c.querySelector('[data-part="start-with"]')!.textContent).toContain(name);
+  });
+
+  it('leaves the rest quiet', () => {
+    const c = screen(starter());
+    const rows = [...c.querySelectorAll('[aria-label^="Refine "]')];
+    const lit = c.querySelector('[data-part="start-here"]')!.closest('[aria-label^="Refine "]');
+    const loud = rows.filter((r) => r !== lit && !r.closest('[data-part="later-fold"]')
+      && /border-(rose|amber)-400/.test(r.className + (r.parentElement?.className ?? '')));
+    expect(rows.length).toBeGreaterThan(1);
+    // The rows carry their borders, so the check below can see them.
+    expect(lit!.className + (lit!.parentElement?.className ?? '')).toMatch(/border-primary/);
+    expect(loud.map((r) => r.getAttribute('aria-label')), 'other rows still shout in red or amber').toEqual([]);
+    expect(c.querySelectorAll('[data-part="not-yet"]').length, 'the others do not say they are not ready yet').toBeGreaterThan(0);
+  });
+
+  it('is nothing once there is enough to start', () => {
+    expect(screen().querySelector('[data-part="start-here"]')).toBeNull();
+  });
+});
