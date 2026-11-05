@@ -7,7 +7,6 @@ import { dodVerdicts } from './dodChecks';
 import { PlanningPoker } from './PlanningPoker';
 import { PbiEditor } from './PbiEditor';
 import { Toolbox } from './Toolbox';
-import { nextToRefine } from './handover';
 import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets, ranked } from './toolboxItems';
 import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
@@ -627,13 +626,10 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
   const later = laterFolds && enough ? items.filter((it) => !!notReady(it, state)) : [];
   const folded = later.length > 0 && !showLater;
   const shown = folded ? items.filter((it) => !later.includes(it)) : items;
-  // One thing lit. Every epic had a filled red "Split it up", every row a red or amber border, and
-  // with six of them shouting the same the one to do first did not stand out: "everything is all
-  // the same colour. The immediate activity does not pop out at me." While refining towards the
-  // first Sprint, the next item in the Product Owner's order carries the colour and says "Start
-  // here"; the rest are quiet until it is their turn.
-  const spot = laterFolds ? nextToRefine(state) : null;
-  const quiet = (it: BacklogItem) => !!spot && it.id !== spot.id;
+  // Before the first Sprint the rows are quiet, all of them alike. Lighting the next one in the
+  // Product Owner's order decided for the player where to start - "they might go for tigers first
+  // as the PO" - so no row is singled out, and the move is said once, in Priya's card.
+  const quiet = (_it: BacklogItem) => laterFolds;
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -689,7 +685,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
       : it.category === 'epic' ? (
         // An outline button beside a grey "Not ready" chip reads as an option. Splitting an epic is
         // the work this screen is asking for, so it asks.
-        <Button size="sm" variant={enough || quiet(it) ? 'outline' : 'default'} className={cn(!enough && !spot && TONE.reflect.solid, !enough && !spot && 'text-white hover:bg-rose-700', "h-7 shrink-0 px-2 text-xs")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
+        <Button size="sm" variant={enough || quiet(it) ? 'outline' : 'default'} className={cn(!enough && !quiet(it) && TONE.reflect.solid, !enough && !quiet(it) && 'text-white hover:bg-rose-700', "h-7 shrink-0 px-2 text-xs")} onClick={() => (onFocus ? onFocus(it.id) : setSplitting(it))}><Scissors className="mr-1 h-3.5 w-3.5" /> Split it up</Button>
       ) : it.unsized ? (
         <Button size="sm" variant="outline" className="h-7 shrink-0 px-2 text-xs" onClick={() => (onFocus ? onFocus(it.id) : setSizing(it.id))}><HelpCircle className="mr-1 h-3.5 w-3.5" /> Size it</Button>
       ) : mode === 'refine' ? null
@@ -724,10 +720,8 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
           label={onFocus ? `Refine ${it.name}` : undefined}
           className={cn(
             focus === it.id && 'ring-2 ring-primary ring-offset-1',
-            spot?.id === it.id && 'ring-2 ring-primary/50 ring-offset-2 shadow-md',
             mode === 'refine' || mode === 'plan'
             ? cn('border-2', why && (enough || quiet(it)) ? 'border-dashed border-border bg-muted/20'
-              : spot?.id === it.id ? 'border-primary bg-primary/[0.07]'
               : it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
               : why ? 'border-amber-400 bg-amber-500/[0.05]'
               : 'border-emerald-400 bg-emerald-500/[0.04]')
@@ -759,11 +753,6 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
             </button>
           </>}
           badges={<>
-            {spot?.id === it.id && (
-              <span data-part="start-here" className="shrink-0 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
-                Start here
-              </span>
-            )}
             <CategoryChip item={it} />
             {/* Say the arithmetic, not just the fact. An item that was 5 and is now 3 with nothing
                 explaining it reads as the game losing count; "5 → 3" reads as the Developers

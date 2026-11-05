@@ -27,7 +27,9 @@ describe('Priya hands each step over', () => {
     expect(h.key).toBe('refinement');
     expect(h.says).toMatch(/one epic for each area/);
     expect(h.says).toMatch(/The rest we refine as we go/);
-    expect(h.asks).toMatch(/enough .* to start/);
+    expect(h.asks).toMatch(/enough to start/);
+    // ...and it is the team's call when: up front, or in Sprint Planning.
+    expect(h.asks).toMatch(/now, or in Sprint Planning/);
     expect(h.progress).toMatch(/^0 points Ready of about \d+ points to start$/);
   });
 
@@ -75,7 +77,7 @@ describe('Priya hands each step over', () => {
     expect(line.textContent).toContain('Priya');
     const card = container.querySelector('[data-part="needs-you"]')!;
     expect(card.textContent).toContain('Your move');
-    expect(card.textContent).toContain('Split and size');
+    expect(card.textContent).toContain('Refine enough to start');
   });
 
   it('draws nothing where there is nothing to hand over', () => {

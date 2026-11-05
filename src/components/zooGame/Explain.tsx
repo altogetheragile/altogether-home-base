@@ -35,8 +35,11 @@ export function ExplainButton({ cards, phase, teachCard, onMarkTaught, compact }
         <button type="button" title={teachCard ? 'New teaching about this screen' : 'What is this for?'} aria-label="What is this for?"
           className={cn(FOCUS, 'flex shrink-0 items-center gap-1.5 rounded-full border py-1.5 text-xs font-semibold transition-colors',
             compact ? 'px-1.5' : 'px-2.5',
-            teachCard ? 'animate-pulse border-primary bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'
+            // Unread teaching is a dot, the way an app marks something new, not a pulsing orange pill:
+            // orange is the move, and this was a second orange thing on every screen beside it.
+            teachCard ? 'relative border-border bg-card text-foreground hover:bg-muted/60'
               : 'border-border text-muted-foreground hover:bg-muted/60 hover:text-foreground')}>
+          {teachCard && <span data-part="unread" aria-hidden className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full bg-primary ring-2 ring-background" />}
           <HelpCircle className="h-4 w-4 shrink-0" />
           {!compact && (teachCard ? 'What is this?' : <span className="hidden sm:inline">What is this?</span>)}
         </button>
