@@ -58,36 +58,45 @@ describe('the first screen', () => {
   });
 });
 
-describe('the next thing to do', () => {
-  // "Everything is all the same colour. The immediate activity does not pop out at me." (5 Nov)
+describe('the move before the first Sprint', () => {
+  // "It still doesn't pop. It also decides for the player which PBI to split. They might go for
+  // tigers first as the PO. Also, they might decide not to do upfront refinement and refine an item
+  // in Sprint Planning." (5 Nov) So no row is singled out, and the card offers both ways to start.
   const starter = () => {
     const s = { ...initialZooState(3), phase: 'refine' } as ZooGameState;
     return { ...s, adopted: ['refinement'], backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState;
   };
 
-  it('is the one item lit, and the card names it', () => {
-    const c = screen(starter());
-    const lit = c.querySelectorAll('[data-part="start-here"]');
-    expect(lit, 'more than one thing, or nothing, says start here').toHaveLength(1);
-    const row = lit[0].closest('[aria-label^="Refine "]')!;
-    const name = row.getAttribute('aria-label')!.replace(/^Refine /, '');
-    expect(c.querySelector('[data-part="start-with"]')!.textContent).toContain(name);
+  it('is a choice: refine some now, or refine in Sprint Planning', () => {
+    let planned = 0;
+    const c = render(
+      <MemoryRouter>
+        <RefineBacklog state={starter()} onSetSprintDays={noop} onSetDod={noop} onAgreeDod={noop}
+          onEstimate={noop} onAddPbi={noop} onRefinePbi={noop} onReorder={noop} onMoveZone={noop}
+          onMoveBefore={noop} onSetUseStories={noop} onSplitEpic={noop} onDeletePbi={noop}
+          onDuplicatePbi={noop} onPlan={() => { planned += 1; }} />
+      </MemoryRouter>,
+    ).container;
+    const card = c.querySelector('[data-part="needs-you"]')!;
+    expect(card.querySelector('[data-choice="now"]')?.textContent).toMatch(/Refine some now/);
+    const later = card.querySelector('[data-choice="planning"]') as HTMLButtonElement;
+    expect(later.textContent).toMatch(/Refine in Sprint Planning/);
+    fireEvent.click(later);
+    expect(planned, 'choosing to refine in Planning did not go there').toBe(1);
   });
 
-  it('leaves the rest quiet', () => {
+  it('names whose order it is, and does not pick an item', () => {
+    const c = screen(starter());
+    expect(c.querySelector('[data-part="start-here"]'), 'a row is still chosen for the player').toBeNull();
+    expect(c.querySelector('[data-choice="now"]')!.textContent).toMatch(/Priya has .+ on top; reorder first if you like/);
+  });
+
+  it('leaves every row quiet, the same as the others', () => {
     const c = screen(starter());
     const rows = [...c.querySelectorAll('[aria-label^="Refine "]')];
-    const lit = c.querySelector('[data-part="start-here"]')!.closest('[aria-label^="Refine "]');
-    const loud = rows.filter((r) => r !== lit && !r.closest('[data-part="later-fold"]')
-      && /border-(rose|amber)-400/.test(r.className + (r.parentElement?.className ?? '')));
     expect(rows.length).toBeGreaterThan(1);
-    // The rows carry their borders, so the check below can see them.
-    expect(lit!.className + (lit!.parentElement?.className ?? '')).toMatch(/border-primary/);
-    expect(loud.map((r) => r.getAttribute('aria-label')), 'other rows still shout in red or amber').toEqual([]);
-    expect(c.querySelectorAll('[data-part="not-yet"]').length, 'the others do not say they are not ready yet').toBeGreaterThan(0);
-  });
-
-  it('is nothing once there is enough to start', () => {
-    expect(screen().querySelector('[data-part="start-here"]')).toBeNull();
+    const loud = rows.filter((r) => /border-(rose|amber)-400/.test(r.className));
+    expect(loud.map((r) => r.getAttribute('aria-label')), 'a row still shouts in red or amber').toEqual([]);
+    expect(rows.every((r) => /border-dashed/.test(r.className)), 'the rows are not drawn alike').toBe(true);
   });
 });

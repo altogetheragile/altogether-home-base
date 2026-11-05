@@ -16,7 +16,7 @@ import { ItemTakeover } from './BacklogBench';
 import { PriyaHandover } from './PriyaHandover';
 import { SplitPanes } from './SplitPanes';
 import { useSplit } from './useSplit';
-import { handover, nextToRefine } from './handover';
+import { handover } from './handover';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
  *  what it means. Replaces a row of 12px grey text that carried the same information invisibly. */
@@ -131,7 +131,6 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   // The one move, with what it is done with inside the card that asks for it. Priya says what she
   // wants next (see `handover`), and the card under her line is the only thing on the screen asking.
   const step = first ? handover(state)?.key : undefined;
-  const next = nextToRefine(state);
   const dodEditor = onSetDod && (
     <div className="space-y-2">
       <DodEditor dod={state.definitionOfDone} onSave={onSetDod} suggesting={!state.dodAgreed} brief />
@@ -149,13 +148,31 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       </>)}
     </div>
   );
+  // The move as the choices it really is, each with what it costs, the way the Daily Scrum's answers
+  // are drawn. Neither is the answer. Refining up front is one way to start; refining in Sprint
+  // Planning, and through the Sprint, is the other, and the Guide allows both. Which item to start on
+  // is the Product Owner's order, not the screen's: it names whose order it is and leaves it there.
+  const topZone = items[0]?.zone;
+  const choices = (
+    <div data-part="choices" className="grid gap-2 sm:grid-cols-2">
+      <div data-choice="now" className="rounded-lg border-2 border-[hsl(var(--zoo-ink))] bg-card px-3 py-2">
+        <div className="text-sm font-semibold">Refine some now</div>
+        <p className="text-[12px] leading-snug text-muted-foreground">
+          Split and size, in any order. {topZone ? <>Priya has <strong className="text-foreground">{topZone}</strong> on top; reorder first if you like.</> : null}
+        </p>
+        <p className="mt-1 text-[11px] text-muted-foreground/80">costs nothing from the Sprint</p>
+      </div>
+      <button type="button" data-choice="planning" onClick={onPlan}
+        className={cn(FOCUS, 'rounded-lg border-2 border-[hsl(var(--zoo-ink))] bg-card px-3 py-2 text-left transition-colors hover:bg-primary/[0.06]')}>
+        <span className="block text-sm font-semibold">Refine in Sprint Planning &rarr;</span>
+        <span className="block text-[12px] leading-snug text-muted-foreground">Go now, and refine there what the Sprint takes.</span>
+        <span className="mt-1 block text-[11px] text-muted-foreground/80">comes out of Planning&rsquo;s time</span>
+      </button>
+    </div>
+  );
   const ask = (
     <PriyaHandover state={state}>
-      {step === 'refinement' ? (next
-        // Which one, by name, and where: the card and the lit row say the same thing. The counts
-        // that were here are the progress line above, said once.
-        ? <p data-part="start-with" className="text-sm">Start with <strong>{next.name}</strong>, at the top. {next.category === 'epic' ? 'Split it up' : next.category === 'need' ? 'Decide what will meet it' : 'Size it'} and the rest follows in order.</p>
-        : figures) : step === 'dod' ? dodEditor : null}
+      {step === 'refinement' ? choices : step === 'dod' ? dodEditor : null}
     </PriyaHandover>
   );
   // What is settled, one line each. The Sprint length was step one, asked before anything else on
@@ -205,7 +222,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {/* One question, like every other screen. What refinement is, who does it and how much is
           enough sits behind the "?" rather than as a paragraph over the work. */}
       <header className="space-y-1">
-        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-primary">{first ? 'Before the first Sprint' : 'Product Backlog Refinement'}</div>
+        <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{first ? 'Before the first Sprint' : 'Product Backlog Refinement'}</div>
         <div className="flex items-center gap-2">
           <h2 className="text-3xl font-bold leading-tight tracking-tight">{first ? 'Ready to start the first Sprint?' : 'What is ready for the Sprints ahead?'}</h2>
           <ExplainButton cards={['refinement', 'product-backlog', 'pbi']} phase="refine" teachCard={teachCard} onMarkTaught={onMarkTaught} />

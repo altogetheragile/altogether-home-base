@@ -1,6 +1,5 @@
 import type { ZooGameState } from './types';
-import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY, notReady } from './engine';
-import type { BacklogItem } from './types';
+import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY } from './engine';
 
 // Priya hands each step over, in her own voice.
 //
@@ -24,15 +23,6 @@ export interface Handover {
   progress?: string;
 }
 
-/** The one item to work on next while refining before the first Sprint: the highest in the
- *  Product Owner's order that is not Ready and that the Developers can do something about. It is
- *  the thing the screen lights, and the thing Priya's card names. Nothing once enough is Ready. */
-export function nextToRefine(state: ZooGameState): BacklogItem | null {
-  if (state.phase !== 'refine' || state.sprintNumber !== 1 || state.velocity.length > 0 || enoughToStart(state)) return null;
-  return availableItems(state).find((it) => !!notReady(it, state)
-    && (it.category === 'epic' || it.category === 'need' || it.unsized)) ?? null;
-}
-
 const pts = (n: number) => `${n} point${n === 1 ? '' : 's'}`;
 
 export function handover(state: ZooGameState): Handover | null {
@@ -45,8 +35,8 @@ export function handover(state: ZooGameState): Handover | null {
       const ready = availableItems(state).filter((it) => isReady(it, state)).reduce((n, it) => n + it.estimate, 0);
       return {
         key: 'refinement',
-        says: 'Here is my starter, one epic for each area, in the order I would like them. Split enough off the top to get us started and size it, and we can plan. The rest we refine as we go.',
-        asks: 'Split and size enough from the top of the Product Backlog to start.',
+        says: 'Here is my starter, one epic for each area, in the order I would like them. We need enough split and sized to get started, now or in Sprint Planning. The rest we refine as we go.',
+        asks: 'Refine enough to start: now, or in Sprint Planning. The team decides.',
         progress: `${pts(ready)} Ready of about ${pts(Math.round(cap * START_READY))} to start`,
       };
     }

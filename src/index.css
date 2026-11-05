@@ -336,8 +336,11 @@
      grid paper, a dark brown ink for lines and words, warm tans for quiet panels. Orange stays the
      one thing you are being asked to do. The old teal frame is in git history. */
   --zoo-ink: 25 37% 12%;          /* #2b1d14 - the line everything is drawn in */
-  --zoo-paper: 44 64% 92%;        /* #f7f0dd */
-  --zoo-grid: 41 42% 83%;         /* #e6dcc4 */
+  /* Lighter paper (5 Nov 2026): "can the squared background be light to contrast with different
+     sections?" The panels, the tan of a quiet section and the white of a card, now read against it
+     rather than being three shades of the same cream. */
+  --zoo-paper: 45 60% 97%;        /* #fcfaf3 */
+  --zoo-grid: 42 40% 90%;         /* #efe9da */
   --background: var(--zoo-paper);
   --foreground: var(--zoo-ink);
   --card: 40 100% 97%;            /* #fffaf0 - a sheet laid on the paper */
@@ -374,6 +377,21 @@
 
 /* The paper itself: a faint grid under everything, as on the planning map. On the game's root
    frames only - a popover is a sheet of card, not another page of paper. */
+/* A "?" for points not sized yet is a fact about the row, not a thing to do: quiet, dashed. It was
+   amber on every unsized row, which on a starter Product Backlog is every row. */
+.zoo-theme [data-part="points"][data-unsized] {
+  background: transparent;
+  color: hsl(var(--muted-foreground));
+  box-shadow: inset 0 0 0 1px hsl(var(--border));
+}
+/* Something new to do: three slow pulses of the ring, then still. */
+@keyframes zoo-attention {
+  0%, 100% { outline: 0 solid hsl(var(--primary) / 0); outline-offset: 2px; }
+  50% { outline: 4px solid hsl(var(--primary) / 0.45); outline-offset: 4px; }
+}
+.zoo-attention { animation: zoo-attention 1.6s ease-in-out 3; }
+@media (prefers-reduced-motion: reduce) { .zoo-attention { animation: none; } }
+
 .zoo-paper {
   background-color: hsl(var(--zoo-paper));
   background-image:

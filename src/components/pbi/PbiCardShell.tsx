@@ -131,7 +131,7 @@ export function PbiCardShell({
 function Points({ points, suffix = false }: { points: number | null; suffix?: boolean }) {
   const unsized = points === null;
   return (
-    <span className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold',
+    <span data-part="points" data-unsized={unsized || undefined} className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold',
       unsized ? TONE.attention.chip : 'bg-muted text-muted-foreground')}
       title={unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
       {unsized ? '?' : points}{suffix ? ' pts' : ''}
