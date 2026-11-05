@@ -1,6 +1,7 @@
 import type { ZooGameState, ScrumTeamMember } from './types';
 import type { SeatName } from './useZooSessions';
 import { seatLines, whoDoesWhatNow } from './header';
+import { handover } from './handover';
 import { yourDev } from './engine';
 import { useYou } from './you';
 import { MEMBER_DRAG } from './ScrumTeam';
@@ -118,7 +119,10 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   const lines = seatLines(state);
   // The Developer whose hands you have, for a game with nobody else at the table.
   const you = yourDev(state, viewer);
-  const sentence = whoDoesWhatNow(state, observer ? null : seat ?? null);
+  // Not while Priya is handing the step over. Her line and the move under it say who does what
+  // on this screen, and the band said it again in other words: "Priya proposes the value. The whole
+  // Scrum Team agrees the Sprint Goal" over "Agree a Sprint Goal as a Scrum Team."
+  const sentence = handover(state) ? '' : whoDoesWhatNow(state, observer ? null : seat ?? null);
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
   // An observer covers nothing, but they should still see who has dropped out: they are often the

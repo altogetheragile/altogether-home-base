@@ -3473,6 +3473,16 @@ export function goalCandidates(state: ZooGameState): BacklogItem[] {
   return picked;
 }
 
+/** What the Sprint Goal wizard writes from: the marked items, or - when nothing is Ready yet and so
+ *  nothing is marked - the top of the Product Backlog, which is still where the Product Owner says
+ *  the value is. With nothing at all to go on, the wizard wrote "...so that they do", a sentence
+ *  about nobody. Refining in Sprint Planning is allowed, so a Goal before any item is Ready is a
+ *  real case rather than a mistake. */
+export function goalSource(state: ZooGameState): BacklogItem[] {
+  const marked = goalCandidates(state);
+  return marked.length ? marked : availableItems(state).slice(0, 1);
+}
+
 /** Coach an outcome-shaped Sprint Goal from the items being selected, in the house shape the
  *  /scrum-game uses too: "Our goal is to [do something] so that [value]".
  *
@@ -3486,7 +3496,7 @@ export function goalCandidates(state: ZooGameState): BacklogItem[] {
  *  are what it takes to put them in front of somebody, which is the work rather than the objective.
  *  A Sprint with no animals in it is named for what it does to the park instead. */
 export function suggestSprintGoal(items: BacklogItem[]): string {
-  if (!items.length) return 'Our goal is to give visitors a reason to come back so that they do';
+  if (!items.length) return 'Our goal is to open the zoo’s first exhibit so that there is something worth coming for';
   const list = (names: string[]): string => (names.length === 1 ? names[0]
     : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`);
   // A zoo opens the lions, not the lion. The species is the exhibit's name and it is written
@@ -3505,6 +3515,10 @@ export function suggestSprintGoal(items: BacklogItem[]): string {
       : `the ${zone} animals`;
     return `Our goal is to open ${who} to visitors so that there is something worth coming for`;
   }
+  // An epic not yet split: the area it is for, and the first animals in it rather than all of them,
+  // because one Sprint opens some of an area and not the whole thing.
+  const epic = items.find((i) => i.category === 'epic');
+  if (epic) return `Our goal is to open the first of the ${epic.zone || epic.name} to visitors so that there is something worth coming for`;
   const amenities = items.filter((i) => i.category === 'amenity');
   const paths = items.filter((i) => i.category === 'path');
   if (amenities.length && paths.length) {

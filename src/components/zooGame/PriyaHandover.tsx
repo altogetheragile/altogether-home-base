@@ -6,9 +6,14 @@ import { cn } from '@/lib/utils';
 
 /** Priya handing the step over, as a line in the team's chat, with what she asks pinned under it
  *  as the "needs you" card. Nothing, on a step she has nothing to hand over. See `handover.ts`. */
-export function PriyaHandover({ state, className, children }: {
+export function PriyaHandover({ state, className, children, side = false }: {
   state: ZooGameState;
   className?: string;
+  /** Her line on the left and the move on the right, over the two columns of the screen below.
+   *  Stacked, the move sat under the line, both ran a little past half the width, and the right
+   *  of the page above the Sprint Goal was empty: "why stack up two boxes and leave a big gap on
+   *  the right?" Side by side, the move is directly above the thing it asks for. */
+  side?: boolean;
   /** What the move is done with, inside the card that asks for it rather than somewhere below it. */
   children?: ReactNode;
 }) {
@@ -16,8 +21,9 @@ export function PriyaHandover({ state, className, children }: {
   if (!h) return null;
   const msg: ChatMessage = { id: `handover-${h.key}`, who: 'product_owner', from: state.team.productOwner.name, text: h.says, day: state.dayNumber };
   return (
-    <section data-part="handover" data-step={h.key} className={cn('space-y-2', className)}>
-      <ul className="flex flex-col">
+    <section data-part="handover" data-step={h.key} data-side={side ? 'yes' : undefined}
+      className={cn(side ? 'grid gap-2 lg:grid-cols-2 lg:items-center lg:gap-4' : 'space-y-2', className)}>
+      <ul className="flex min-w-0 flex-col">
         <Bubble msg={msg} loud />
       </ul>
       {/* Drawn as the rail draws what needs you, because it is the same kind of thing: a solid card,

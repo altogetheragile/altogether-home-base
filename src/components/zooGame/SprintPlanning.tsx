@@ -2,7 +2,7 @@ import { SplitPanes } from './SplitPanes';
 import { PriyaHandover } from './PriyaHandover';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
+import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, goalSource, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
 import { useYou } from './you';
 
 
@@ -370,15 +370,18 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
       {/* No park. It has the next click during Build and at the Review, and nowhere else - here
           it is decoration, and it halves the width of the work. */}
       <div className="min-h-0 flex-1 space-y-3 overflow-y-auto pr-1">
-      <PriyaHandover state={state} className="max-w-2xl" />
+      <PriyaHandover state={state} side />
       {/* ---- WHY ---- */}
       {step === 'why' && (
         <PlanColumns
           left={<>
             <BacklogHeading count={items.length} note="ordered by the Product Owner - open one to read it" />
             <p className="text-[11px] text-muted-foreground/70">
-              What the Product Owner is proposing value from. The marked items are about a Sprint&rsquo;s worth off the
-              top, which is what a Sprint Goal is usually about.
+              {candidates.length
+                ? <>What the Product Owner is proposing value from. The marked items are about a Sprint&rsquo;s worth off the
+                  top, which is what a Sprint Goal is usually about.</>
+                : <>Nothing is Ready yet, so nothing is marked. The top is still where the Product Owner sees the value, and
+                  the next topic is where you split and size what this Goal needs.</>}
             </p>
             <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
               {items.map((it) => (
@@ -407,8 +410,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   for, so that is only what it does when there is nothing to work with. */}
               <Button size="sm" className={cn(WIZARD, 'h-8 gap-1 px-3 text-xs font-semibold')}
                 onClick={() => {
-                  if (!state.sprintGoal.trim()) { onSetSprintGoal(suggestSprintGoal(goalCandidates(state))); setReworded(null); return; }
-                  const out = rewordSprintGoal(state.sprintGoal, goalCandidates(state));
+                  if (!state.sprintGoal.trim()) { onSetSprintGoal(suggestSprintGoal(goalSource(state))); setReworded(null); return; }
+                  const out = rewordSprintGoal(state.sprintGoal, goalSource(state));
                   onSetSprintGoal(out.goal);
                   setReworded(out.note);
                 }}
