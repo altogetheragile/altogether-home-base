@@ -1,4 +1,5 @@
-import { type ReactNode, useSyncExternalStore } from 'react';
+import type { ReactNode } from 'react';
+import { useMinWidth, WIDTH } from './useSplit';
 import { GripVertical, GripHorizontal } from 'lucide-react';
 import { PanelGroup, Panel, PanelResizeHandle } from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
@@ -11,20 +12,6 @@ import { cn } from '@/lib/utils';
 // Only where the panes sit side by side (or one over the other at a fixed height). Below the
 // breakpoint they stack as before and there is nothing to drag. Where somebody leaves the bar is
 // remembered in this browser, per screen, so it stays where they put it.
-
-const WIDTH = { md: 768, lg: 1024, xl: 1280 } as const;
-
-function useMinWidth(px: number): boolean {
-  return useSyncExternalStore(
-    (on) => {
-      const mq = typeof window !== 'undefined' ? window.matchMedia?.(`(min-width: ${px}px)`) : undefined;
-      mq?.addEventListener?.('change', on);
-      return () => mq?.removeEventListener?.('change', on);
-    },
-    () => (typeof window !== 'undefined' && !!window.matchMedia?.(`(min-width: ${px}px)`).matches),
-    () => false,
-  );
-}
 
 export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, min = [20, 20], first, second, clip, page, stackedClassName, className, firstClassName, secondClassName }: {
   /** Names the screen, so each remembers its own split. */

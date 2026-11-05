@@ -13,14 +13,17 @@ interface DodEditorProps {
    *  team starts from something to pick and change rather than an empty box, which is where people
    *  stall (docs/ZOO_GAME_FLOW.md, "Start from something"). */
   suggesting?: boolean;
+  /** Inside the card that asks for it, on the first screen a newcomer meets: no paragraphs over the
+   *  lines, and the library shut until asked for. The explaining is behind the "?". */
+  brief?: boolean;
 }
 
 /** Refine the product-wide Definition of Done: edit the criteria, and add coached
  *  suggestions from a library grouped by the kind of quality bar each sets. Changes
  *  apply to every item from now on. */
-export function DodEditor({ dod, onSave, suggesting = false }: DodEditorProps) {
+export function DodEditor({ dod, onSave, suggesting = false, brief = false }: DodEditorProps) {
   const [items, setItems] = useState<string[]>(dod.length ? dod : ['']);
-  const [showCoach, setShowCoach] = useState(suggesting);
+  const [showCoach, setShowCoach] = useState(suggesting && !brief);
 
   const commit = (next: string[]) => { setItems(next); onSave(next.map((s) => s.trim()).filter(Boolean)); };
   const edit = (i: number, v: string) => commit(items.map((x, j) => (j === i ? v : x)));
@@ -39,6 +42,7 @@ export function DodEditor({ dod, onSave, suggesting = false }: DodEditorProps) {
           <Sparkles className="mr-1 h-3.5 w-3.5" /> Suggest criteria
         </Button>
       </div>
+      {!brief && (<>
       <p className="text-[11px] text-muted-foreground">
         The product-wide quality bar every item clears to be Done - the same for all items, unlike each PBI&rsquo;s own
         acceptance criteria. Inspect and refine it here; it applies to every item from now on.
@@ -47,6 +51,7 @@ export function DodEditor({ dod, onSave, suggesting = false }: DodEditorProps) {
         Some of these the park can see for itself and will answer on the card. The rest are yours to
         hold each other to, which is true of every real Definition of Done.
       </p>
+      </>)}
 
       <div className="space-y-1.5">
         {suggesting && (

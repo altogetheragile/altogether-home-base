@@ -1,11 +1,17 @@
 import type { ZooGameState, ChatMessage } from './types';
 import { handover } from './handover';
 import { Bubble } from './TeamChat';
+import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 /** Priya handing the step over, as a line in the team's chat, with what she asks pinned under it
  *  as the "needs you" card. Nothing, on a step she has nothing to hand over. See `handover.ts`. */
-export function PriyaHandover({ state, className }: { state: ZooGameState; className?: string }) {
+export function PriyaHandover({ state, className, children }: {
+  state: ZooGameState;
+  className?: string;
+  /** What the move is done with, inside the card that asks for it rather than somewhere below it. */
+  children?: ReactNode;
+}) {
   const h = handover(state);
   if (!h) return null;
   const msg: ChatMessage = { id: `handover-${h.key}`, who: 'product_owner', from: state.team.productOwner.name, text: h.says, day: state.dayNumber };
@@ -25,6 +31,7 @@ export function PriyaHandover({ state, className }: { state: ZooGameState; class
           {h.progress && <span data-part="needs-you-progress" className="ml-auto text-[11px] font-medium text-muted-foreground">{h.progress}</span>}
         </div>
         <p className="mt-1 text-sm font-medium leading-snug">{h.asks}</p>
+        {children && <div data-part="needs-you-body" className="mt-2">{children}</div>}
       </div>
     </section>
   );

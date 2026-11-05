@@ -8,13 +8,14 @@ import { ProductBacklogSidebar } from './Board';
 import { GroundPanel } from './GroundPanel';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { EYEBROW, FOCUS, TONE, type Tone } from './ui/tokens';
+import { FOCUS, TONE, type Tone } from './ui/tokens';
 import { useState, type ReactNode } from 'react';
-import { CheckCircle2, ChevronDown, Check } from 'lucide-react';
+import { CheckCircle2, Check, CircleDashed } from 'lucide-react';
 import { DodEditor } from './DodEditor';
 import { ItemTakeover } from './BacklogBench';
 import { PriyaHandover } from './PriyaHandover';
 import { SplitPanes } from './SplitPanes';
+import { useSplit } from './useSplit';
 import { handover } from './handover';
 
 /** A number worth reading: the figure at a size you can see, its meaning under it, in the colour of
@@ -29,34 +30,31 @@ function Figure({ value, label, tone, icon: Icon, title }: { value: number | str
   );
 }
 
-/** One of the numbered things this screen asks for. All three are built from this, because when
- *  they were three hand-written headings they were three slightly different headings - the middle
- *  one was not even a panel, so its number sat at a different place on the page from the other two. */
-function Step({ n, title, note, done, right, onToggle, children }: {
-  n: number; title: string; note?: string; done?: boolean;
-  /** Shown on the heading row, hard against the right - a summary, or a collapse control. */
-  right?: ReactNode;
-  /** If the step folds away, the WHOLE heading row opens it. A chevron on its own is a target the
-   *  width of a thumbnail at the far end of a wide panel. */
-  onToggle?: () => void;
-  children?: ReactNode;
+/** Something already settled on this screen, as one quiet line with a way back in. The numbered
+ *  steps these replaced were all on screen at once, open or shut, beside the "Your move" card and
+ *  the ground panel - four things asking at once on the screen a newcomer meets first. Now the
+ *  screen asks one thing, in the card, and what is settled steps back to a line. */
+function Settled({ part, children, open, onToggle, change = 'Change', body, pending }: {
+  part: string; children: ReactNode; open?: boolean; onToggle?: () => void; change?: string; body?: ReactNode;
+  /** Not settled yet, and not the move either: there to be done early by whoever wants to. */
+  pending?: boolean;
 }) {
-  const Head = onToggle ? 'button' : 'div';
   return (
-    <section className={cn('rounded-lg border-2 p-2.5', done ? 'border-emerald-400/60 bg-emerald-500/[0.05]' : 'border-primary/30 bg-primary/[0.04]')}>
-      <Head {...(onToggle ? { type: 'button' as const, onClick: onToggle } : {})}
-        className="flex w-full flex-wrap items-center justify-between gap-2 text-left">
-        <h3 className={cn(EYEBROW, 'flex items-center gap-1.5', done ? 'text-emerald-700 dark:text-emerald-400' : 'text-primary')}>
-          <span className={cn('flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold text-white', done ? 'bg-emerald-500' : 'bg-primary')}>
-            {done ? <Check className="h-3 w-3" /> : n}
-          </span>
-          {title}
-          {note && <span className="font-normal normal-case tracking-normal text-muted-foreground">{note}</span>}
-        </h3>
-        {right}
-      </Head>
-      {children}
-    </section>
+    <li data-part={part} className="space-y-1.5">
+      <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+        {pending
+          ? <CircleDashed className={cn(TONE.attention.text, 'h-3.5 w-3.5 shrink-0')} />
+          : <Check className={cn(TONE.done.text, 'h-3.5 w-3.5 shrink-0')} />}
+        <span className="min-w-0 flex-1">{children}</span>
+        {onToggle && (
+          <button type="button" onClick={onToggle} aria-expanded={!!open}
+            className={cn(FOCUS, 'shrink-0 rounded px-1 text-[11px] font-medium text-primary hover:underline')}>
+            {open ? 'Done' : change}
+          </button>
+        )}
+      </div>
+      {open && body}
+    </li>
   );
 }
 
@@ -103,16 +101,10 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   // Closed, like the agreement below it. Two steps side by side, one open and one shut, said that
   // the first was further along than the second when neither had been done.
   const [lengthOpen, setLengthOpen] = useState(false);
+  const [dodChanging, setDodChanging] = useState(false);
+  const wide = useSplit('lg');
   // Which item is on the bench. Nothing, until you pick one.
   const [focus, setFocus] = useState<string | null>(null);
-  // When Priya asks what Done means, the step she is asking about opens. Folded shut, the card said
-  // "agree the Definition of Done" over a heading you had to find and press first. Opening or
-  // closing it yourself wins, until what she is asking changes.
-  const asksForDone = handover(state)?.key === 'dod';
-  const [dodChosen, setDodChosen] = useState<{ asks: boolean; open: boolean } | null>(null);
-  const dodOpen = dodChosen && dodChosen.asks === asksForDone ? dodChosen.open : asksForDone;
-  const setDodOpen = (next: boolean | ((o: boolean) => boolean)) =>
-    setDodChosen({ asks: asksForDone, open: typeof next === 'function' ? next(dodOpen) : next });
   const items = availableItems(state);
   const benchItem = items.find((it) => it.id === focus) ?? null;
   const ready = items.filter((it) => !it.unsized);
@@ -130,6 +122,67 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {unsized > 0 && <Figure value={unsized} label="to size" tone={horizon >= START_READY ? 'quiet' : 'coach'} />}
       <Figure value={ready.length} label="Ready" tone="done" icon={CheckCircle2} />
     </div>
+  );
+
+  // The one move, with what it is done with inside the card that asks for it. Priya says what she
+  // wants next (see `handover`), and the card under her line is the only thing on the screen asking.
+  const step = first ? handover(state)?.key : undefined;
+  const dodEditor = onSetDod && (
+    <div className="space-y-2">
+      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} suggesting={!state.dodAgreed} brief />
+      {!state.dodAgreed && onAgreeDod && (<>
+        <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodChanging(false); }}>
+          <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done
+        </Button>
+        {/* The other way out, said as plainly as the first. Plenty of teams start without one; what
+            they learn is what it costs, and that is a Sprint's worth of teaching. It is not a gate:
+            a team that starts without one finds out at the Review what Done meant. */}
+        <button type="button" onClick={() => { onSetDod([]); setDodChanging(false); }}
+          className={cn(FOCUS, 'w-full rounded-md border border-dashed border-border px-2 py-1.5 text-[11px] text-muted-foreground hover:text-foreground')}>
+          Start without one - and find out at the Review what Done meant
+        </button>
+      </>)}
+    </div>
+  );
+  const ask = (
+    <PriyaHandover state={state}>
+      {step === 'refinement' ? figures : step === 'dod' ? dodEditor : null}
+    </PriyaHandover>
+  );
+  // What is settled, one line each. The Sprint length was step one, asked before anything else on
+  // the first screen with a sensible default already chosen. It is still agreed here - never at
+  // Planning, where sizing the box to the work is backwards (see `setSprintDays`) - but as a line
+  // that says what it is and can be changed, the way games start you on the defaults.
+  const settled = (
+    <ul data-part="settled" className="space-y-1.5 rounded-lg border border-border bg-muted/20 px-3 py-2">
+      {onSetSprintDays && (
+        <Settled part="settled-length" open={lengthOpen} onToggle={() => setLengthOpen((o) => !o)}
+          body={<SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />}>
+          Sprints are <strong className="text-foreground">{state.sprintDays} days</strong>
+        </Settled>
+      )}
+      {horizon >= START_READY && (
+        <Settled part="enough-to-start">
+          <strong className="text-foreground">Enough to start:</strong> {ready.length} item{ready.length === 1 ? '' : 's'} Ready. The rest is refined during the Sprints.
+        </Settled>
+      )}
+      {/* While the move is refining, what Done means is one press away rather than a step of its
+          own. Priya asks for it once there is enough to start, but a team that wants the bar before
+          it sizes against it can agree it first: "when we estimate size then we need to understand
+          what Done looks like." */}
+      {!state.dodAgreed && step === 'refinement' && onSetDod && (
+        <Settled part="settled-dod" pending open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor} change="Agree it now">
+          Definition of Done: <strong className={TONE.attention.text}>nobody has agreed it yet</strong>
+        </Settled>
+      )}
+      {state.dodAgreed && onSetDod && (
+        <Settled part="settled-dod" open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor}>
+          {state.definitionOfDone.length
+            ? <>Definition of Done agreed: <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong></>
+            : <>Starting without a Definition of Done</>}
+        </Settled>
+      )}
+    </ul>
   );
 
   return (
@@ -162,7 +215,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           built. On a narrow screen they stack, list first - it is the thing being talked about. */}
       {/* What Priya is asking for, first on a narrow screen. In the right-hand column it would come
           after the whole Product Backlog, which is a long way down to find out what to do. */}
-      <PriyaHandover state={state} className="lg:hidden" />
+      {!wide && first && settled}
+      {!wide && ask}
       {/* The bar between them drags, so whoever needs the room has it: the Product Backlog when
           splitting, the agreements when writing the Definition of Done. */}
       <SplitPanes id="refine" sizes={[60, 40]} min={[35, 25]} stackedClassName="grid gap-3"
@@ -173,97 +227,21 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
             columns then ended at different heights, and the agreements on the right needed the page
             scrolled while the list on the left did not. Reported from playing it. */}
         <div className="pr-1">
-        <ProductBacklogSidebar state={state} mode="refine" compact focus={focus} onFocus={setFocus} onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
+        <ProductBacklogSidebar state={state} mode="refine" compact laterFolds={first} focus={focus} onFocus={setFocus} onAddPbi={onAddPbi} onRefinePbi={onRefinePbi}
           onSetUseStories={onSetUseStories} onEstimate={onEstimate} onReorder={onReorder} onMoveZone={onMoveZone} onMoveBefore={onMoveBefore} onSplitEpic={onSplitEpic} onChooseSolution={onChooseSolution} onDeletePbi={onDeletePbi} onDuplicatePbi={onDuplicatePbi} />
         </div>
   
         </>}
         second={<>
-        <PriyaHandover state={state} className="hidden lg:block" />
-        {/* The card on the right has two faces. The agreements before the first Sprint, and the
-            item you picked - the same bench the Product Backlog tab uses for the rest of the game.
-            Picking an item used to do nothing at all, which made the list a list. */}
-        {/* The item opens over the screen, not beside it. Picking one used to change something at
-            the far end of the page, which is a change nobody notices. */}
-        {first && onSetSprintDays && (
-          <Step n={1} title="First, agree how long a Sprint is" done={state.sprintDaysAgreed} onToggle={() => setLengthOpen((o) => !o)}
-            right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              <strong className="text-foreground">{state.sprintDays} days</strong>
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !lengthOpen && '-rotate-90')} />
-            </span>}>
-            {lengthOpen && (
-              <div className="mt-1.5">
-                <SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />
-              </div>
-            )}
-          </Step>
-        )}
-  
-        {/* The Definition of Done is the Increment's commitment, and this is where a team would
-            agree one. It is not a gate.
-            
-            It used to be: you could not reach Sprint Planning until you had agreed one, which took
-            the best teaching moment of the first Sprint and threw it away. A team that starts
-            without one finds out at the Review what Done meant - nothing - and the Retrospective
-            asks the question with the evidence in front of them. Reported as "there is no learning
-            opportunity here". */}
-        {first && onSetDod && (
-          <Step n={2} title="And agree what Done means" note={'the Increment\u2019s commitment'} done={state.dodAgreed}
-            onToggle={() => setDodOpen((o) => !o)}
-            right={<span className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-              {/* Said open or shut: the suggested lines are not an agreement. */}
-              {state.dodAgreed
-                ? !dodOpen && <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong>
-                : <strong className={cn(TONE.attention.text)}>nobody has agreed it yet</strong>}
-              <ChevronDown className={cn('h-3.5 w-3.5 transition-transform', !dodOpen && '-rotate-90')} />
-            </span>}>
-            {dodOpen && (
-              <div className="mt-1.5 space-y-2">
-                <DodEditor dod={state.definitionOfDone} onSave={onSetDod} suggesting={!state.dodAgreed} />
-                {!state.dodAgreed && onAgreeDod && (<>
-                  <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodOpen(false); }}>
-                    <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done
-                  </Button>
-                  {/* The other way out, said as plainly as the first. Plenty of teams start without
-                      one; what they learn is what it costs, and that is a Sprint's worth of
-                      teaching this screen used to prevent. */}
-                  {onSetDod && (
-                    <button type="button" onClick={() => { onSetDod([]); setDodOpen(false); }}
-                      className={cn(FOCUS, 'w-full rounded-md border border-dashed border-border px-2 py-1.5 text-[11px] text-muted-foreground hover:text-foreground')}>
-                      Start without one - and find out at the Review what Done meant
-                    </button>
-                  )}
-                </>)}
-              </div>
-            )}
-          </Step>
-        )}
-
-        {/* Genuinely useful numbers set in grey 12px, which is how you hide something in plain sight.
-            Each one is now a labelled figure in the colour of what it means. */}
-        {/* Sizing comes AFTER the Definition of Done, and that is the whole reason these are
-            numbered. Reported from playing it: "when we estimate size then we need to understand
-            what Done looks like." Quite so - the bar the work has to meet is part of how big the
-            work is, and a team sizing before it has agreed one is sizing against a guess. */}
-        {/* What the zoo cannot build on yet, and what it would cost to be able to. Here because
-            refinement is where the Product Backlog's order is argued about, and this is the biggest
-            ordering decision there is: another animal in the area we have, or the ground for the
-            area we have not. */}
-        <GroundPanel state={state} onOpenGround={onOpenGround} />
-
-        {first ? (
-          <Step n={3} title="Then get the top ready" done={horizon >= START_READY} right={figures}>
-            {/* Said, so nobody carries on refining for the sake of it. */}
-            {horizon >= START_READY && (
-              <p data-part="enough-to-start" className="mt-1.5 text-[12px] leading-snug text-emerald-800 dark:text-emerald-300">
-                <strong>Enough to start.</strong> The rest is refined during the Sprints, when you know more.
-              </p>
-            )}
-          </Step>
-        ) : (
-          <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>
-        )}
-
+        {/* What is settled first, as a line each, then the move: done so far, and what is next. */}
+        {wide && first && settled}
+        {wide && ask}
+        {/* What the zoo cannot build on yet, and what it would cost to be able to. Not before the
+            first Sprint: the zoo is worth nothing until somebody has visited it, so every button in
+            it was dead, and a panel of dead buttons is a thing a newcomer has to read to learn it is
+            not for them yet. It arrives when there is something to spend. */}
+        {!first && <GroundPanel state={state} onOpenGround={onOpenGround} />}
+        {!first && <div className="flex flex-wrap items-center justify-end gap-2">{figures}</div>}
         </>} />
       {benchItem && (
         <ItemTakeover state={state} item={benchItem} onEstimate={onEstimate} onRefinePbi={onRefinePbi}
