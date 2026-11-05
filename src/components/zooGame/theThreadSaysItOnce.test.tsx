@@ -155,7 +155,11 @@ describe('the board and the message centre', () => {
     const pane = centre.parentElement!;
     expect(pane.className).toMatch(/flex-1/);
     expect(pane.className).toMatch(/basis-0/);
-    expect(pane.previousElementSibling?.className, 'the board does not share the pane evenly')
-      .toMatch(/flex-1 basis-0/);
+    const board = pane.previousElementSibling?.className ?? '';
+    expect(board, 'the board does not share the pane evenly').toMatch(/flex-1/);
+    // ...but only from nothing where the panes are split. Stacked, a zero basis collapsed the board
+    // to an empty strip in every window narrower than xl.
+    expect(board).toMatch(/xl:basis-0/);
+    expect(board.split(/\s+/), 'the board is sized from nothing when stacked').not.toContain('basis-0');
   });
 });
