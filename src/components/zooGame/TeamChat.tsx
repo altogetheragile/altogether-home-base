@@ -75,7 +75,14 @@ export function Bubble({ msg, opens = true, loud = false }: { msg: ChatMessage; 
           className={cn('mt-0.5 inline-block whitespace-pre-line rounded-2xl text-left',
             loud ? 'border-2 border-[hsl(var(--zoo-ink))] bg-white px-3.5 py-2 text-[15px] font-medium leading-snug shadow-[3px_3px_0_hsl(var(--zoo-ink))]'
               : 'px-2.5 py-1.5 text-[12px] leading-snug',
+            loud && 'relative',
             mine ? 'rounded-br-sm text-white' : cn('rounded-bl-sm text-foreground', !loud && 'bg-muted'))}>
+          {/* Said aloud, the bubble points at who said it. A rounded box in ink with a name over it
+              read as one more card on a page of cards: "make it more like a speech bubble." */}
+          {loud && !mine && (
+            <span aria-hidden data-part="bubble-tail"
+              className="absolute -left-[9px] bottom-2 h-3.5 w-3.5 rotate-45 border-b-2 border-l-2 border-[hsl(var(--zoo-ink))] bg-white" />
+          )}
           {msg.text}
         </span>
       </div>

@@ -1,5 +1,5 @@
 import type { ZooGameState } from './types';
-import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY } from './engine';
+import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY, goalCandidates } from './engine';
 
 // Priya hands each step over, in her own voice.
 //
@@ -54,6 +54,15 @@ export function handover(state: ZooGameState): Handover | null {
   if (state.phase === 'planning' && (state.planningTopic ?? 'why') === 'why') {
     // The Product Owner proposes how the Sprint could add value, and the whole Scrum Team agrees the
     // Sprint Goal (Scrum Guide 2020, Topic One). Her line is the proposal, not the Goal.
+    // Nothing Ready means nothing marked, and a line about "the marked items" points at nothing.
+    const top = availableItems(state)[0];
+    if (!goalCandidates(state).length && top) {
+      return {
+        key: 'goal',
+        says: `Nothing is Ready yet, so the Goal comes first. ${top.name}, at the top, is where I think the value is. What should this Sprint be for? We refine what it needs in the next topic.`,
+        asks: 'Agree a Sprint Goal as a Scrum Team.',
+      };
+    }
     return {
       key: 'goal',
       says: state.sprintNumber === 1
