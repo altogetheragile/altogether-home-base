@@ -1,5 +1,6 @@
 import type { ZooGameState } from './types';
-import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY } from './engine';
+import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY, notReady } from './engine';
+import type { BacklogItem } from './types';
 
 // Priya hands each step over, in her own voice.
 //
@@ -21,6 +22,15 @@ export interface Handover {
   asks: string;
   /** How far along it is, where that can be counted. */
   progress?: string;
+}
+
+/** The one item to work on next while refining before the first Sprint: the highest in the
+ *  Product Owner's order that is not Ready and that the Developers can do something about. It is
+ *  the thing the screen lights, and the thing Priya's card names. Nothing once enough is Ready. */
+export function nextToRefine(state: ZooGameState): BacklogItem | null {
+  if (state.phase !== 'refine' || state.sprintNumber !== 1 || state.velocity.length > 0 || enoughToStart(state)) return null;
+  return availableItems(state).find((it) => !!notReady(it, state)
+    && (it.category === 'epic' || it.category === 'need' || it.unsized)) ?? null;
 }
 
 const pts = (n: number) => `${n} point${n === 1 ? '' : 's'}`;
