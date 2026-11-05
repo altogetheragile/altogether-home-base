@@ -514,7 +514,10 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           same height, and whoever is busier with one can give it the room. */}
       <SplitPanes id="sprint-board" direction="vertical" from="xl" sizes={[55, 45]} min={[25, 20]} clip
         className="flex-1" stackedClassName="contents"
-        firstClassName="flex min-h-0 flex-1 basis-0 flex-col" secondClassName="flex min-h-0 flex-1 basis-0 flex-col"
+        // The board's pane is sized from nothing only where the panes are split. Stacked, below xl,
+        // nothing above it has a height to share out, so a zero basis drew the board as an empty
+        // strip with its cards gone - which is every window narrower than 1280px.
+        firstClassName="flex min-h-0 flex-1 flex-col xl:basis-0" secondClassName="flex min-h-0 flex-1 basis-0 flex-col"
         first={
       <div className={cn('flex min-h-0 flex-1 gap-3 pb-16 pr-0.5 xl:pb-0',
         state.dayStage === 'dailyScrum' ? 'flex-row' : 'flex-col')}>
