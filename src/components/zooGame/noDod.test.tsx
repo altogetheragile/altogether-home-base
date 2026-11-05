@@ -84,16 +84,15 @@ describe('what the Sprint remembers about it', () => {
 });
 
 describe('the order the agreements are made in', () => {
-  it('puts what Done means before the sizing', () => {
+  it('puts what Done means within reach before the sizing is finished', () => {
     // "When we estimate size then we need to understand what Done looks like." Quite so: the bar the
-    // work has to meet is part of how big the work is, and a team sizing before it has agreed one is
-    // sizing against a guess. The steps were numbered the other way round.
-    const { container } = refine(ready({ dodAgreed: false }));
-    const text = container.textContent ?? '';
-    const done = text.indexOf('And agree what Done means');
-    const size = text.indexOf('Then get the top ready');
-    expect(done, 'the screen no longer asks what Done means').toBeGreaterThan(-1);
-    expect(size, 'the screen no longer asks for anything to be sized').toBeGreaterThan(-1);
-    expect(done, 'sizing is still asked for before the bar it is sized against').toBeLessThan(size);
+    // work has to meet is part of how big the work is. Priya asks for refinement first (the flow's
+    // order), so while that is the move, agreeing what Done means is one press away on the screen.
+    const s = ready({ dodAgreed: false });
+    const { container } = refine({ ...s, backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState);
+    const line = container.querySelector('[data-part="settled-dod"]');
+    expect(line, 'the screen no longer offers to agree what Done means').toBeTruthy();
+    expect(line!.textContent).toMatch(/nobody has agreed it yet/);
+    expect(line!.querySelector('button')?.textContent).toMatch(/Agree it now/);
   });
 });

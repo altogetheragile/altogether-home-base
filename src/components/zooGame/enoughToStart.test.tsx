@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { RefineBacklog } from './RefineBacklog';
 import { initialZooState, DEFAULT_BRIEF } from './config';
@@ -39,6 +39,11 @@ describe('enough to start', () => {
   it('stops asking once there is, and says so', () => {
     const c = refine(aSprintReady());
     expect(c.querySelector('[data-part="enough-to-start"]')?.textContent).toMatch(/Enough to start/);
+    // What is for later folds into one row, and opens.
+    const fold = c.querySelector('[data-part="later-fold"]') as HTMLButtonElement;
+    expect(fold?.textContent).toMatch(/more, refined in later Sprints/);
+    expect(c.querySelectorAll('[data-part="later"]').length, 'the later items are not folded').toBe(0);
+    fireEvent.click(fold);
     // Every epic left is "Later", and none of them is drawn as the thing to do next.
     expect(c.querySelectorAll('[data-part="later"]').length).toBeGreaterThanOrEqual(4);
     expect(c.textContent).not.toMatch(/Not ready/);

@@ -37,8 +37,10 @@ describe('refinement, compact', () => {
   it('says plainly that nobody has agreed the Definition of Done', () => {
     // It used to show a count, which reads as "there is one" - and the whole teaching of starting
     // without one is that nobody agreed it.
+    // Now it is the move itself: the card asks for it, and nothing anywhere counts lines as agreed.
     const { container } = screen();
-    expect(container.textContent).toMatch(/nobody has agreed it yet/i);
+    expect(container.querySelector('[data-part="needs-you"]')?.textContent).toMatch(/Agree the Definition of Done/);
+    expect(container.querySelector('[data-part="settled"]')?.textContent).not.toMatch(/Definition of Done agreed/);
   });
 
   it('leaves the explaining to Learn', () => {

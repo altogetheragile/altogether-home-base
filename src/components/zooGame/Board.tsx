@@ -559,6 +559,8 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
 interface SidebarProps {
   /** One 44px row per item, so a Product Backlog of twenty-three reads on one screen. */
   compact?: boolean;
+  /** Once enough is Ready to start, fold what is for later into one row you can open. */
+  laterFolds?: boolean;
   state: ZooGameState;
   mode: 'plan' | 'sprint' | 'refine' | 'view';
   onAddPbi: (draft: PbiDraft) => void;
@@ -592,7 +594,7 @@ interface SidebarProps {
 /** The persistent Product Backlog: the whole undone-work list, ordered by the PO.
  *  You add and refine PBIs here, estimate unsized ones by planning poker, and either
  *  forecast them into the Sprint (Planning) or pull them in mid-Sprint (the board). */
-export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onChooseSolution, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
+export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds = false, onWidth, onAddPbi, onRefinePbi, onSetUseStories, onEstimate, selected, onToggle, onReorder, onMoveZone, onMoveBefore, onPull, onSplitEpic, onChooseSolution, onDeletePbi, onDuplicatePbi, focus, onFocus }: SidebarProps) {
   // Where the list has an item takeover beside it, every row action opens THAT - the takeover
   // already carries the conversation, the criteria, the cards and the commit. These panels are the
   // fallback for the places that have no takeover to open, and having both was the fault reported:
@@ -617,6 +619,13 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   // Refining the whole Product Backlog before the first Sprint is the up-front planning the game
   // exists to argue against. It can still be refined; the screen just stops telling you to.
   const enough = mode === 'refine' && horizon >= START_READY;
+  // ...and once it stops asking, it stops taking the room. A first Sprint wants the four items it
+  // can be planned from, not thirteen rows of which nine say "Later": the small first level that
+  // games open with. One row says how many more there are and opens them.
+  const [showLater, setShowLater] = useState(false);
+  const later = laterFolds && enough ? items.filter((it) => !!notReady(it, state)) : [];
+  const folded = later.length > 0 && !showLater;
+  const shown = folded ? items.filter((it) => !later.includes(it)) : items;
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -626,7 +635,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
   const flatIndex = new Map(items.map((it, i) => [it.id, i]));
   const zoneOrder: string[] = [];
   const byZone = new Map<string, BacklogItem[]>();
-  for (const it of items) {
+  for (const it of shown) {
     if (!byZone.has(it.zone)) { byZone.set(it.zone, []); zoneOrder.push(it.zone); }
     byZone.get(it.zone)!.push(it);
   }
@@ -906,6 +915,15 @@ export function ProductBacklogSidebar({ state, mode, compact = false, onWidth, o
             </div>
           );
         })}
+        {later.length > 0 && (
+          <button type="button" data-part="later-fold" aria-expanded={showLater} onClick={() => setShowLater((o) => !o)}
+            className={cn(FOCUS, 'flex w-full items-center gap-2 rounded-lg border border-dashed border-border px-3 py-2 text-left text-sm text-muted-foreground hover:text-foreground')}>
+            <ChevronDown className={cn('h-4 w-4 shrink-0 transition-transform', !showLater && '-rotate-90')} />
+            {showLater
+              ? <span>Hide the {later.length} for later Sprints</span>
+              : <span><strong className="text-foreground">{later.length} more</strong>, refined in later Sprints</span>}
+          </button>
+        )}
       </div>
     </section>
   );
