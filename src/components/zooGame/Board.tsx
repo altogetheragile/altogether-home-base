@@ -630,6 +630,16 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
   // Product Owner's order decided for the player where to start - "they might go for tigers first
   // as the PO" - so no row is singled out, and the move is said once, in Priya's card.
   const quiet = (_it: BacklogItem) => laterFolds;
+  // What a split has just made. "Can we make PBIs pop more - especially after splitting?" The pieces
+  // arrived drawn like the epic they came out of, dashed and grey, which says "not a thing yet" about
+  // the very things the split was for. Remembered from when this list was first drawn: anything
+  // that has appeared since is new, and says so until it is sized.
+  const [seen] = useState(() => new Set(items.map((it) => it.id)));
+  const isNew = (it: BacklogItem) => mode === 'refine' && !seen.has(it.id) && !!it.unsized;
+  // In refinement, dashed is for what is not a Product Backlog item yet: an epic, waiting to be
+  // split. Everything else is a card in ink, sized or not. Being unsized is a fact about it, said
+  // by its chip, not a reason to draw it as a ghost.
+  const ghost = (it: BacklogItem, why: string | null) => !!why && (mode !== 'refine' || it.category === 'epic');
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -713,14 +723,17 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
         {/* Red, amber, green down the left edge: an epic nobody has split is red, an item waiting to
             be sized is amber, an item that meets the Definition of Ready is green. One glance tells
             you what is left to do, which is the question this screen is asking. */}
-        <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'} density={compact ? 'line' : 'row'}
+        <PbiCard item={it} state={ghost(it, why) ? 'locked' : on ? 'forecast' : 'backlog'} density={compact ? 'line' : 'row'}
           // Where there is a bench beside the list, the card IS the way onto it: picking an item up
           // should not mean finding a chevron the width of a thumbnail.
           onClick={onFocus ? () => onFocus(it.id) : undefined}
           label={onFocus ? `Refine ${it.name}` : undefined}
           className={cn(
             focus === it.id && 'ring-2 ring-primary ring-offset-1',
-            mode === 'refine' || mode === 'plan'
+            isNew(it) && 'zoo-attention',
+            mode === 'refine' && why && it.category !== 'epic' && (enough || quiet(it))
+            ? 'border-2 bg-white'
+            : mode === 'refine' || mode === 'plan'
             ? cn('border-2', why && (enough || quiet(it)) ? 'border-dashed border-border bg-muted/20'
               : it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
               : why ? 'border-amber-400 bg-amber-500/[0.05]'
@@ -753,6 +766,11 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
             </button>
           </>}
           badges={<>
+            {isNew(it) && (
+              <span data-part="just-split" className="shrink-0 rounded bg-primary px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-primary-foreground">
+                New
+              </span>
+            )}
             <CategoryChip item={it} />
             {/* Say the arithmetic, not just the fact. An item that was 5 and is now 3 with nothing
                 explaining it reads as the game losing count; "5 → 3" reads as the Developers

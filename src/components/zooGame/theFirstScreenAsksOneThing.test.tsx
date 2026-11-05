@@ -97,6 +97,35 @@ describe('the move before the first Sprint', () => {
     expect(rows.length).toBeGreaterThan(1);
     const loud = rows.filter((r) => /border-(rose|amber)-400/.test(r.className));
     expect(loud.map((r) => r.getAttribute('aria-label')), 'a row still shouts in red or amber').toEqual([]);
-    expect(rows.every((r) => /border-dashed/.test(r.className)), 'the rows are not drawn alike').toBe(true);
+    // Dashed is for an epic, waiting to be split. A Product Backlog item is a card in ink, sized or
+    // not: "Can we make PBIs pop more - especially after splitting?"
+    const st = starter();
+    for (const r of rows) {
+      const name = r.getAttribute('aria-label')!.replace(/^Refine /, '');
+      const epic = st.backlog.find((it) => it.name === name)?.category === 'epic';
+      expect(r.getAttribute('data-pbi-state'), `${r.getAttribute('aria-label')} is drawn as the wrong kind of thing`)
+        .toBe(epic ? 'locked' : 'backlog');
+    }
+  });
+
+  it('says what a split has just made, until it is sized', () => {
+    const s = starter();
+    const tree = (st: ZooGameState) => (
+      <MemoryRouter>
+        <RefineBacklog state={st} onSetSprintDays={noop} onSetDod={noop} onAgreeDod={noop}
+          onEstimate={noop} onAddPbi={noop} onRefinePbi={noop} onReorder={noop} onMoveZone={noop}
+          onMoveBefore={noop} onSetUseStories={noop} onSplitEpic={noop} onDeletePbi={noop}
+          onDuplicatePbi={noop} onPlan={noop} />
+      </MemoryRouter>
+    );
+    const r = render(tree(s));
+    expect(r.container.querySelector('[data-part="just-split"]')).toBeNull();
+    const piece = { ...s.backlog[0], id: 'piece-1', name: 'Snow Leopard', category: 'exhibit', unsized: true } as ZooGameState['backlog'][number];
+    r.rerender(tree({ ...s, backlog: [piece, ...s.backlog] } as ZooGameState));
+    const chip = r.container.querySelector('[data-part="just-split"]');
+    expect(chip, 'nothing marks what the split made').toBeTruthy();
+    expect(chip!.closest('[aria-label]')?.getAttribute('aria-label')).toBe('Refine Snow Leopard');
+    r.rerender(tree({ ...s, backlog: [{ ...piece, unsized: false, estimate: 3 }, ...s.backlog] } as ZooGameState));
+    expect(r.container.querySelector('[data-part="just-split"]'), 'it is still new once sized').toBeNull();
   });
 });

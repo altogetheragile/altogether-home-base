@@ -84,3 +84,20 @@ describe('Priya hands each step over', () => {
     expect(render(<PriyaHandover state={at({ phase: 'sprint' })} />).container.innerHTML).toBe('');
   });
 });
+
+describe('what Priya says, handing over', () => {
+  it('is said at reading size in a bubble that stands out, not as a pale line of chat', async () => {
+    // "Priya says this, 'Enough ready to start, and we agree what Done means. Let's plan the first
+    // Sprint.' but it is barely noticeable." (5 Nov 2026)
+    const { render } = await import('@testing-library/react');
+    const { PriyaHandover } = await import('./PriyaHandover');
+    const { initialZooState } = await import('./config');
+    const s = { ...initialZooState(3), phase: 'refine', dodAgreed: true } as import('./types').ZooGameState;
+    const c = render(<PriyaHandover state={s} />).container;
+    const bubble = [...c.querySelectorAll('[data-part="chat-message"] span')].find((e) => /plan the first Sprint/.test(e.textContent ?? ''))!;
+    expect(bubble, 'her line is not there').toBeTruthy();
+    expect(bubble.className).toMatch(/text-\[15px\]/);
+    expect(bubble.className).toMatch(/bg-white/);
+    expect(bubble.className).not.toMatch(/bg-muted/);
+  });
+});
