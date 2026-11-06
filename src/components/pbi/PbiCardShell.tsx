@@ -1,5 +1,5 @@
 import type { ComponentType, ReactNode } from 'react';
-import { Lock } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { RADIUS, TONE } from '@/components/zooGame/ui/tokens';
 
@@ -22,26 +22,36 @@ export type PbiState =
 
 /** How a card looks in each state.
  *
- *  The accent belongs to the work in hand, and to nothing else. Three To Do cards outlined in
- *  orange shout at you from a column you are not working in - and then the one card you ARE working
- *  on has nothing left to be. So To Do is a white card with a rule, Doing wears the accent, and
- *  what is Done says so in green on white rather than being washed in it. */
+ *  The frame is the state, and nothing else says it: no lock, no greying, no chip saying the same
+ *  thing again (docs/ZOO_GAME_FLOW.md, One Card, Three Sizes). A card that is not Ready yet is a
+ *  dashed outline you can still read - it used to be greyed and locked as well, so the item a
+ *  newcomer most needed to read was the one drawn as though it did not matter.
+ *
+ *  The accent belongs to the work in hand. To Do is a plain card, Doing wears the accent, and what
+ *  is Done says so in green. */
 const STATE_STYLE: Record<PbiState, { shell: string; icon: string }> = {
   backlog: { shell: 'border-border bg-card hover:border-primary/60 hover:bg-primary/5', icon: 'text-muted-foreground' },
-  locked: { shell: 'border-dashed border-border bg-muted/20 text-muted-foreground', icon: 'text-muted-foreground/60' },
+  locked: { shell: 'border-dashed border-muted-foreground/50 bg-card', icon: 'text-muted-foreground' },
   forecast: { shell: 'border-border bg-card hover:border-primary/50', icon: 'text-muted-foreground' },
   doing: { shell: 'border-primary bg-primary/5 shadow-sm', icon: 'text-primary' },
   built: { shell: 'border-sky-300/80 bg-card', icon: 'text-sky-700 dark:text-sky-400' },
-  live: { shell: 'border-emerald-300/80 bg-card', icon: 'text-emerald-700 dark:text-emerald-300' },
+  live: { shell: 'border-emerald-600/70 bg-emerald-50/60 dark:bg-emerald-950/20', icon: 'text-emerald-700 dark:text-emerald-300' },
 };
 
 export function PbiCardShell({
-  icon: Icon, name, points, state = 'backlog', density = 'row', lead, trailing, badges, detail, note, onClick, label, className,
+  icon: Icon, name, points, typeLine, stack = false, state = 'backlog', density = 'row', lead, trailing, badges, detail, note, onClick, label, className,
 }: {
   icon: ComponentType<{ className?: string }>;
   name: string;
-  /** Its size in points, or null while nobody has sized it ("?"). */
+  /** Its size in points, or null while nobody has sized it ("?"). Drawn first, in a circle, in
+   *  the same place on every card - the way a card game puts the cost in a corner, so a player
+   *  learns where to look once. */
   points: number | null;
+  /** What kind of thing it is and where it belongs, under the name: "Habitat · Big Cats". Said here
+   *  once, rather than as chips beside the name. */
+  typeLine?: ReactNode;
+  /** An item with others inside it - an epic. Drawn as a stack of cards, because that is what it is. */
+  stack?: boolean;
   state?: PbiState;
   /** `row` for lists, `card` for board columns. The difference is how much breathing room it gets,
    *  never how the item itself is drawn. */
@@ -65,6 +75,12 @@ export function PbiCardShell({
   const s = STATE_STYLE[state];
   const card = density === 'card';
   const line = density === 'line';
+  const type = typeLine && (
+    <span data-part="type-line" className={cn('flex min-w-0 items-center gap-1 truncate text-[11px] font-medium text-muted-foreground', line && 'shrink')}>
+      <Icon className={cn('h-3 w-3 shrink-0', s.icon)} />
+      <span className="truncate">{typeLine}</span>
+    </span>
+  );
   return (
     <div
       role={onClick ? 'button' : undefined}
@@ -72,53 +88,45 @@ export function PbiCardShell({
       onClick={onClick}
       // Hooks for a theme to draw on: the zoo inks its cards (index.css, `.zoo-theme .pbi-card`).
       data-pbi-state={state}
+      data-stack={stack || undefined}
       className={cn('pbi-card', RADIUS.panel, 'border text-sm transition-colors', s.shell,
-        card ? 'p-2' : line ? 'px-2 py-1.5' : 'px-2 py-1.5', onClick && 'cursor-pointer', className)}>
-      {/* A board column is a third of half a screen. Everything on one line meant the name wrapped
-          to two and pushed the chips onto a third, so four cards no longer fitted a column that
-          holds four; sharing the line with the button left the name a stub - "Big Cats...".
-          So: the NAME gets a line of its own, the width of the whole card, and the chips and the
-          action share the one below it. Two tidy lines, and the name is legible in both. */}
+        card ? 'p-2' : 'px-2 py-1.5', onClick && 'cursor-pointer', className)}>
       {line ? (
         // One row, everything on it. Twenty-three items on a screen beats four items and a scroll:
         // the Product Owner's order is the thing being read, and you cannot read an order a page
         // at a time.
         <div className="flex h-[1.75rem] items-center gap-1.5">
           {lead}
-          <Icon className={cn('h-4 w-4 shrink-0', s.icon)} />
-          <span title={name} className="min-w-0 flex-1 truncate font-medium leading-tight">{name}</span>
+          <Cost points={points} state={state} size="sm" />
+          {!typeLine && <Icon className={cn('h-4 w-4 shrink-0', s.icon)} />}
+          <span title={name} className="min-w-0 shrink-0 basis-auto truncate font-medium leading-tight">{name}</span>
+          <span className="flex min-w-0 flex-1 items-center">{type}</span>
           {badges}
-          <Points points={points} />
-          {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
-          {trailing}
-        </div>
-      ) : card ? (
-        <div className="flex items-start gap-2">
-          {lead}
-          <Icon className={cn('mt-0.5 h-4 w-4 shrink-0', s.icon)} />
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-1.5 gap-y-1">
-            <span title={name} className="min-w-0 flex-1 basis-28 truncate font-medium leading-tight">{name}</span>
-            {badges}
-            <Points points={points} suffix />
-            {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
-          </div>
           {trailing}
         </div>
       ) : (
+        // The name gets a line of its own, the width of the card, with what it is under it. A
+        // board column is a third of half a screen, and a name sharing its line with chips and a
+        // button was a stub - "Big Cats...".
         <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-2">
             {lead}
-            <Icon className={cn('h-4 w-4 shrink-0', s.icon)} />
-            <span title={name} className="min-w-0 flex-1 truncate font-medium leading-tight">{name}</span>
-            {state === 'locked' && <Lock className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" />}
+            <Cost points={points} state={state} size={card ? 'lg' : 'md'} />
+            {!typeLine && <Icon className={cn('h-4 w-4 shrink-0', s.icon)} />}
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span title={name} className="truncate font-medium leading-tight">{name}</span>
+              {type}
+            </div>
+            {trailing && !badges && <span className="ml-auto flex shrink-0 items-center gap-1.5">{trailing}</span>}
           </div>
-          {/* Wraps: with three chips and a button in a third of half a screen there is not always
-              room for all four, and a button that runs out over the next column reads as broken. */}
-          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
-            {badges}
-            <Points points={points} />
-            {trailing && <span className="ml-auto flex shrink-0 items-center gap-1.5">{trailing}</span>}
-          </div>
+          {badges && (
+            // Wraps: with chips and a button in a third of half a screen there is not always room
+            // for all of them, and a button that runs out over the next column reads as broken.
+            <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
+              {badges}
+              {trailing && <span className="ml-auto flex shrink-0 items-center gap-1.5">{trailing}</span>}
+            </div>
+          )}
         </div>
       )}
       {note && <div className={cn(TONE.attention.text, "mt-1 pl-6 text-[11px] font-medium")}>{note}</div>}
@@ -127,15 +135,20 @@ export function PbiCardShell({
   );
 }
 
-/** Its size in points, or a "?" while the Developers have not sized it. */
-function Points({ points, suffix = false }: { points: number | null; suffix?: boolean }) {
+/** Its size in points, in a circle at the front of the card: a dashed "?" while the Developers
+ *  have not sized it, and a tick once it is Done, because by then its size is history. */
+function Cost({ points, state, size }: { points: number | null; state: PbiState; size: 'sm' | 'md' | 'lg' }) {
   const unsized = points === null;
+  const done = state === 'live';
   return (
-    <span data-part="points" data-unsized={unsized || undefined} className={cn('shrink-0 rounded-md px-1.5 py-0.5 font-mono text-[11px] font-semibold',
-      unsized ? TONE.attention.chip : 'bg-muted text-muted-foreground')}
-      title={unsized ? 'Not sized yet - the Developers size it in refinement' : 'Size, in points'}>
-      {unsized ? '?' : points}{suffix ? ' pts' : ''}
+    <span data-part="points" data-unsized={unsized || undefined}
+      className={cn('flex shrink-0 items-center justify-center rounded-full border-2 font-mono font-bold leading-none',
+        size === 'sm' ? 'h-6 w-6 text-[11px]' : size === 'md' ? 'h-7 w-7 text-xs' : 'h-8 w-8 text-sm',
+        done ? 'border-emerald-600 bg-emerald-600 text-white'
+          : unsized ? 'border-dashed border-muted-foreground/60 bg-background text-muted-foreground'
+          : 'border-foreground/80 bg-background text-foreground')}
+      title={done ? 'Done' : unsized ? 'Not sized yet - the Developers size it in refinement' : `${points} point${points === 1 ? '' : 's'}`}>
+      {done ? <Check className={size === 'sm' ? 'h-3 w-3' : 'h-3.5 w-3.5'} /> : unsized ? '?' : points}
     </span>
   );
 }
-

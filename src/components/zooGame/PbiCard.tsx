@@ -1,9 +1,8 @@
 import type { ComponentProps } from 'react';
-import { Check } from 'lucide-react';
 import type { BacklogItem } from './types';
 import { ICONS, iconKey } from './itemIcons';
 import { Chip } from './ui/Chip';
-import { itemKind, KIND_LABEL } from './itemKinds';
+import { itemKind, KIND_LABEL, typeLine } from './itemKinds';
 import { PbiCardShell, type PbiState } from '@/components/pbi/PbiCardShell';
 
 // ============= One card for one Product Backlog item =============
@@ -22,13 +21,12 @@ export type { PbiState };
 
 // The layout lives in the shared shell; the zoo supplies what is the zoo's: the icon for what the
 // item becomes in the park, its estimate, and "Live" for an item released to visitors.
-export function PbiCard({ item, state = 'backlog', badges, ...rest }: {
+export function PbiCard({ item, state = 'backlog', ...rest }: {
   item: BacklogItem;
 } & Omit<ComponentProps<typeof PbiCardShell>, 'icon' | 'name' | 'points'>) {
   return (
     <PbiCardShell icon={ICONS[iconKey(item)]} name={item.name} points={item.unsized ? null : item.estimate}
-      state={state} {...rest}
-      badges={<>{badges}{state === 'live' && <Chip tone="done" icon={<Check className="h-2.5 w-2.5" />}>Live</Chip>}</>} />
+      typeLine={typeLine(item)} stack={item.category === 'epic'} state={state} {...rest} />
   );
 }
 

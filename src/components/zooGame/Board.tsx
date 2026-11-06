@@ -11,9 +11,9 @@ import { toolboxDraft, TOOLBOX, meetsOf, noOnePieceMeets, ranked } from './toolb
 import { criterionFor } from './parkChecks';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, AlertCircle, ChevronsLeft, ChevronsRight, Undo2, Clock } from 'lucide-react';
+import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, ChevronsLeft, ChevronsRight, Undo2, Clock } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
-import { PbiCard, CategoryChip } from './PbiCard';
+import { PbiCard } from './PbiCard';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
 import { FOCUS, PADDING, SURFACE, TAP, TONE, WIZARD } from './ui/tokens';
@@ -636,10 +636,6 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
   // that has appeared since is new, and says so until it is sized.
   const [seen] = useState(() => new Set(items.map((it) => it.id)));
   const isNew = (it: BacklogItem) => mode === 'refine' && !seen.has(it.id) && !!it.unsized;
-  // In refinement, dashed is for what is not a Product Backlog item yet: an epic, waiting to be
-  // split. Everything else is a card in ink, sized or not. Being unsized is a fact about it, said
-  // by its chip, not a reason to draw it as a ghost.
-  const ghost = (it: BacklogItem, why: string | null) => !!why && (mode !== 'refine' || it.category === 'epic');
   // Existing enclosures an animal can be assigned to (animals and enclosures are separate PBIs).
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
   const sizingItem = sizing ? items.find((i) => i.id === sizing) : null;
@@ -664,18 +660,13 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
     // in the narrow Backlog rail. In Planning an unready item cannot be forecast until it is put
     // right - the Guide allows refining here ("The Scrum Team may refine these items during this
     // process"), but a Product Backlog refined during the last Sprint would not need it.
-    const status = why && (enough || quiet(it)) ? (
-      <span data-part={enough ? 'later' : 'not-yet'} title={enough ? `${why}. It does not need to be yet: enough is Ready above it to start, and the rest is refined during the Sprints.` : why}
+    // Ready or not is the frame's to say. What the frame cannot say is that an unready item does
+    // not need to be yet, because enough above it is Ready to start: that is "Later".
+    const status = why && enough ? (
+      <span data-part="later" title={`${why}. It does not need to be yet: enough is Ready above it to start, and the rest is refined during the Sprints.`}
         className="flex shrink-0 items-center gap-1 rounded-full bg-muted px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
-        {enough ? <><Clock className="h-3 w-3" /> Later</> : <>Not ready</>}
+        <Clock className="h-3 w-3" /> Later
       </span>
-    ) : why ? (
-      <span title={mode === 'plan' ? `${why}. You can put that right here, but a Product Backlog refined during the last Sprint would not need it - and this is Planning's time.` : why}
-        className={cn(TONE.attention.text, "flex shrink-0 items-center gap-1 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide")}>
-        <AlertCircle className="h-3 w-3" /> Not ready
-      </span>
-    ) : mode === 'view' || mode === 'refine' ? (
-      <span className={cn(TONE.done.text, "flex shrink-0 items-center gap-1 text-[11px] font-medium")}><Check className="h-3.5 w-3.5" /> Ready</span>
     ) : null;
     const action =
       // This Backlog is being discussed, not worked on: no splitting, sizing or selecting here.
@@ -720,25 +711,17 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
         className={cn(dragId === it.id && 'opacity-50')}>
         {/* The same card as everywhere else, with this screen's controls on it: re-order handles
             and an expand toggle in front, the action behind. */}
-        {/* Red, amber, green down the left edge: an epic nobody has split is red, an item waiting to
-            be sized is amber, an item that meets the Definition of Ready is green. One glance tells
-            you what is left to do, which is the question this screen is asking. */}
-        <PbiCard item={it} state={ghost(it, why) ? 'locked' : on ? 'forecast' : 'backlog'} density={compact ? 'line' : 'row'}
+        {/* The frame says where it is: a stack for an epic, dashed until it is Ready, solid once it
+            is. It used to say it three times over - red, amber or green borders, a lock, and
+            greying - on top of chips for its kind and area. */}
+        <PbiCard item={it} state={why ? 'locked' : on ? 'forecast' : 'backlog'} density={compact ? 'line' : 'row'}
           // Where there is a bench beside the list, the card IS the way onto it: picking an item up
           // should not mean finding a chevron the width of a thumbnail.
           onClick={onFocus ? () => onFocus(it.id) : undefined}
           label={onFocus ? `Refine ${it.name}` : undefined}
           className={cn(
             focus === it.id && 'ring-2 ring-primary ring-offset-1',
-            isNew(it) && 'zoo-attention',
-            mode === 'refine' && why && it.category !== 'epic' && (enough || quiet(it))
-            ? 'border-2 bg-white'
-            : mode === 'refine' || mode === 'plan'
-            ? cn('border-2', why && (enough || quiet(it)) ? 'border-dashed border-border bg-muted/20'
-              : it.category === 'epic' ? 'border-rose-400 bg-rose-500/[0.04]'
-              : why ? 'border-amber-400 bg-amber-500/[0.05]'
-              : 'border-emerald-400 bg-emerald-500/[0.04]')
-            : undefined)}
+            isNew(it) && 'zoo-attention')}
           lead={<>
             {onReorder && (
               // Side by side, not stacked. A row on this list is 44 tall and two stacked 44s are
@@ -771,7 +754,6 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
                 New
               </span>
             )}
-            <CategoryChip item={it} />
             {/* Say the arithmetic, not just the fact. An item that was 5 and is now 3 with nothing
                 explaining it reads as the game losing count; "5 → 3" reads as the Developers
                 re-sizing what is left, which is what happened. */}

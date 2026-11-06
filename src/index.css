@@ -414,6 +414,16 @@
 }
 .zoo-theme .pbi-card[data-pbi-state="backlog"],
 .zoo-theme .pbi-card[data-pbi-state="forecast"] { border-color: hsl(var(--zoo-ink)); }
+/* An epic is a stack: cards drawn behind it, because there are cards inside it. Its frame is solid
+   whether or not it is Ready - it is a thing to split, not a thing still to be decided. */
+.zoo-theme .pbi-card[data-stack] {
+  border-style: solid;
+  border-width: 2px;
+  border-color: hsl(var(--zoo-ink));
+  box-shadow: 4px 4px 0 -2px #fff, 4px 4px 0 0 hsl(var(--zoo-ink)), 8px 8px 0 -2px #fff, 8px 8px 0 0 hsl(var(--zoo-ink));
+}
+/* Not Ready: dashed, flat, readable. */
+.zoo-theme .pbi-card[data-pbi-state="locked"]:not([data-stack]) { border-width: 2px; }
 
 /* A new thing said catches the eye for a moment and then stops asking. Notes used to arrive in
    silence - the strip simply changed, and a learner watching the board never knew the team had

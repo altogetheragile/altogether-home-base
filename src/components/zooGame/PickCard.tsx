@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { BacklogItem } from './types';
-import { PbiCard, CategoryChip } from './PbiCard';
-import { Chip } from './ui/Chip';
+import { PbiCard } from './PbiCard';
+import { typeLine } from './itemKinds';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { Lock, Plus, X, Scissors, Wand2 } from 'lucide-react';
@@ -36,8 +36,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
   const [reading, setReading] = useState(false);
   // What kind of thing it is, on the card you choose from. Choosing work you have not read is
   // guessing, and "Bridge" alone does not tell you it is infrastructure rather than scenery.
-  const card = <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'}
-    badges={<><Chip>{item.zone}</Chip><CategoryChip item={item} /></>} />;
+  const card = <PbiCard item={item} state={why ? 'locked' : chosen ? 'forecast' : 'backlog'} />;
 
   // Reading before choosing, in a takeover. It used to be a popover hanging off the card, which is
   // the same fault the Product Backlog had: something small opens somewhere else on the screen and you do
@@ -49,7 +48,7 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
           <div className="flex items-start justify-between gap-3 pr-8">
             <div className="min-w-0">
               <DialogTitle className="text-lg font-semibold leading-tight">{item.name}</DialogTitle>
-              <div className="mt-1 flex flex-wrap items-center gap-1.5"><Chip>{item.zone}</Chip><CategoryChip item={item} /></div>
+              <div className="mt-1 text-xs font-medium text-muted-foreground">{typeLine(item)}</div>
             </div>
             <span className="shrink-0 rounded-full bg-muted px-2 py-1 text-sm font-semibold">{item.unsized ? '?' : `${item.estimate} pts`}</span>
           </div>
