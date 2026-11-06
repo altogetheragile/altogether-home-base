@@ -109,11 +109,6 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const benchItem = items.find((it) => it.id === focus) ?? null;
   const ready = items.filter((it) => !it.unsized);
   const unsized = items.length - ready.length;
-  // Nothing Ready is not a gate. "The Scrum Team may refine these items during this process" (Sprint
-  // Planning, Scrum Guide 2020), and the game lets them, at Planning's cost. Refusing the button until
-  // something was sized decided for the team that refinement happens up front. Reported from playing
-  // it: "they might decide not to do upfront refinement and refine an item in Sprint Planning."
-  const nothingReady = ready.length === 0;
   const first = state.sprintNumber === 1 && state.velocity.length === 0; // the very first pass, before any Sprint
   const horizon = readyHorizon(state);
   // The counts, built once - they sit on step two's heading row during setup and on their own after
@@ -275,12 +270,9 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           onClose={() => setFocus(null)} />
       )}
 
-      <ActionBar hint={nothingReady ? 'Nothing is Ready yet. You can refine in Sprint Planning, out of its time.'
-        : first && !state.dodAgreed
-          ? state.definitionOfDone.length
-            ? 'Nobody has agreed the Definition of Done. You can start anyway.'
-            : 'No Definition of Done. Done will mean whatever anybody says it means.'
-          : undefined}>
+      <ActionBar>
+        {/* Never refused, even with nothing Ready: "The Scrum Team may refine these items during this
+            process" (Sprint Planning, Scrum Guide 2020), and the game lets them, at Planning's cost. */}
         <Button onClick={onPlan}>Go to Sprint Planning &rarr;</Button>
       </ActionBar>
     </div>

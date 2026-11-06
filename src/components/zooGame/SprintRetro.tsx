@@ -4,7 +4,7 @@ import type { ZooGameState, ChatKind } from './types';
 import { SprintLengthPicker } from './SprintLengthPicker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
-import { ActionBar } from './ActionBar';
+import { ActionBar, BackButton } from './ActionBar';
 import { DodHandover } from './DodHandover';
 import { NextRung } from './NextRung';
 import { retroQuestions, decisionsIn, whoIs, sprintProgress, improvementsFrom, antiPatterns, yourRetroTurn } from './engine';
@@ -371,8 +371,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
       )}
       </div>
 
-      <ActionBar left={step === 'adapt' ? <Button variant="ghost" size="sm" onClick={() => setStep('inspect')}>&larr; Back</Button> : undefined}
-        hint={step === 'adapt' && !selected ? 'Pick one improvement to carry forward' : undefined}>
+      <ActionBar left={step === 'adapt' ? <BackButton to="Inspect" onClick={() => setStep('inspect')} /> : undefined}>
         {step === 'inspect'
           ? <Button onClick={() => setStep('adapt')}>Next: what we will change &rarr;</Button>
           : <Button disabled={!selected} onClick={() => selected && onNextSprint(selected)}>Start Sprint {state.sprintNumber + 1} &rarr;</Button>}

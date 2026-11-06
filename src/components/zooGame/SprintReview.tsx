@@ -15,7 +15,7 @@ import { CardDetail } from './Board';
 import { CoachTip } from './CoachTip';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
-import { ActionBar } from './ActionBar';
+import { ActionBar, BackButton } from './ActionBar';
 import { EventStage } from './EventStage';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -815,7 +815,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       </EventStage>
       </div>} />
 
-      <ActionBar left={step !== 'done' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'next' ? 'visitors' : 'done')}>&larr; Back</Button> : undefined}>
+      <ActionBar left={step !== 'done' ? <BackButton to={STEPS.find((s) => s.key === (step === 'next' ? 'visitors' : 'done'))!.label} onClick={() => setStep(step === 'next' ? 'visitors' : 'done')} /> : undefined}>
         {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
           : step === 'visitors' ? <Button onClick={() => setStep('next')}>Next: what we do about it &rarr;</Button>
             : <Button onClick={onContinue}>Retrospective &rarr;</Button>}

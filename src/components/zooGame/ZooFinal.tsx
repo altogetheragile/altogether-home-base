@@ -58,7 +58,12 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
           Backlog uses to delete an item - not a browser confirm, which is a different game's
           furniture. Everything else that cannot be undone is meant to cost something: taking a day
           back would teach that the day did not matter. */}
-      <ActionBar hint={starting ? 'This zoo, its Sprints and its decision log go. There is no way back to it.' : undefined}>
+      {starting && (
+        <p data-part="start-over-warning" className="max-w-md rounded-lg border-2 border-destructive/50 bg-destructive/5 px-3 py-2 text-sm font-medium">
+          This zoo, its Sprints and its decision log go. There is no way back to it.
+        </p>
+      )}
+      <ActionBar>
         {starting ? (
           <>
             <Button variant="outline" onClick={() => setStarting(false)}>Keep this one</Button>

@@ -968,15 +968,7 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
                 <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
               )}
             </>
-          ) : undefined}
-          hint={(() => {
-          if (pressing) return pressing.cost;
-          const why = whyNothingMoves(state);
-          const left = state.sprintDays - state.dayNumber + 1;
-          if (why === 'empty') return `The forecast is finished, with ${left} day${left === 1 ? '' : 's'} of the Sprint left.`;
-          if (why === 'blocked') return 'Nothing in this Sprint can start: what is here is waiting on something that is not.';
-          return undefined;
-        })()}>
+          ) : undefined}>
           {/* Ending a day gives back what is left of it, and the last day of a Sprint ends the
               Sprint - the work still in Doing goes back to the Product Backlog at the Review. On
               the last day that is worth saying before the press, not after it. It is said here
