@@ -270,16 +270,25 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
         </div>
       </div>
       <div className="mt-2 space-y-1">
-        {tasks.length === 0 && <p className="text-[11px] text-muted-foreground/70">Write a first step. Then Fill in the gaps adds the ones you have not thought of, and leaves yours alone.</p>}
+        {tasks.length === 0 && (
+          <div className="space-y-1">
+            <p className="text-[11px] text-muted-foreground/70">Write a first step. Then Fill in the gaps adds the ones you have not thought of, and leaves yours alone.</p>
+            {/* What a step looks like: a piece of work a Developer can pick up and finish, in a day or
+                less. An example, not one of theirs - it is never added to the plan. */}
+            <p data-part="step-example" className="flex items-center gap-1.5 rounded border border-dashed border-border px-2 py-1 text-[11px] italic text-muted-foreground">
+              <ListChecks aria-hidden className="h-3.5 w-3.5 shrink-0 not-italic text-muted-foreground/60" /> For example: Lay the path from the main gate
+            </p>
+          </div>
+        )}
         {tasks.map((t) => (
           <div key={t.id} className="flex items-center gap-1.5">
             <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
             <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
-            <button type="button" onClick={() => remove(t.id)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove task"><X className="h-3.5 w-3.5" /></button>
+            <button type="button" onClick={() => remove(t.id)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove this step"><X className="h-3.5 w-3.5" /></button>
           </div>
         ))}
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" /> Add task</Button>
+        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={add}><Plus className="mr-1 h-3.5 w-3.5" /> Add a step</Button>
       </div>
     </div>
   );

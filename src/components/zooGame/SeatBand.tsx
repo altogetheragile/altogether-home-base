@@ -123,7 +123,10 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   // on this screen, and the band said it again in other words: "Priya proposes the value. The whole
   // Scrum Team agrees the Sprint Goal" over "Agree a Sprint Goal as a Scrum Team."
   const sentence = handover(state) ? '' : whoDoesWhatNow(state, observer ? null : seat ?? null);
-  const goal = state.phase === 'sprint';
+  // From the moment it is the Goal: topics two and three of Sprint Planning serve it, and the Sprint
+  // is for it. At topic one it is still being written, on the page.
+  const goal = state.phase === 'sprint'
+    || (state.phase === 'planning' && (state.planningTopic ?? 'why') !== 'why' && !!state.sprintGoal.trim());
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
   // An observer covers nothing, but they should still see who has dropped out: they are often the
@@ -134,9 +137,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
     <div data-part="seat-band"
       className={cn('flex shrink-0 items-center gap-3 overflow-x-auto border-b border-border bg-muted/40 px-3 py-1.5', className)}>
       {goal ? (
-        // During the Sprint the band carries the Sprint Goal, in full, on every screen of it. Who
-        // does what is already on the seats beside it; what the whole Sprint is for was in a box of
-        // its own above the board, pushing the work down.
+        // The band carries the Sprint Goal, in full, on every screen that serves it. Who does what
+        // is already on the seats beside it; what the whole Sprint is for was in a box of its own
+        // above the work, pushing it down, and said again on Planning's page.
         <p data-part="sprint-goal" className="flex min-w-0 flex-1 items-baseline gap-2 text-foreground">
           {observer && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
           <span title="The commitment of the Sprint Backlog" className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
