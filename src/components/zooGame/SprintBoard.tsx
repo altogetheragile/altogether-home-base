@@ -23,7 +23,7 @@ import type { SeatName } from './useZooSessions';
 import { PlanningPoker } from './PlanningPoker';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
-import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, Target, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
+import { Boxes, MessageCircleQuestion, FilePlus, Check, Sunrise, ListChecks, X, Clock, ChevronUp, ChevronDown } from 'lucide-react';
 import { EYEBROW, FOCUS, TAP, TONE } from './ui/tokens';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
@@ -448,54 +448,9 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
 
   return (
     <div className="relative flex h-full min-h-0 flex-1 flex-col gap-3">
-      {/* The commitment of the Sprint Backlog, on the Sprint Backlog.
-          
-          It was in the top strip and nowhere else: one line, small, truncated where it ran out of
-          room, hidden below a large screen, and behind a popover if you wanted the rest of it. "Our
-          goal is to deliver the Big Cats zone so that visitors have something to se..." is not a
-          commitment anybody can hold in mind while they choose what to pull.
-          
-          The strip keeps its version, and the two are not a duplicate: the strip is always on
-          screen and says whether the Goal is SAFE, with the Goal under it in small type; this says
-          the Goal itself, in full, where the work is chosen. Both read `goalLine`, so they cannot
-          disagree about the same Sprint.
-          
-          Not at Planning: that whole screen is about agreeing this, and saying it twice on one
-          screen is saying it in two weights. */}
-      {state.phase === 'sprint' && (
-        <div data-part="sprint-goal"
-          className="shrink-0 rounded-lg border-2 border-primary/40 bg-primary/[0.07] px-3 py-2">
-          {/* The label and the verdict share a line. They were a row each, which with the Goal
-              itself made three rows above the board - and the board is what the screen is for:
-              "do we need to push down the PBIs in To Do?" */}
-          <div data-part="goal-head" className={cn(EYEBROW, 'flex flex-wrap items-center gap-x-2 text-primary')}>
-            <Target className="h-3.5 w-3.5 shrink-0" aria-hidden />
-            Sprint Goal
-            <span className="font-normal normal-case tracking-normal text-muted-foreground">
-              commitment of the Sprint Backlog
-            </span>
-            {/* The verdict is not here any more.
-                It was written to be the strip's arithmetic read a second time where the work is
-                chosen, and on the screen a Sprint is actually played it came out as the same
-                sentence twice, word for word, 170 pixels apart:
-
-                  Goal safe · 0 of 3 items · 0 of 13 pts        <- the strip, always on screen
-                  SPRINT GOAL  commitment of the Sprint Backlog · Goal safe · 0 of 3 items...
-
-                Asked after playing it: "Can the spaces be better used?" The strip keeps it,
-                because the strip is on every screen and this banner is on one. What this banner
-                is for is the Goal ITSELF, in full, beside the cards - which is what it still does
-                and what the strip, truncated to a line, never could. */}
-          </div>
-          {/* Big enough to read at a glance and wrapping rather than truncating: the whole fault
-              was that it could not be read. */}
-          <p data-part="sprint-goal-text"
-            className={cn('mt-0.5 text-base font-bold leading-snug',
-              !state.sprintGoal.trim() && 'text-muted-foreground')}>
-            {state.sprintGoal.trim() || 'No Sprint Goal yet - the Scrum Team agrees one at Sprint Planning.'}
-          </p>
-        </div>
-      )}
+      {/* The Sprint Goal is not here: it is the band's line during the Sprint, on every screen of
+          it, so the board starts at the top of its pane. "Developers pull and build. Priya refines
+          and answers. is not needed. Replace with the Sprint Goal - everything shifts up." */}
       {/* The board starts at the top of its pane. The help button, the burndown and the settings
           used to sit here in two rows of their own, above the columns: a band of empty space
           between the tabs and the work. They are the game's tools rather than the board's, so they

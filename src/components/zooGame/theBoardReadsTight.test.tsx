@@ -88,30 +88,6 @@ describe('the reorder arrows', () => {
   });
 });
 
-describe('the Sprint Goal panel', () => {
-  it('says what it is on one line, and the Goal on the next', () => {
-    // Three rows to say two things is a third of the To Do column. It was down to two by bringing
-    // the verdict up beside the label; it is still two, and now the verdict is not here at all -
-    // it was the strip's sentence printed a second time 170 pixels below the strip.
-    const s = sprint();
-    const { container } = board(s);
-    const panel = container.querySelector('[data-part="sprint-goal"]')!;
-    const head = panel.querySelector('[data-part="goal-head"]');
-    expect(head, 'the label lost its row').toBeTruthy();
-    expect(head!.textContent).toMatch(/Sprint Goal/);
-    expect(head!.textContent, 'the label row grew the strip’s arithmetic back')
-      .not.toMatch(/Goal safe|at risk/i);
-    expect(panel.textContent, 'the Goal itself is not on the row below').toContain(s.sprintGoal);
-  });
-
-  it('keeps the Goal itself the thing you read first', () => {
-    const { container } = board(sprint());
-    const text = container.querySelector('[data-part="sprint-goal-text"]')!;
-    expect(text.className, 'the Goal is no bigger than its own label').toMatch(/text-base|text-lg/);
-    expect(text.className).toMatch(/font-bold/);
-  });
-});
-
 describe('the Goal the game suggests', () => {
   const item = (over: Partial<BacklogItem>): BacklogItem => ({
     id: over.name ?? 'x', name: 'x', zone: 'Big Cats', category: 'enclosure', estimate: 3,

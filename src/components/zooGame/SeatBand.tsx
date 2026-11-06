@@ -7,7 +7,7 @@ import { useYou } from './you';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { YOURS } from './seatCopy';
 import { useState } from 'react';
-import { Pencil } from 'lucide-react';
+import { Pencil, Target } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
@@ -123,6 +123,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   // on this screen, and the band said it again in other words: "Priya proposes the value. The whole
   // Scrum Team agrees the Sprint Goal" over "Agree a Sprint Goal as a Scrum Team."
   const sentence = handover(state) ? '' : whoDoesWhatNow(state, observer ? null : seat ?? null);
+  const goal = state.phase === 'sprint';
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
   // An observer covers nothing, but they should still see who has dropped out: they are often the
@@ -132,10 +133,25 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   return (
     <div data-part="seat-band"
       className={cn('flex shrink-0 items-center gap-3 overflow-x-auto border-b border-border bg-muted/40 px-3 py-1.5', className)}>
-      <p className="min-w-0 shrink-0 text-xs font-medium text-foreground">
-        {observer && <span className="mr-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
-        {sentence}
-      </p>
+      {goal ? (
+        // During the Sprint the band carries the Sprint Goal, in full, on every screen of it. Who
+        // does what is already on the seats beside it; what the whole Sprint is for was in a box of
+        // its own above the board, pushing the work down.
+        <p data-part="sprint-goal" className="flex min-w-0 flex-1 items-baseline gap-2 text-foreground">
+          {observer && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
+          <span title="The commitment of the Sprint Backlog" className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+            <Target className="h-3.5 w-3.5 self-center" aria-hidden /> Sprint Goal
+          </span>
+          <span data-part="sprint-goal-text" className={cn('min-w-0 text-sm font-bold leading-snug', !state.sprintGoal.trim() && 'font-medium text-muted-foreground')}>
+            {state.sprintGoal.trim() || 'None. The Scrum Team did not agree one at Sprint Planning.'}
+          </span>
+        </p>
+      ) : (
+        <p className="min-w-0 shrink-0 text-xs font-medium text-foreground">
+          {observer && <span className="mr-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
+          {sentence}
+        </p>
+      )}
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {lines.map((s) => {
           // The Developers take work by being dragged onto it; the Product Owner and the Scrum
