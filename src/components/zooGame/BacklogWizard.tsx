@@ -170,9 +170,6 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
 
       <ActionBar>
         <div className="flex items-center gap-2.5">
-          <span className="hidden text-[11px] text-muted-foreground sm:inline">
-            Writes {zones.length} area{zones.length === 1 ? '' : 's'} and the park&rsquo;s own grounds
-          </span>
           <Button className={WIZARD} disabled={!ready || !mine.allowed} onClick={() => onBuild({ zones, audience, firstZone })}>
             <Sparkles className="mr-1 h-4 w-4" /> Write the Product Backlog
           </Button>

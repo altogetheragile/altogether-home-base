@@ -37,7 +37,8 @@ describe('the way to Sprint Planning', () => {
 
   it('says what starting without one will mean, rather than blocking', () => {
     refine(ready({ dodAgreed: false, definitionOfDone: [] }));
-    expect(document.body.textContent).toMatch(/Done will mean whatever anybody says it means/i);
+    // On the screen, where the choice is, rather than written into the bar beside the button.
+    expect(document.body.textContent).toMatch(/find out at the Review what Done meant/i);
   });
 
   it('offers starting without one as a choice a team could actually make', () => {

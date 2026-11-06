@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
 import { NoteStrip } from './GameNotes';
 import { DOCK_PILL, DOCK_POSITION, useDockPresence, useGameNotes } from './notesDock';
 
@@ -24,19 +25,19 @@ export const DOCK_GUTTER = 'pb-24';
 /** The one primary action, in the one place it always is.
  *
  *  Every screen in the game ends in this bar: same shape, same corner, so "what do I press to go on"
- *  is never a question you have to answer twice. Anything secondary - going back, a hint about why
- *  the action is disabled, whatever the game has to say - rides in the same pill, quiet, on the left.
+ *  is never a question you have to answer twice. Back rides in the same pill, on the left, and says
+ *  where it goes. Nothing else is written in it: what to do next is the screen's "Your move", and a
+ *  bar that also explained itself said it twice, differently on every screen - "Pick at least one
+ *  item to continue", "4 without steps yet. Fine to start." The game's own notes still ride here.
  *
  *  Bottom right, always. It has been centred over the window, and docked as the foot of whichever
  *  half of the screen the work was in - which meant the orange button was in a different place on
  *  every screen and you had to look for it. One corner. The notes come with it, because two floating
  *  things in one corner is the same problem with more of it.
  */
-export function ActionBar({ left, hint, className, children }: {
+export function ActionBar({ left, className, children }: {
   /** Secondary controls: Back, skip, resume. */
   left?: ReactNode;
-  /** Why the primary action is not available yet, said beside it rather than in a tooltip. */
-  hint?: ReactNode;
   className?: string;
   children: ReactNode;
 }) {
@@ -50,11 +51,8 @@ export function ActionBar({ left, hint, className, children }: {
       {/* Back keeps its room. It used to shrink to nothing when the words beside the button ran
           long, and the words were drawn over it ("←Back" on top of "7 items have no steps"). */}
       {left && <div className="flex shrink-0 items-center gap-2">{left}</div>}
-      {/* What the game is saying comes first: it is news, and the hint is only ever an explanation
-          of the button it sits next to. Neither pushes the button out of the corner. */}
-      {notes.length > 0
-        ? <NoteStrip notes={notes} />
-        : hint && <span className="hidden min-w-0 max-w-[52ch] truncate text-[11px] text-muted-foreground sm:block">{hint}</span>}
+      {/* What the game is saying: news, which never pushes the button out of the corner. */}
+      {notes.length > 0 && <NoteStrip notes={notes} />}
       <div className="flex min-w-0 items-center gap-2.5 [&_button]:shrink-0">{children}</div>
     </>
   );
@@ -70,4 +68,10 @@ export function ActionBar({ left, hint, className, children }: {
     </div>,
     document.body,
   );
+}
+
+/** Back, saying where to: "Back to Topic 2". A bare "Back" on a screen with steps left you to work
+ *  out which step it meant, and every screen said it its own way. */
+export function BackButton({ to, onClick }: { to: string; onClick: () => void }) {
+  return <Button variant="ghost" size="sm" data-part="back" onClick={onClick}>&larr; Back to {to}</Button>;
 }

@@ -147,7 +147,8 @@ describe('the dock, while something is being asked', () => {
     const chip = document.querySelector('[data-part="unanswered"]');
     expect(chip, 'the dock offers to move on with no sign that anything is waiting').toBeTruthy();
     expect(chip!.textContent).toMatch(/Ada is waiting/);
-    expect(document.body.textContent, 'what ending the day does to the question is not said')
+    // On the chip, as the acceptance case says it: the bar carries no sentences of its own.
+    expect(chip!.getAttribute('title'), 'what ending the day does to the question is not said')
       .toMatch(/End the day and the Developers decide it themselves/);
   });
 

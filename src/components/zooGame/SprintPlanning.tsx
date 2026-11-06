@@ -16,7 +16,7 @@ import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
 import { REFINE_POINT_OPTIONS } from './config';
-import { ActionBar } from './ActionBar';
+import { ActionBar, BackButton } from './ActionBar';
 import { CoachTip } from './CoachTip';
 import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -318,7 +318,6 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
   const stars = revealed(state, 'essentials');
   const horizon = readyHorizon(state);
-  const totalSteps = chosen.reduce((n, i) => n + (i.tasks ?? []).filter((t) => t.label.trim()).length, 0);
   // How the work gets done is topic three's whole job, so an item with no steps is topic three left
   // undone. "Suggest steps for all" is one press away if you would rather not write them yourself.
   const unplanned = chosen.filter((i) => !(i.tasks ?? []).some((t) => t.label.trim())).length;
@@ -715,7 +714,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-2">
                 <span className="text-[11px] text-muted-foreground">
                   {nextUnplanned ? <>Next item without a plan: <strong className="text-foreground">{nextUnplanned.name}</strong></>
-                    : 'Every item has steps.'}
+                    // Not "every item has steps" while the one open here has none: the claim was
+                    // about the others, and read as though this one were done.
+                    : chosen.every((it) => steps(it).length > 0) ? 'Every item has steps.' : 'No other item is waiting for a plan.'}
                 </span>
                 {nextUnplanned && (
                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setOpenPlan(nextUnplanned.id)}>
@@ -735,22 +736,15 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
       </div>
 
       {/* One primary action, always in the same place. */}
-      <ActionBar left={step !== 'why' ? <Button variant="ghost" size="sm" onClick={() => setStep(step === 'how' ? 'what' : 'why')}>&larr; Back</Button> : undefined}>
+      <ActionBar left={step !== 'why' ? <BackButton to={step === 'how' ? 'Topic 2' : 'Topic 1'} onClick={() => setStep(step === 'how' ? 'what' : 'why')} /> : undefined}>
         <div className="flex min-w-0 items-center gap-2.5">
           {step === 'why' && (
             <>
-              {!hasGoal && <span className="hidden text-[11px] text-muted-foreground sm:inline">{state.sprintGoal.trim() ? 'A Sprint Goal is an objective, not a word' : 'Write the Sprint Goal to continue'}</span>}
-              {hasGoal && outstanding.length > 0 && (
-                <span className="hidden text-[11px] text-muted-foreground sm:inline">
-                  Proposed. Waiting on {outstanding.map((w) => (w === viewer ? 'you' : agreer(w))).join(' and ')}
-                </span>
-              )}
               <Button disabled={!agreed} onClick={() => setStep('what')}>Next: what to build <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
           {step === 'what' && (
             <>
-              {!hasWhat && <span className="hidden text-[11px] text-muted-foreground sm:inline">Pick at least one item to continue</span>}
               {/* One Developer proposes the forecast and the others agree it. Changing it is
                   proposing it again, so everybody is asked again. */}
               {hasWhat && forecastWaiting.length > 0 && (
@@ -767,24 +761,6 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           )}
           {step === 'how' && (
             <>
-              {/* Topic three is where the Developers plan HOW, and the screen says what is still
-                  unplanned - but it does not refuse. The Guide is explicit that the Sprint Backlog
-                  emerges as the Sprint goes on, and the plan for the first days is enough to start:
-                  refusing taught that a Sprint cannot begin until every step is written, which is
-                  the up-front planning the whole game exists to argue with. */}
-              {unplanned > 0 ? (
-                // Short, with the rest on hover: the pill is a button and a few words, not a paragraph.
-                <span data-part="unplanned" className="min-w-0 truncate text-[11px] text-muted-foreground"
-                  title="You can start anyway: the plan is yours to finish in the Sprint.">
-                  {unplanned} without steps yet. Fine to start.
-                </span>
-              ) : (
-                // What the three topics just produced, said at the moment it comes into being. The
-                // Sprint Backlog is the output of the event, and the learner should watch it appear.
-                <span className="hidden text-[11px] text-muted-foreground lg:inline">
-                  Creates the <strong className="text-foreground">Sprint Backlog</strong>: your Sprint Goal, {chosen.length} item{chosen.length === 1 ? '' : 's'} ({committed} pts){totalSteps > 0 ? `, ${totalSteps} steps` : ''}
-                </span>
-              )}
               <Button onClick={() => onPlan([...selected], refinePts)}>Start Sprint {state.sprintNumber} <ArrowRight className="ml-1 h-4 w-4" /></Button>
             </>
           )}
