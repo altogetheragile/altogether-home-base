@@ -137,7 +137,7 @@ export function PbiCardShell({
 
 /** Its size in points, in a circle at the front of the card: a dashed "?" while the Developers
  *  have not sized it, and a tick once it is Done, because by then its size is history. */
-function Cost({ points, state, size }: { points: number | null; state: PbiState; size: 'sm' | 'md' | 'lg' }) {
+export function Cost({ points, state, size }: { points: number | null; state: PbiState; size: 'sm' | 'md' | 'lg' }) {
   const unsized = points === null;
   const done = state === 'live';
   return (

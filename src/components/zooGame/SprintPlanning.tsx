@@ -11,7 +11,7 @@ import { PbiCard } from './PbiCard';
 import { ShapeChooser } from './ShapeChooser';
 import { Workspace } from './ui/Workspace';
 import { PickCard } from './PickCard';
-import { itemKind } from './itemKinds';
+import { OpenCard } from './OpenCard';
 import { PlanningPoker } from './PlanningPoker';
 import { ExplainButton } from './Explain';
 import { StepTrack } from './StepTrack';
@@ -657,10 +657,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           {planFor ? (
             <section className="flex min-h-0 min-w-0 flex-col gap-2 overflow-y-auto rounded-lg border-2 border-primary/40 p-3">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <h3 className="text-sm font-semibold">
-                  Plan <span className="text-muted-foreground">·</span> {planFor.name}
-                  <span className="font-normal text-muted-foreground"> · {planFor.estimate} pts · {itemKind(planFor)} · {planFor.zone}</span>
-                </h3>
+                <h3 className="text-sm font-semibold">Plan</h3>
                 {/* The step editor carries its own "suggest" for the item in front of you. This one
                     is for the rest: five items with no steps is five presses otherwise, and topic
                     three is a conversation about all of them. */}
@@ -679,30 +676,16 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   steps that get it there on the right. Stacked, the criteria pushed the steps below
                   the fold and the page scrolled with half its width empty. */}
               <div className="grid min-h-0 flex-1 gap-3 xl:grid-cols-[minmax(0,17rem)_minmax(0,1fr)]">
-              <div className="min-h-0 space-y-2 overflow-y-auto">
-              {/* Read-only here: the criteria were agreed when the item was refined, and Planning is
-                  not where the Product Owner rewrites them. They are shown because the steps have to
-                  add up to them. */}
-              {(planFor.acceptance ?? []).length > 0 && (
-                <div>
-                  <div className="text-[11px] font-semibold text-muted-foreground">
-                    Acceptance criteria <span className="font-normal">· agreed at refinement · read-only here</span>
-                  </div>
-                  <ul className="mt-0.5 space-y-0.5">
-                    {(planFor.acceptance ?? []).map((ac) => (
-                      <li key={ac} className="flex gap-1.5 text-[12px] text-muted-foreground">
-                        <span className="text-muted-foreground/50">·</span>{ac}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-
+              {/* Room at the edges for the card's hard shadow, which a scroll box clips. */}
+              <div className="min-h-0 space-y-2 overflow-y-auto pb-1.5 pr-1.5">
+              {/* The item as a card: what it is on the front, with the shape it takes here, and its
+                  acceptance criteria on the back. Read-only here: the criteria were agreed when it
+                  was refined, and Planning is not where the Product Owner rewrites them. */}
               {/* What kind of thing, before how it gets built - the first "how" is what shape it
                   takes, and it decides the order of the Sprint. */}
               {(() => {
                 const shape = <ShapeChooser item={planFor} enclosures={habitats} onPlan={(patch) => onPlanShape?.(planFor.id, patch)} />;
-                return shape ? <div className="rounded-md border border-border bg-card px-2 py-1.5">{shape}</div> : null;
+                return <OpenCard item={planFor} front={shape ? <div className="rounded-md border border-border bg-background px-2 py-1.5">{shape}</div> : null} />;
               })()}
               </div>
 

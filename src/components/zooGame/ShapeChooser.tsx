@@ -49,7 +49,7 @@ export function ShapeChooser({ item, enclosures, onPlan }: {
 }) {
   if (item.category === 'enclosure') {
     return (
-      <Field label="How big?">
+      <Field label="Size in the park">
         <Choice options={SIZES.map((s) => ({ key: s.key, label: s.label, hint: s.hint }))}
           value={item.enclosureSize ?? 'medium'} onPick={(k) => onPlan({ enclosureSize: k as 'small' | 'medium' | 'large' })} />
       </Field>
