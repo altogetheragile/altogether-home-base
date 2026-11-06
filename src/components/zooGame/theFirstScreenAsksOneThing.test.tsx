@@ -79,6 +79,7 @@ describe('the move before the first Sprint', () => {
     ).container;
     const card = c.querySelector('[data-part="needs-you"]')!;
     expect(card.querySelector('[data-choice="now"]')?.textContent).toMatch(/Refine some now/);
+    expect(card.querySelector('[data-choice="now"] [data-part="split-steer"]'), 'the tip lost the scissors that point to Split it up').not.toBeNull();
     const later = card.querySelector('[data-choice="planning"]') as HTMLButtonElement;
     expect(later.textContent).toMatch(/Refine in Sprint Planning/);
     fireEvent.click(later);

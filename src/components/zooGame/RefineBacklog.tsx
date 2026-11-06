@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { FOCUS, TONE, type Tone } from './ui/tokens';
 import { useState, type ReactNode } from 'react';
-import { CheckCircle2, Check, CircleDashed } from 'lucide-react';
+import { CheckCircle2, Check, CircleDashed, Scissors } from 'lucide-react';
 import { DodEditor } from './DodEditor';
 import { ItemTakeover } from './BacklogBench';
 import { PriyaHandover } from './PriyaHandover';
@@ -151,7 +151,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const choices = (
     <div data-part="choices" className="grid gap-2 sm:grid-cols-2">
       <div data-choice="now" className="rounded-lg border-2 border-[hsl(var(--zoo-ink))] bg-card px-3 py-2">
-        <div className="text-sm font-semibold">Refine some now</div>
+        {/* The scissors are the ones on each card's Split it up button: a steer to where the move is. */}
+        <div className="flex items-center gap-1.5 text-sm font-semibold"><Scissors aria-hidden className="h-4 w-4" data-part="split-steer" /> Refine some now</div>
         <p className="text-[12px] leading-snug text-muted-foreground">
           Split and size, in any order. {topZone ? <>Priya has <strong className="text-foreground">{topZone}</strong> on top; reorder first if you like.</> : null}
         </p>
