@@ -33,7 +33,8 @@ describe('enough to start', () => {
     const c = refine(written());
     expect(c.querySelector('[data-part="later"]')).toBeNull();
     expect(c.querySelector('[data-part="enough-to-start"]')).toBeNull();
-    expect(c.textContent).toMatch(/Not ready/);
+    // Said by the frame, not a chip: the cards that are not Ready yet are dashed.
+    expect(c.querySelector('[data-pbi-state="locked"]')).toBeTruthy();
   });
 
   it('stops asking once there is, and says so', () => {

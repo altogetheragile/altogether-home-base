@@ -70,3 +70,10 @@ export function itemKind(item: Pick<BacklogItem, 'category' | 'template' | 'desi
 export function draftKind(draft: Pick<PbiDraft, 'category' | 'template'>): ItemKind {
   return itemKind({ category: draft.category, template: draft.template });
 }
+
+/** What it is and where it belongs: "Habitat · Big Cats". An epic's area is usually its name, and
+ *  "Big Cats" over "Epic · Big Cats" is the word said twice. */
+export function typeLine(item: BacklogItem): string {
+  const kind = KIND_LABEL[itemKind(item)];
+  return item.zone && item.zone !== item.name ? `${kind} · ${item.zone}` : kind;
+}

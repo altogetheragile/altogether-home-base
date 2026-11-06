@@ -97,14 +97,14 @@ describe('the move before the first Sprint', () => {
     expect(rows.length).toBeGreaterThan(1);
     const loud = rows.filter((r) => /border-(rose|amber)-400/.test(r.className));
     expect(loud.map((r) => r.getAttribute('aria-label')), 'a row still shouts in red or amber').toEqual([]);
-    // Dashed is for an epic, waiting to be split. A Product Backlog item is a card in ink, sized or
-    // not: "Can we make PBIs pop more - especially after splitting?"
+    // An epic is a stack, and only an epic. Not Ready is a dashed frame, never a greyed one: "Can
+    // we make PBIs pop more - especially after splitting?"
     const st = starter();
     for (const r of rows) {
       const name = r.getAttribute('aria-label')!.replace(/^Refine /, '');
       const epic = st.backlog.find((it) => it.name === name)?.category === 'epic';
-      expect(r.getAttribute('data-pbi-state'), `${r.getAttribute('aria-label')} is drawn as the wrong kind of thing`)
-        .toBe(epic ? 'locked' : 'backlog');
+      expect(r.hasAttribute('data-stack'), `${r.getAttribute('aria-label')} is drawn as the wrong kind of thing`).toBe(epic);
+      expect(r.className, `${r.getAttribute('aria-label')} is greyed out`).not.toMatch(/opacity-|text-muted-foreground\b/);
     }
   });
 
