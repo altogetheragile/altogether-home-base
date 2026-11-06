@@ -235,12 +235,9 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
   return (
     <div className={cn('rounded-lg border bg-card p-3', item.goalCritical ? 'border-amber-400/70' : 'border-border')}>
       <div className="flex items-center justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-1.5 text-sm">
-          <CategoryIcon item={item} className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-          <span className="truncate font-medium">{item.name}</span>
-          <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[9px] text-muted-foreground">{item.zone}</span>
-          <span className="shrink-0 font-mono text-[11px] text-muted-foreground">{item.estimate} pts</span>
-        </div>
+        {/* What the item is, its size and its area are on the card beside this. Said here again,
+            they were the third time on one screen. */}
+        <div className="text-[11px] font-bold uppercase tracking-wide">Steps to build it</div>
         <div className="flex shrink-0 items-center gap-1">
           {onToggleGoalCritical && (
             <button type="button" onClick={() => onToggleGoalCritical(item.id)}
@@ -273,7 +270,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
         </div>
       </div>
       <div className="mt-2 space-y-1">
-        {tasks.length === 0 && <p className="text-[11px] text-muted-foreground/70">No tasks yet - suggest a breakdown or add your own steps for how this gets built.</p>}
+        {tasks.length === 0 && <p className="text-[11px] text-muted-foreground/70">Write a first step. Then Fill in the gaps adds the ones you have not thought of, and leaves yours alone.</p>}
         {tasks.map((t) => (
           <div key={t.id} className="flex items-center gap-1.5">
             <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
