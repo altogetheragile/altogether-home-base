@@ -104,16 +104,18 @@ describe('what the Daily Scrum puts above the fold', () => {
     } as ZooGameState;
   };
 
-  it('puts the Developers\u2019 own decision beside the burndown, not below it', () => {
+  it('puts the Developers\u2019 own decision as the last step, straight after the verdict', () => {
     const c = screen(theirsToDecide());
     const decision = c.querySelector('[data-part="decision"]');
     expect(decision, 'there is no decision on the screen the decision is for').toBeTruthy();
-    expect(decision!.textContent).toMatch(/points left/);
+    expect(c.querySelector('[data-part="verdict"]')!.textContent).toMatch(/points left/);
     expect(decision!.textContent, 'the decision offers nothing to decide').toMatch(/Drop .+, (protect the Goal|finish the rest)/);
     expect(decision!.textContent).toMatch(/Keep the plan/);
-    // Side by side: one grid, two children, no scrolling between them.
-    expect(decision!.parentElement!.className).toMatch(/grid/);
-    expect(decision!.parentElement!.className).toMatch(/lg:grid-cols-2/);
+    // Asked while playing it: "what is important? What should I do?" The answer is in numbered
+    // steps: the verdict first, then the move, with nothing of the same weight between them.
+    const steps = [...c.querySelectorAll('[data-step]')];
+    expect(steps[0].querySelector('[data-part="verdict"]'), 'the first step is not the verdict').toBeTruthy();
+    expect(steps[steps.length - 1].contains(decision), 'the decision is not the last step').toBe(true);
   });
 
   it('cuts no scope at all once the Sprint Goal itself is at risk', () => {
@@ -144,14 +146,15 @@ describe('what the Daily Scrum puts above the fold', () => {
     // The copy said the Daily Scrum "always happens" on a screen with a button that skips it.
     const c = screen(scrum({ pendingImpediment: { id: 'imp1', title: 'A blocker', detail: 'in the way' } as unknown as ZooGameState['pendingImpediment'] }));
     expect(c.textContent, 'the copy still claims what the game does not do').not.toMatch(/It always happens/i);
-    expect(c.textContent).toMatch(/nobody dealing with it/i);
+    expect(c.textContent).toMatch(/Nobody deals with it/);
+    expect(c.textContent).toMatch(/the Daily Scrum does not happen/);
   });
 
   it('counts items until essentials can be marked', () => {
     // "none ⭐" read as a fault rather than as something not met yet.
     const c = screen();
     expect(c.textContent, 'the essentials figure is still a shrug').not.toMatch(/none/);
-    expect(c.textContent).toMatch(/Items done/);
+    expect(c.textContent).toMatch(/items done/);
   });
 });
 

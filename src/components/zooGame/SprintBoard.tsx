@@ -867,8 +867,10 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
       <Dialog open={state.dayStage === 'dailyScrum'}>
         {/* No close button: the event ends by adapting the plan or carrying on regardless, and a
             cross that silently did nothing would be worse than no cross at all. */}
-        <DialogContent data-part="daily-scrum"
-          className="zoo-theme max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-primary p-4 [&>button]:hidden">
+        {/* Focus goes to the event, not its first button: that was the first stand-up answer,
+            which then looked already chosen. The frame is ink: orange is for your move. */}
+        <DialogContent data-part="daily-scrum" onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); }}
+          className="zoo-theme max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-[hsl(var(--zoo-ink))] p-4 outline-none [&>button]:hidden">
           <DialogTitle className="sr-only">Daily Scrum</DialogTitle>
           <div>
             <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} onAskScrumMaster={onAskScrumMaster} onSay={onSay} />
