@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
+import { lookAhead } from './lookAhead';
 
 // The Sprint, one move at a time: your move above the board, the board, then the team chat.
 //
@@ -22,6 +23,8 @@ const sprint = (over: Partial<ZooGameState> = {}): ZooGameState => {
     ...over,
   } as ZooGameState;
 };
+/** Nothing waiting at all: the Product Owner's proposals ahead have been turned down too. */
+const nothingAhead = (s: ZooGameState): ZooGameState => ({ ...s, declinedProposals: lookAhead(s).map((p) => p.id) });
 const board = (s: ZooGameState) => render(
   <MemoryRouter>
     <SprintBoard state={s} move={<div data-part="the-move">Your move</div>} rail={<div data-part="the-chat">chat</div>}
@@ -46,7 +49,7 @@ describe('the Sprint screen', () => {
   });
 
   it('keeps End Day quiet while something waits on you, and loud when nothing does', () => {
-    const quiet = board(sprint());
+    const quiet = board(nothingAhead(sprint()));
     expect(document.querySelector('[data-part="end-day"]')!.className, 'with nothing waiting End Day is not the way on').toMatch(/bg-primary/);
     quiet.unmount();
     const s = sprint();

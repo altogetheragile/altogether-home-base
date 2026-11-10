@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer, ChatKind } from './types';
 import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress } from './engine';
 import { NewHere } from './NewHere';
+import { lookAhead } from './lookAhead';
 import { ActionBar } from './ActionBar';
 import { MEMBER_DRAG } from './ScrumTeam';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -266,6 +267,13 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
         waiting: `Ending the day does not accept it - ${last
           ? 'the Sprint ends and it goes to the Review unaccepted.'
           : `it carries into Day ${state.dayNumber + 1}.`}` };
+    }
+    // The Product Owner looking ahead: an epic to split, or a gap to fill. Ending the day does not
+    // lose it, but while it sits there unanswered End Day was the loudest button on the screen.
+    const ahead = lookAhead(state)[0];
+    if (ahead) {
+      return { go: ahead.label, cost: undefined,
+        waiting: `Ending the day does not settle it - it is still waiting on Day ${state.dayNumber + 1}.` };
     }
     return null;
   })();

@@ -8,6 +8,7 @@ import { askToCheck, askIfDue, endDay, tickDay, guessUnanswered, settleOpenQuest
   theirsToAnswer, openQuestions, QUESTION_PATIENCE } from './engine';
 import { DOCK_POSITION } from './notesDock';
 import type { ZooGameState } from './types';
+import { lookAhead } from './lookAhead';
 
 // Two things the game says at once, and the seam between them.
 //
@@ -38,6 +39,8 @@ const sprint = (over: Partial<ZooGameState> = {}): ZooGameState => {
     ...over,
   } as unknown as ZooGameState;
 };
+/** Nothing waiting at all: the Product Owner's proposals ahead have been turned down too. */
+const nothingAhead = (s: ZooGameState): ZooGameState => ({ ...s, declinedProposals: lookAhead(s).map((p) => p.id) });
 const penOf = (s: ZooGameState) => s.backlog.find((x) => x.status === 'committed')!;
 
 describe('who may answer what', () => {
@@ -196,7 +199,7 @@ describe('the dock, while something is being asked', () => {
   });
 
   it('says nothing when nothing is being asked', () => {
-    board(sprint());
+    board(nothingAhead(sprint()));
     expect(document.querySelector('[data-part="unanswered"]'), 'the dock warns about nothing').toBeNull();
   });
 
