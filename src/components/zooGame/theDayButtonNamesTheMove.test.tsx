@@ -5,6 +5,7 @@ import { SprintBoard } from './SprintBoard';
 import { initialZooState, DEFAULT_BRIEF } from './config';
 import * as engine from './engine';
 import { lookAhead } from './lookAhead';
+import { presetFor } from './design';
 import type { ZooGameState } from './types';
 
 // The end-turn button of a strategy game (Civilization's "Choose production"): while something waits
@@ -91,5 +92,18 @@ describe('the day button, while the Product Owner has a proposal waiting', () =>
     board(s);
     expect(document.querySelector('[data-part="unanswered"]')?.textContent).toContain(ahead.label);
     expect(document.querySelector('[data-part="end-day"]')!.className, 'End Day shouts over the split').not.toMatch(/\bbg-primary\b/);
+  });
+});
+
+describe('the day button, while built work waits for a second pair of eyes', () => {
+  it('names the review, and End Day is the quiet one', () => {
+    // Seen while playing it: "Who gives it the second pair of eyes?" on the rail, and End Day still
+    // the loud button beside it.
+    const s = sprint({ definitionOfDone: ['Peer reviewed by another Developer'] });
+    const item = s.backlog.find((it) => it.started)!;
+    const built = { ...s, backlog: s.backlog.map((it) => (it.id === item.id ? { ...it, design: presetFor(it), assignedDevs: [s.team.developers[0].id] } : it)) } as ZooGameState;
+    board(nothingAhead(built));
+    expect(document.querySelector('[data-part="unanswered"]')?.textContent).toContain(`Review ${item.name}`);
+    expect(document.querySelector('[data-part="end-day"]')!.className, 'End Day shouts over the review').not.toMatch(/\bbg-primary\b/);
   });
 });
