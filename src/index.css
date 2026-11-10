@@ -347,7 +347,11 @@
   --card-foreground: var(--zoo-ink);
   --popover: 40 100% 97%;
   --popover-foreground: var(--zoo-ink);
-  --primary: var(--aa-orange-hsl);       /* the next thing to do, and only that */
+  /* Blue is the next thing to do, and only that (10 Nov 2026). It was the brand orange, which is
+     also the Product Owner's colour, so Priya's figure, her chat and every "your move" were the same
+     thing to the eye. "PO is orange. Your Move can change." The orange stays hers, as --zoo-po. */
+  --primary: 221 83% 48%;         /* #1453e0 */
+  --zoo-po: var(--aa-orange-hsl);
   --primary-foreground: var(--aa-white-hsl);
   --secondary: 42 52% 88%;        /* a tinted panel */
   --secondary-foreground: var(--zoo-ink);

@@ -37,9 +37,10 @@ export const SEAT = {
   productOwner: {
     /** For an SVG fill, a canvas, an avatar - somewhere that needs a value rather than a class. */
     hex: colors.orange,
-    chip: 'bg-primary text-primary-foreground',
-    soft: 'bg-primary/15 text-primary',
-    text: 'text-primary',
+    // Her orange, said as hers: inside the game `primary` is blue, the next thing to do.
+    chip: 'bg-[hsl(var(--zoo-po))] text-white',
+    soft: 'bg-[hsl(var(--zoo-po)/0.15)] text-[hsl(var(--zoo-po))]',
+    text: 'text-[hsl(var(--zoo-po))]',
   },
   scrumMaster: {
     hex: '#7B2D7B',

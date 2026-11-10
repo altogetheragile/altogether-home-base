@@ -8,7 +8,7 @@ import { TAB_EDGE } from './ui/tokens';
 import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 
-// Orange is yours to do now, and nothing else on the screen is orange (rule 11 in
+// `primary` (orange then, blue now) is yours to do now, and nothing else on the screen is (rule 11 in
 // docs/SCRUM_GAMES_PLAN.md). Asked while playing the Sprint: "The colours are too uniform in that
 // it is not obvious what to do." The tab, the step you are on and your seats were all orange.
 

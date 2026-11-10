@@ -132,10 +132,12 @@ them before building it.
 10. **The objective tracker.** The goal is always on screen, in the same place, in full. The
     Sprint Goal rides in the band from Planning's second topic to the end of the Sprint
     (`SeatBand.tsx`). Nothing else repeats it.
-11. **Colour means one thing** (`ui/tokens.ts`). Orange is yours to do now: the move, its button,
-    the card it is about. Teal is the Developers' work in progress, green is Done and only Done,
-    red is the Sprint Goal in danger, violet is a wizard or teaching. A screen where most things
-    are orange says nothing is.
+11. **Colour means one thing** (`ui/tokens.ts`). Blue (`primary` inside `.zoo-theme`) is yours
+    to do now: the move, its button, the card it is about. People keep their own colours: the
+    Product Owner orange (`--zoo-po`), the Scrum Master plum, the Developers teal. Green is Done and
+    only Done, red is the Sprint Goal in danger, violet is a wizard or teaching. A screen where most
+    things are blue says nothing is. The move was orange until 10 Nov 2026, which made Priya and
+    "your move" the same thing to the eye.
 12. **Three levels of message.** What blocks you takes the screen (an event, such as the Daily
     Scrum). What is waiting on you is your move, above the thing it is about, one at a time, until
     it is answered (`ActionRail.tsx`). Everything else is the log: the team chat and Learn. A
