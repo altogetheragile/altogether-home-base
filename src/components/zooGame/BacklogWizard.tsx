@@ -8,6 +8,7 @@ import { ActionBar } from './ActionBar';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS, WIZARD } from './ui/tokens';
+import { SEAT } from './seats';
 import { Check, Sparkles, Users, Camera, Armchair } from 'lucide-react';
 
 // ============= Where a Product Backlog comes from =============
@@ -108,8 +109,8 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
           and refuses the press when you take it, is a screen you are stuck on - reported from a
           live session joined as a Developer. */}
       {!mine.allowed && (
-        <p data-part="not-yours" className="rounded-lg border border-primary/40 bg-primary/[0.06] px-3 py-2 text-xs">
-          <span className={cn(EYEBROW, 'mr-1.5 text-primary')}>The Product Owner&rsquo;s</span>
+        <p data-part="not-yours" className="rounded-lg border border-[hsl(var(--zoo-po)/0.4)] bg-[hsl(var(--zoo-po)/0.06)] px-3 py-2 text-xs">
+          <span className={cn(EYEBROW, 'mr-1.5', SEAT.productOwner.text)}>The Product Owner&rsquo;s</span>
           <span>{mine.because} You are watching them answer it - the three answers are theirs, and the
             Backlog appears here when they write it.</span>
         </p>

@@ -61,9 +61,13 @@ export function ActionBar({ left, className, children }: {
   // and something below it to scroll past; as the last child of a pane whose height it defines it
   // had neither, so the one button that moves the game on sat at the foot of a long page where you
   // could not see it. Portalled to the body so no filtered or clipping ancestor can trap it.
+  //
+  // ...which put it outside `.zoo-theme`, so it took the site's colours rather than the game's: the
+  // one button still orange once the game's next thing to do had gone blue. It carries the theme
+  // itself, as every popover and dialog in the game does.
   if (typeof document === 'undefined') return null;
   return createPortal(
-    <div className={cn(DOCK_POSITION, 'pointer-events-none')}>
+    <div className={cn('zoo-theme', DOCK_POSITION, 'pointer-events-none')}>
       <div className={cn(DOCK_PILL, className)}>{inner}</div>
     </div>,
     document.body,

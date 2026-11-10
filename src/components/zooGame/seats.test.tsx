@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync } from 'node:fs';
 import { colors } from '@/theme/colors';
+import { render } from '@testing-library/react';
 import { SEAT, DEV_STACK } from './seats';
+import { ActionBar } from './ActionBar';
 import { BOARD_ICONS } from './board/boardIcons';
 
 // One colour per accountability, and the same one the board uses.
@@ -168,5 +170,26 @@ describe('nothing in the game paints a seat for itself', () => {
       }
     }
     expect(stray, `a seat is painted by hand: ${stray.join(' | ')}`).toEqual([]);
+  });
+});
+
+describe('the Product Owner\'s colour', () => {
+  it('is her own, not the game\'s "your move"', () => {
+    // "PO is orange. Your Move can change." Inside the game `primary` is the next thing to do, so a
+    // Product Owner drawn in `primary` is drawn as a move.
+    for (const [k, v] of Object.entries(SEAT.productOwner)) {
+      if (k === 'hex') continue;
+      expect(v, `SEAT.productOwner.${k} is the move colour`).not.toMatch(/primary/);
+      expect(v, `SEAT.productOwner.${k} is not her orange`).toMatch(/--zoo-po/);
+    }
+  });
+
+  it('is not what the dock\'s button wears', () => {
+    // The dock is portalled to the body. Outside `.zoo-theme`, `primary` is the site's orange, so
+    // End Day was drawn in the Product Owner's colour while every other move was blue.
+    const { unmount } = render(<ActionBar><button type="button" data-part="the-way-on">End Day</button></ActionBar>);
+    expect(document.querySelector('[data-part="the-way-on"]')!.closest('.zoo-theme'),
+      'the dock is outside the game\'s theme').toBeTruthy();
+    unmount();
   });
 });

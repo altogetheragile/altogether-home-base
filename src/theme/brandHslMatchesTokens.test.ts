@@ -64,9 +64,14 @@ describe('the palette the App starts with', () => {
 describe('the theme takes its brand colours from the brand', () => {
   it('no longer hard-codes a primary', () => {
     expect(css).not.toMatch(/--primary:\s*24 95% 53%/);
-    // Three: the light theme, the (unreachable) dark one, and .zoo-theme, which had the brand
-    // transcribed by hand with comments naming the very tokens it duplicated.
-    expect(css.match(/--primary:\s*var\(--aa-orange-hsl\)/g)?.length, 'every theme should use it').toBe(3);
+    // Two: the light theme and the (unreachable) dark one. .zoo-theme used to be a third, with the
+    // brand transcribed by hand; since 10 Nov 2026 its primary is the game's own "your move" blue,
+    // because the brand orange there is the Product Owner's (--zoo-po).
+    expect(css.match(/--primary:\s*var\(--aa-orange-hsl\)/g)?.length, 'every site theme should use it').toBe(2);
+    expect(css, 'the game no longer keeps the brand orange for its Product Owner').toMatch(/--zoo-po:\s*var\(--aa-orange-hsl\)/);
+    const brand = Object.values(expected);
+    const zooPrimary = css.match(/\.zoo-theme\s*\{[^}]*--primary:\s*([^;]+);/)?.[1].trim();
+    expect(brand, 'the game\'s primary is a brand colour transcribed by hand').not.toContain(zooPrimary);
   });
 
   it('points the rest of the brand-coloured tokens at the palette too', () => {

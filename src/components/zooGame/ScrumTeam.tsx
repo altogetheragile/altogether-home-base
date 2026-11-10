@@ -118,7 +118,7 @@ export function ScrumTeamStrip({ team, onRename, compact = false }: { team: Scru
           <button type="button" title="The Scrum Team - tap for names and roles"
             className={cn(FOCUS, "flex items-center gap-1.5 rounded-full border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
             <Users className="h-3.5 w-3.5" />
-            <span className="rounded-full bg-primary/15 px-1 font-semibold text-primary">PO</span>
+            <span className={cn(SEAT.productOwner.soft, "rounded-full px-1 font-semibold")}>PO</span>
             <span className={cn(SEAT.scrumMaster.soft, "rounded-full px-1 font-semibold")}>SM</span>
             <span className="flex -space-x-1">
               {team.developers.map((d) => <Avatar key={d.id} name={d.name} colour={SEAT.developers.hex} size={16} />)}
@@ -145,7 +145,7 @@ function TeamRows({ team, onRename, inline = false }: { team: ScrumTeam; onRenam
   return (
     <div className={cn(inline ? 'flex flex-wrap items-center gap-x-3 gap-y-1.5' : 'space-y-1.5 text-xs')}>
       <span className="flex items-center gap-1.5" title="Product Owner - accountable for the product's value; orders the Product Backlog toward the Product Goal.">
-        <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[11px] font-semibold text-primary">PO</span>
+        <span className={cn(SEAT.productOwner.soft, "rounded-full px-1.5 py-0.5 text-[11px] font-semibold")}>PO</span>
         <EditableName member={team.productOwner} onRename={onRename} className="font-medium text-foreground" />
       </span>
       <span className="flex items-center gap-1.5" title="Scrum Master - a true leader who serves the team; causes impediments to be removed and coaches self-management.">
