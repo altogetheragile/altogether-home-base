@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer, ChatKind } from './types';
-import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress } from './engine';
+import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, asksNow, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress } from './engine';
 import { NewHere } from './NewHere';
 import { lookAhead } from './lookAhead';
 import { ActionBar } from './ActionBar';
@@ -267,6 +267,15 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
         waiting: `Ending the day does not accept it - ${last
           ? 'the Sprint ends and it goes to the Review unaccepted.'
           : `it carries into Day ${state.dayNumber + 1}.`}` };
+    }
+    // Built, and waiting on a second pair of eyes the Definition of Done asks for. Seen while playing
+    // it: "Who gives it the second pair of eyes?" on the rail, and End Day the loud button beside it.
+    const review = asksNow(state).find((a) => a.kind === 'review');
+    const reviewed = review && state.backlog.find((it) => it.id === review.itemId);
+    // ...when there is somebody left to give it, as the rail asks it.
+    if (reviewed && state.team.developers.some((d) => !(reviewed.assignedDevs ?? []).includes(d.id))) {
+      return { go: `Review ${reviewed.name}`, cost: undefined,
+        waiting: `Ending the day does not review it - it is not Done until another Developer has looked it over.` };
     }
     // The Product Owner looking ahead: an epic to split, or a gap to fill. Ending the day does not
     // lose it, but while it sits there unanswered End Day was the loudest button on the screen.

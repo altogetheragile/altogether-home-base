@@ -199,7 +199,10 @@ describe('the dock, while something is being asked', () => {
   });
 
   it('says nothing when nothing is being asked', () => {
-    board(nothingAhead(sprint()));
+    // ...and the pen has had its second pair of eyes, which the default Definition of Done asks for.
+    const s = sprint();
+    const two = s.team.developers.slice(0, 2).map((d) => d.id);
+    board(nothingAhead({ ...s, backlog: s.backlog.map((x) => (x.started ? { ...x, assignedDevs: two } : x)) } as ZooGameState));
     expect(document.querySelector('[data-part="unanswered"]'), 'the dock warns about nothing').toBeNull();
   });
 

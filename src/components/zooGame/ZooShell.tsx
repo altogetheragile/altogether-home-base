@@ -280,8 +280,12 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // Where the Learn drawer has been sent from outside it - the value measures, from the game menu.
   const [learnAt, setLearnAt] = useState<LearnSection | null>(null);
   // What is following the cursor, waiting to be put down on the park.
-  /** Something already standing that you have picked up again to put down somewhere else. */
-  const [moving, setMoving] = useState<string | null>(null);
+  /** Something already standing that you have picked up again to put down somewhere else - and
+   *  the day you picked it up. A Move nobody finished lived as long as the shell did, so the same
+   *  habitat carried into the next Sprint arrived already in your hand: "When I pull in an
+   *  enclosure that was partially Done I get the place the enclosure cursor again." */
+  const [moving, setMoving] = useState<{ id: string; day: string } | null>(null);
+  const today = `${state.sprintNumber}:${state.dayNumber}`;
   // Whether the acceptance criteria are open over the park. Here rather than inside the panel,
   // because the thing that opens them is the chip on the build strip: what an item has to be, and
   // the controls that get it there, are one conversation and were at opposite ends of the screen.
@@ -290,6 +294,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // "Back to the park" zooms out. This replaces the takeover: there is no window over the park any
   // more, and nothing is built anywhere else.
   const [inside, setInside] = useState<string | null>(null);
+  // A Move counts on the day it was pressed, for the thing in your hand, and not from inside a
+  // habitat: inside, you are working on what is in it, not carrying the whole of it.
+  const movingId = moving && moving.day === today && moving.id === inHand?.id && !inside ? moving.id : null;
 
   // Escape gets you out of whatever you picked up.
   //
@@ -300,13 +307,13 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   useEffect(() => {
     const out = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      if (moving) { setMoving(null); return; }
+      if (movingId) { setMoving(null); return; }
       if (drawing) { onDrawing?.(false); return; }
       if (inside) { setInside(null); return; }
     };
     window.addEventListener('keydown', out);
     return () => window.removeEventListener('keydown', out);
-  }, [moving, drawing, inside, onDrawing]);
+  }, [movingId, drawing, inside, onDrawing]);
 
   const insideItem = inside ? state.backlog.find((it) => it.id === inside) ?? null : null;
 
@@ -324,7 +331,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // ...and not for something that has no spot of its own. A path is drawn rather than dropped and
   // an animal lives in its habitat, so neither is a thing you carry to a place and let go of. See
   // `putDownByHand`, which the On the park menu reads too.
-  const placingId = moving ?? (inHand && edit && putDownByHand(inHand) && !inHand.pos
+  const placingId = movingId ?? (inHand && edit && putDownByHand(inHand) && !inHand.pos
     && structureChosen(inHand) ? inHand.id : null);
   /** Which corner to dock the inspector in: the one furthest from the thing you are working on, so
    *  what it is telling you about is never underneath it. */
@@ -581,7 +588,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                         onSetEnclosure: edit.onSetEnclosure,
                         onSetServices: edit.onSetServices,
                         onTurn,
-                        onUnplace: (id) => setMoving(id),
+                        onUnplace: (id) => setMoving({ id, day: today }),
                         // The first act of building, on the same toolbar as everything that follows
                         // it: one row, in the order the work happens.
                         onChooseStructure: edit.onChooseStructure,
@@ -597,7 +604,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                         // offering it, so the tool stayed out invisibly, every press inside the pen
                         // was read as drawing a run, and moving a pool or a tree stopped working.
                         // Reported from playing it: the path tool stayed active during Look Inside.
-                        onInside: (id) => { setInside(id); if (id) onDrawing?.(false); },
+                        onInside: (id) => { setInside(id); setMoving(null); if (id) onDrawing?.(false); },
                         // A planting item is a clump: another plant, what each one is, and taking one
                         // out. The park has always drawn and moved them; this is where they arrive.
                         onAddCopy,
