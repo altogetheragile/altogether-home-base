@@ -34,10 +34,10 @@ describe('what needs you', () => {
     expect([...r.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['Rounded', 'Your call']);
   });
 
-  it('names who is asking, in the colour they wear', () => {
+  it('names who is asking, quietly - orange is for the move', () => {
     const chip = rail(asked()).querySelector('[data-part="rail-actor"]')!;
     expect(chip.textContent).toBe('Product Owner');
-    expect(chip.className).toMatch(/bg-primary\/15/);
+    expect(chip.className, 'the Product Owner is a second orange chip beside Your move').not.toMatch(/primary/);
   });
 });
 

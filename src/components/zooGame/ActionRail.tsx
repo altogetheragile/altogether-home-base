@@ -3,7 +3,6 @@ import type { ZooGameState, PbiDraft } from './types';
 import type { SeatName } from './useZooSessions';
 import { useYou } from './you';
 import { asksNow, openQuestions, readyToOpen, theirsToAnswer, whoIs, QUESTION_PATIENCE, PLACEMENT_CHOICES, whatToPullNext, whatToHelpWith, yourDev, activeWipLimit, hatHolder } from './engine';
-import { SEAT } from './seats';
 import { lookAhead } from './lookAhead';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
@@ -306,7 +305,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
         )}
         {/* Who is asking, in their own colour: the Product Owner orange, the Scrum Master purple,
             the Developers teal - the colours they wear everywhere else in the game. */}
-        <span data-part="rail-actor" className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold', actorTone(actor))}>
+        <span data-part="rail-actor" className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold', ACTOR)}>
           {actor}
         </span>
         {action.meta && <span data-part="rail-meta" className="text-[11px] text-muted-foreground">{action.meta}</span>}
@@ -362,12 +361,10 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   );
 }
 
-/** The colour of whoever is asking. */
-function actorTone(actor: string): string {
-  if (/product owner/i.test(actor)) return SEAT.productOwner.soft;
-  if (/scrum master/i.test(actor)) return SEAT.scrumMaster.soft;
-  return SEAT.developers.soft;
-}
+/** Whoever is asking, as a quiet label. It wore their colour, which made the Product Owner's an
+ *  orange chip beside an orange "Your move": two orange things where one says what to do. The
+ *  person's colour stays on the person, in the chat and on the board. */
+const ACTOR = 'bg-muted text-foreground';
 
 /** Whether a thing on the rail is this player's to answer.
  *

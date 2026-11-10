@@ -17,14 +17,15 @@ export function JourneyLine({ state, className }: { state: ZooGameState; classNa
           {s.key === 'planning' && (
             <span data-part="journey-cycle" title={looped ? `Back round to Sprint Planning for Sprint ${sprint}` : 'Every Sprint runs these four'}
               className={cn('mx-0.5 flex items-center gap-0.5 rounded-full px-1.5 py-0.5 font-semibold',
-                looped ? 'bg-primary/15 text-primary' : 'text-muted-foreground/70')}>
+                looped ? 'bg-muted text-foreground' : 'text-muted-foreground/70')}>
               <RotateCw className="h-3 w-3" aria-hidden />
               <span>Sprint {sprint}</span>
             </span>
           )}
           {i > 0 && s.key !== 'planning' && <span aria-hidden className="h-px w-2 bg-border sm:w-3" />}
           <span className={cn('flex items-center gap-1 rounded-full px-2 py-0.5',
-            s.status === 'now' && 'bg-primary font-bold text-primary-foreground',
+            // Where you are, in ink. Orange is for what is yours to do, and this is a place.
+            s.status === 'now' && 'bg-[hsl(var(--zoo-ink))] font-bold text-white',
             s.status === 'done' && 'text-foreground/80',
             s.status === 'todo' && 'text-muted-foreground/70',
             s.status === 'passed' && 'border border-dashed border-amber-500/70 text-amber-700')}
