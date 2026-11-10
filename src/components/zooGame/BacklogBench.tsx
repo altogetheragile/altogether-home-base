@@ -270,9 +270,11 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
       {/* The commitment of the Product Backlog, on the Product Backlog. An artifact and its
           commitment belong together, and this said the Sprint Backlog already worked that way. It
           did not: the Sprint Goal was in the top strip, truncated, and nowhere near the board. It
-          is above the board now, so the claim is true and the two artifacts match. */}
-      <div className="rounded-lg border border-primary/25 bg-primary/[0.04] px-3 py-2">
-        <div className={cn(EYEBROW, 'flex items-center gap-1.5 text-primary')}>
+          is above the board now, so the claim is true and the two artifacts match.
+          In Priya's orange, with the label in ink so it can be read: the Product Goal is the Product Owner's, and the game's blue is for the
+          move waiting on you, which this is not. */}
+      <div className="rounded-lg border-2 border-[hsl(var(--zoo-po))] bg-[hsl(var(--zoo-po)/0.10)] px-3 py-2">
+        <div className={cn(EYEBROW, 'flex items-center gap-1.5 text-foreground')}>
           <BoardIcon name={BOARD.productGoal} className="h-3.5 w-3.5" /> Product Goal <span className="font-normal normal-case tracking-normal text-muted-foreground">commitment of the Product Backlog</span>
         </div>
         <p className={cn('text-sm leading-snug', state.productGoal.trim() ? 'font-semibold' : 'text-muted-foreground')}>
