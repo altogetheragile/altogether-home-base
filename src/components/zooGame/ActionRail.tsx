@@ -287,11 +287,11 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   const rest = ordered.map((a, i) => ({ a, i })).filter(({ i }) => i !== idx);
   return (
     <div data-part="action-rail" data-kind={yours ? 'yours' : 'waiting'}
-      // Yours is the loudest thing on the screen: a white card in orange, at reading size, with its
-      // answers at button size. It was a pale orange box of 14px text with 12px buttons, the same
-      // weight as the board and the chat beside it, and in a screen where most things were orange.
-      className={cn('shrink-0 space-y-2 rounded-xl',
-        yours ? 'border-[3px] border-primary bg-card px-4 py-3 shadow-[4px_4px_0_hsl(var(--zoo-ink))]' : 'border border-dashed border-border bg-muted/30 px-3 py-2.5',
+      // Yours is the loudest thing on the screen, and it is loud by its frame - an orange card with a
+      // hard shadow and one orange button - not by its size. At 18px text and large buttons it took a
+      // third of the board's height to say one sentence.
+      className={cn('shrink-0 space-y-1.5 rounded-xl',
+        yours ? 'border-2 border-primary bg-card px-3 py-2 shadow-[3px_3px_0_hsl(var(--zoo-ink))]' : 'border border-dashed border-border bg-muted/30 px-3 py-2',
         className)}>
       <div className="flex flex-wrap items-center gap-1.5">
         {yours ? (
@@ -315,7 +315,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
           </span>
         )}
       </div>
-      <p className={cn('leading-snug', yours ? 'text-base font-semibold text-foreground lg:text-lg' : 'text-sm text-muted-foreground')}>
+      <p className={cn('leading-snug', yours ? 'text-sm font-semibold text-foreground' : 'text-sm text-muted-foreground')}>
         {action.text}
         {action.note && (
           <span className="mt-1 block text-xs font-normal leading-snug text-muted-foreground">{action.note}</span>
@@ -327,7 +327,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
         <div className="flex flex-wrap gap-2">
           {action.answers.map((a) => (
             <button key={a.label} type="button" onClick={a.act}
-              className={cn(FOCUS, 'shrink-0 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors',
+              className={cn(FOCUS, 'shrink-0 rounded-md border-2 px-3 py-1 text-xs font-semibold transition-colors',
                 a.primary ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
                   : 'border-[hsl(var(--zoo-ink))] bg-card hover:bg-muted/60')}>
               {a.label}
