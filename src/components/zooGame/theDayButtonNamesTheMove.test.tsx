@@ -2,7 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
-import { initialZooState } from './config';
+import { initialZooState, DEFAULT_BRIEF } from './config';
+import * as engine from './engine';
+import { lookAhead } from './lookAhead';
 import type { ZooGameState } from './types';
 
 // The end-turn button of a strategy game (Civilization's "Choose production"): while something waits
@@ -26,6 +28,8 @@ const checking = () => {
   return { s: { ...s, questions: [{ id: `check-${item.id}`, of: 'product_owner', from: 'Ada', itemId: item.id, text: 'Is it what you asked for?',
     askedAt: s.daySecondsLeft, choices: [{ key: 'accept', label: 'Accept it' }], day: 1 }] } as unknown as ZooGameState, item };
 };
+/** Nothing waiting at all: the Product Owner's proposals ahead have been turned down too. */
+const nothingAhead = (s: ZooGameState): ZooGameState => ({ ...s, declinedProposals: lookAhead(s).map((p) => p.id) });
 const board = (s: ZooGameState, onEndDay = noop) => render(
   <MemoryRouter>
     <SprintBoard state={s} move={<div data-part="action-rail"><button type="button">Accept it</button></div>}
@@ -70,8 +74,22 @@ describe('the day button, while something waits on you', () => {
   });
 
   it('is just End Day when nothing waits', () => {
-    board(sprint());
+    board(nothingAhead(sprint()));
     expect(document.querySelector('[data-part="unanswered"]')).toBeNull();
     expect(document.querySelector('[data-part="end-day"]')!.textContent).toMatch(/^End Day 1 →/);
+  });
+});
+
+describe('the day button, while the Product Owner has a proposal waiting', () => {
+  it('names the split, and End Day is the quiet one', () => {
+    // Seen while playing it: "Split Big Cats" waiting on the rail, and End Day still the big orange
+    // button. The blocker counted questions and held cards, not what the Product Owner sees ahead.
+    const { startOnTheBoard } = engine;
+    const s = { ...startOnTheBoard(initialZooState(3), DEFAULT_BRIEF), dayStage: 'building' } as ZooGameState;
+    const ahead = lookAhead(s)[0];
+    expect(ahead, 'this Sprint has nothing ahead to propose').toBeTruthy();
+    board(s);
+    expect(document.querySelector('[data-part="unanswered"]')?.textContent).toContain(ahead.label);
+    expect(document.querySelector('[data-part="end-day"]')!.className, 'End Day shouts over the split').not.toMatch(/\bbg-primary\b/);
   });
 });
