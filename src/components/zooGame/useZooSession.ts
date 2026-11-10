@@ -260,7 +260,8 @@ const EVENT_BEAT_MS = 9000;
  *
  *  Reported from playing it: "the messaging... can it be combined?" The reducer's line carries the
  *  reason now, so the one that is left is the one worth reading. */
-export const NARRATED = new Set(['START_ITEM', 'LEND_A_HAND']);
+// CALL_SPRINT_GOAL too: the call says its own reasons, naming what was left unfinished.
+export const NARRATED = new Set(['START_ITEM', 'LEND_A_HAND', 'CALL_SPRINT_GOAL']);
 
 /** Which card a move is about, under either of the two names an action gives it.
  *

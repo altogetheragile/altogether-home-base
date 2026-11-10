@@ -90,6 +90,8 @@ export function goalLine(state: ZooGameState): { line: string; risk: boolean; is
   if ((state.phase === 'review' || state.phase === 'retro') && typeof state.sprintGoalMet === 'boolean') {
     return { line: state.sprintGoalMet ? 'Sprint Goal met' : 'Sprint Goal not met', risk: !state.sprintGoalMet };
   }
+  // ...and before it is settled, it is waiting on the Product Owner's call, not on the pulse.
+  if (state.phase === 'review' || state.phase === 'retro') return { line: 'Sprint Goal: Priya’s call', risk: false };
   const pulse = goalPulse(state);
   return { line: pulse.line, risk: pulse.level === 'risk' };
 }
