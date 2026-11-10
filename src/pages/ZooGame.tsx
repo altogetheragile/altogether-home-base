@@ -401,7 +401,8 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
         // easily switch between them?"
         if (beforeStart) {
           return <BeforeYouStart tab={startTab} onTab={setStartTab} onDone={() => setBeforeStart(false)}
-            read={(state.taught ?? []).length} onForgetTeaching={forgetTaught} copy={copyProps} />;
+            read={(state.taught ?? []).length} onForgetTeaching={forgetTaught}
+            onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
         }
         return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={startFromTheBrief}
           teachCard={cardFor('intro')}
