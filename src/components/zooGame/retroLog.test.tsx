@@ -64,10 +64,9 @@ describe('the Daily Scrum counts one day one way', () => {
     const state = { ...initialZooState(3), phase: 'sprint', dayStage: 'dailyScrum',
       sprintDays: 3, dayNumber: 2, sprintGoal: 'Open the Big Cats zone' } as ZooGameState;
     const { container } = render(<DailyScrum state={state} onHold={() => {}} onSkip={() => {}} />);
-    const figures = [...container.querySelectorAll('div')]
-      .map((d) => d.textContent ?? '').filter((t) => /Days left$/.test(t.trim()));
-    expect(figures.length, 'the day figure is not on the screen').toBeGreaterThan(0);
-    expect(figures.join(' '), 'day 2 of 3 should have two days left, today included').toMatch(/2/);
+    const verdict = container.querySelector('[data-part="verdict"]')?.textContent ?? '';
+    expect(verdict, 'the day figure is not on the screen').toMatch(/\d+ days?\b/);
+    expect(verdict, 'day 2 of 3 should have two days left, today included').toMatch(/\b2 days\b/);
   });
 });
 

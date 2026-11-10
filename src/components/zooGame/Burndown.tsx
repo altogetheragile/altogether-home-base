@@ -52,7 +52,9 @@ export function Burndown({ state, compact = false }: { state: ZooGameState; comp
     ideal: Math.round((start * (days - i)) / days),
     remaining: i < state.burndown.length ? state.burndown[i] : null,
   }));
-  const height = compact ? 130 : 190;
+  // Compact is the Daily Scrum's, beside the verdict it is the evidence for: small enough that the
+  // verdict, not the chart, is what you read first.
+  const height = compact ? 96 : 190;
   return (
     <ResponsiveContainer width="100%" height={height}>
       <LineChart data={data} margin={{ top: 8, right: 10, bottom: 2, left: -18 }}>
