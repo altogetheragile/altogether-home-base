@@ -232,26 +232,36 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
   // theirs to answer, so ending the day answers it: you lose the say, which is what an absent
   // Product Owner costs. An ACCEPTANCE is nobody's but the Product Owner's, so ending the day does
   // not settle it; it carries, and on the last day it reaches the Review unaccepted.
+  //
+  // ...and the move it names. The dock's button is the end-turn button of a strategy game: while
+  // something waits on you it says what (Civilization's "Choose production"), and pressing it takes
+  // you there. "End Day" is offered beside it, smaller, because nothing here blocks the day.
   const pressing = (() => {
+    const held = state.proposed;
+    if (held) {
+      const who = state.team.developers.find((d) => d.id === held.devId)?.name ?? 'the Developers';
+      return { go: `Answer ${who}`, waiting: undefined,
+        cost: `${who} is waiting on you, and the clock is held until you answer.` };
+    }
     const open = openQuestions(state);
     const named = (q: typeof open[number]) => (q.itemId
       ? state.backlog.find((it) => it.id === q.itemId)?.name ?? 'the work' : 'the work');
     const theirs = open.find(theirsToAnswer);
     if (theirs) {
-      return { chip: `${theirs.from} is waiting`, waiting: undefined,
+      return { go: `Answer ${theirs.from}`, waiting: undefined,
         cost: `${theirs.from} asked about ${named(theirs)} and is waiting. End the day and the Developers decide it themselves.` };
     }
     const mine = open.find((q) => !theirsToAnswer(q));
     if (mine) {
       const last = state.dayNumber >= state.sprintDays;
-      return { chip: `${named(mine)} is waiting to be checked`,
+      return { go: `Check ${named(mine)}`,
         // No long version of it. The rail below is already asking this question, in more words and
         // with the two buttons that answer it - and the dock saying the same thing again grew the
         // pill across the window until it lay on top of those buttons. Reported as "when I finish
         // a PBI and want to ask for PO approval I cannot - other messages are in the way".
         //
-        // The chip stays, because it is the one thing the rail does NOT say: that pressing End Day
-        // will not settle this. Six words rather than forty.
+        // What it carries is the one thing the rail does NOT say: that pressing End Day will not
+        // settle this. On the button, as its title, rather than forty words in the dock.
         cost: undefined,
         waiting: `Ending the day does not accept it - ${last
           ? 'the Sprint ends and it goes to the Review unaccepted.'
@@ -259,6 +269,17 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
     }
     return null;
   })();
+  // Take the player to the move: bring it into view, put them on its first answer, and flash it so
+  // the eye lands where the hand did.
+  const goToMove = () => {
+    const rail = document.querySelector<HTMLElement>('[data-part="action-rail"]');
+    if (!rail) return;
+    rail.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+    rail.querySelector<HTMLButtonElement>('button')?.focus({ preventScroll: true });
+    // A pulse rather than a ring: the pane clips anything drawn outside the card.
+    rail.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.015)', backgroundColor: 'hsl(var(--primary) / 0.12)' }, { transform: 'scale(1)' }],
+      { duration: 600, easing: 'ease-out' });
+  };
   const todo = committed.filter((it) => it.status === 'committed' && !it.started);
   const doing = committed.filter((it) => it.status === 'committed' && it.started);
   // Deploy = built to the Definition of Done, awaiting release; Done = deployed (live to visitors).
@@ -916,24 +937,9 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
           // ...and when the forecast is finished with days still in the Sprint, the way on is not
           // the end of the day: it is a conversation with the Product Owner about what to take next.
           // So the answer is a button rather than a sentence somebody has to act on themselves.
-          left={(pressing || whyNothingMoves(state) === 'empty') ? (
+          left={whyNothingMoves(state) === 'empty' ? (
             <>
-              {/* The seam between the two things the game says at once. The rail says somebody is
-                  waiting on you; the dock beside it says press this to move on. Both were true and
-                  nothing joined them, so the game offered to move past a question it was asking.
-                  It does not block - a Product Owner who has wandered off cannot be allowed to stall
-                  a Sprint, and an unanswered question costing you the say is the lesson. It names
-                  the price instead. In `left` rather than only in the hint because the hint is
-                  hidden on a narrow screen and behind anything the game is saying. */}
-              {pressing && (
-                <span data-part="unanswered" title={pressing.waiting ?? pressing.cost}
-                  className="shrink-0 rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">
-                  {pressing.chip}
-                </span>
-              )}
-              {whyNothingMoves(state) === 'empty' && (
-                <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
-              )}
+              <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
             </>
           ) : undefined}>
           {/* Ending a day gives back what is left of it, and the last day of a Sprint ends the
@@ -942,7 +948,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
               rather than in a dialog because a dialog over every day would be a dialog nobody
               reads by Sprint 2. */}
           {state.dayNumber === state.sprintDays && !endingConfirmed ? (
-            <Button data-part="end-sprint" variant="destructive"
+            <Button data-part="end-sprint" variant={pressing ? 'ghost' : 'destructive'} size={pressing ? 'sm' : 'default'}
               onClick={() => setConfirmedOn(thisDay)}>
               End the Sprint{doing.length > 0 ? ` \u00b7 ${doing.length} unfinished` : ''} &rarr;
             </Button>
@@ -950,14 +956,22 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
             // Quiet while something waits on you. It was the loudest button on the screen while the
             // move above the board was the thing to do, so the screen said two things at once.
             <Button data-part={state.dayNumber === state.sprintDays ? 'end-sprint-confirm' : 'end-day'}
-              variant={pressing || state.proposed ? 'outline' : 'default'} onClick={onEndDay}>
-              {state.dayNumber === state.sprintDays
+              variant={pressing ? 'ghost' : 'default'} size={pressing ? 'sm' : 'default'} onClick={onEndDay}
+              title={pressing ? (pressing.waiting ?? pressing.cost) : undefined}>
+              {pressing && state.dayNumber < state.sprintDays ? `End Day ${state.dayNumber} anyway` : state.dayNumber === state.sprintDays
                 ? doing.length > 0
                   ? `Yes \u00b7 ${doing.length} go back to the Product Backlog`
                   : 'Yes, go to the Review'
                 : state.dailyScrumAt === 'start'
                   ? `End Day ${state.dayNumber} \u2192 Day ${state.dayNumber + 1} Scrum`
                   : `End Day ${state.dayNumber} \u2192 its Scrum`}
+            </Button>
+          )}
+          {/* What is waiting on you, named, and the way to it: last in the dock, where the way on
+              always is, and the loudest thing in it, because it is the thing to do next. */}
+          {pressing && (
+            <Button data-part="unanswered" title={pressing.waiting ?? pressing.cost} onClick={goToMove}>
+              {pressing.go} &rarr;
             </Button>
           )}
         </ActionBar>
