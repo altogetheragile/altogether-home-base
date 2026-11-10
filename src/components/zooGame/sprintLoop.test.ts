@@ -92,7 +92,7 @@ describe('a Sprint, played through to the Review', () => {
     expect(notReleased.map((x) => `${x.category}:${x.name}`), 'these were never released').toEqual([]);
     expect((s.connectors ?? []).length, 'no pathway was ever run to a zone').toBeGreaterThan(0);
     expect(s.velocity[0], 'nothing was delivered').toBeGreaterThan(0);
-    expect(s.sprintGoalMet, 'the Sprint Goal was not met').toBe(true);
+    expect(s.sprintGoalFacts?.reading, 'the Sprint Goal does not read as met').toBe(true);
     // ...and the Review has something to talk about, which is the whole point of getting here.
     expect(s.signals.length, 'the visitors said nothing, so the Review teaches nothing').toBeGreaterThan(0);
   });

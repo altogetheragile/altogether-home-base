@@ -630,9 +630,14 @@ export interface ZooGameState {
   /** In a shared game, the players who have agreed the forecast as it stands. Whoever changes it
    *  proposes it, and is the first to agree; the others agree or change it themselves. */
   forecastAgreed?: string[];
-  /** Whether the current Sprint's goal was met, set at the Review (null until then,
-   *  or when there is no goal). */
+  /** Whether the current Sprint's goal was met: the Product Owner's call at the Review (null until
+   *  she makes it, or when there is no goal). */
   sprintGoalMet: boolean | null;
+  /** What the Review shows before the Goal is called, kept at the end of the Sprint because the
+   *  unfinished work has gone back to the Product Backlog by the time anybody looks. `reading` is
+   *  what the essentials say - or, with none marked, every item forecast - and it is only a reading:
+   *  the call is the Product Owner's. */
+  sprintGoalFacts?: { done: string[]; unfinished: string[]; essentials: string[]; reading: boolean } | null;
   /** Product-wide, team-owned quality bar every item clears to be shippable. */
   definitionOfDone: string[];
   /** The team's agreement about what makes an item ready to forecast. Editable, like the DoD. */
@@ -966,6 +971,7 @@ export type ZooAction =
   | { type: 'SKIP_DAILY_SCRUM'; by?: string }
   | { type: 'START_DAY' }
   | { type: 'REVIEW_SPRINT' }
+  | { type: 'CALL_SPRINT_GOAL'; met: boolean }
   | { type: 'NEXT_SPRINT'; improvement: string }
   | { type: 'END_GAME' }
   | { type: 'LOAD_GAME'; state: ZooGameState }

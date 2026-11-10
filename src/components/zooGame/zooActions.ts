@@ -136,6 +136,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     beginDay: () => send({ type: 'START_DAY' }),
     cancelSprint: () => send({ type: 'CANCEL_SPRINT' }),
     review: () => send({ type: 'REVIEW_SPRINT' }),
+    callSprintGoal: (met: boolean) => send({ type: 'CALL_SPRINT_GOAL', met }),
     nextSprint: (improvement: string) => send({ type: 'NEXT_SPRINT', improvement }),
     finish: () => send({ type: 'END_GAME' }),
     // Resuming a save brings its own memory of which cards were read. So does this browser, from

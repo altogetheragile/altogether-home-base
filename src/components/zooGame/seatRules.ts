@@ -26,6 +26,8 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   // "The Product Owner is accountable for maximising the value of the product... Product
   // Backlog management includes developing the Product Goal, creating and ordering items,
   // and making the Product Backlog transparent."
+  // This game's rule, not the Guide's, which names nobody: see `callSprintGoal`.
+  CALL_SPRINT_GOAL:  { who: 'product_owner', because: 'In this game the Product Owner calls the Sprint Goal at the Review. The Guide names nobody: the Scrum Team inspects the outcome there.' },
   SET_PRODUCT_GOAL:  { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate.' },
   SET_GOAL_FORM:     { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate.' },
   WRITE_BACKLOG:     { who: 'product_owner', because: 'The Product Backlog is the Product Owner’s to create and order.' },
