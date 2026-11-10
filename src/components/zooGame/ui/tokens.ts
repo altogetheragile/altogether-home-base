@@ -206,7 +206,12 @@ export const BAR_ACTION = 'w-full justify-center sm:w-auto';
  *  report was the obvious one: "can the tab outline be thicker and darker, it is still too subtle".
  *  A tab is not a quiet panel. It is the control that says which of three things you are looking
  *  at, and it should be legible across a room, because in a classroom it is. */
-export const TAB_EDGE = 'border-primary';
+//
+// ...and then in ink. Orange came to mean "yours to do now" (rule 11 in docs/SCRUM_GAMES_PLAN.md),
+// and a tab is where you are, not something to do: with the tab, the step track and the seats all
+// orange, "the colours are too uniform in that it is not obvious what to do" (10 Nov 2026). Ink is
+// as dark and as thick as the orange was, so the tab is no harder to read.
+export const TAB_EDGE = 'border-[hsl(var(--zoo-ink))]';
 /** The row itself: tabs sit ON the line, so the active one can break it.
  *
  *  It SCROLLS rather than squashing. Three tabs need about 440px and a phone has 390, so the row

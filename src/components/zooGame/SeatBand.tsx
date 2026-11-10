@@ -142,7 +142,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
         // above the work, pushing it down, and said again on Planning's page.
         <p data-part="sprint-goal" className="flex min-w-0 flex-1 items-baseline gap-2 text-foreground">
           {observer && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
-          <span title="The commitment of the Sprint Backlog" className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+          <span title="The commitment of the Sprint Backlog" className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-foreground">
             <Target className="h-3.5 w-3.5 self-center" aria-hidden /> Sprint Goal
           </span>
           <span data-part="sprint-goal-text" className={cn('min-w-0 text-sm font-bold leading-snug', !state.sprintGoal.trim() && 'font-medium text-muted-foreground')}>
@@ -187,8 +187,10 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                   : cover ? 'Nobody is holding this seat, so its work falls to you. ' : ''}${YOURS[s.role][state.phase] ?? ''}`
                 : `${s.name} · ${s.doing}${s.hat ? '\nHolds the Scrum Master hat this Sprint.' : ''}`}
               className={cn('flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1',
-                yours && 'border-2 border-primary bg-primary/5',
-                cover && !absent && 'border-2 border-dashed border-primary/60',
+                // Your seat, in ink. It was orange, the colour of what is yours to do, and a seat is
+                // who you are: with your two seats, the tab and the step track all orange, nothing was.
+                yours && 'border-2 border-[hsl(var(--zoo-ink))] bg-card',
+                cover && !absent && 'border-2 border-dashed border-[hsl(var(--zoo-ink))]/60',
                 absent && 'border-2 border-dashed border-amber-400/70 bg-amber-500/[0.04]',
                 !s.present && 'opacity-40')}>
               {/* The board's person, not a coloured disc with a letter in it. Taller than it is
@@ -205,7 +207,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                   {/* The Scrum Master hat, worn by a Developer: the SM the board writes on Sam,
                       in the Scrum Master's colour, beside the name of whoever has it. */}
                   {s.hat && <span data-part="seat-hat" title="Holds the Scrum Master hat this Sprint" className={cn(SEAT.scrumMaster.soft, 'ml-1 rounded-full px-1 text-[10px] font-semibold')}>SM</span>}
-                  {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-primary">you</span>}
+                  {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-foreground">you</span>}
                   {/* One name is yours to change: alone, that is your Developer's, not Sam's as well. */}
                   {yours && onRename && (mine || s.role === 'developer') && <RenameMe id={s.id} name={s.name} onRename={onRename} />}
                   {/* One word, because the band is one line and this is the whole news. Said in
@@ -213,7 +215,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                       this had. */}
                   {absent
                     ? <span data-part="seat-away" className="ml-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">away</span>
-                    : cover && <span className="ml-1 text-[10px] font-medium text-primary">covering</span>}
+                    : cover && <span className="ml-1 text-[10px] font-medium text-foreground">covering</span>}
                 </span>
                 <span className="block truncate text-[10px] text-muted-foreground">{s.doing}</span>
               </span>
