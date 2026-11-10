@@ -34,6 +34,17 @@ describe('what needs you', () => {
     expect([...r.querySelectorAll('button')].map((b) => b.textContent)).toEqual(['Rounded', 'Your call']);
   });
 
+  it('is loud by its frame, not its size', () => {
+    // "Does the text and the buttons need to be so large? They take up unnecessary space." The card
+    // was 18px text with large buttons and took a third of the board's height for one sentence.
+    const r = rail(asked());
+    expect(r.querySelector('p')!.className, 'the move is set in display type').not.toMatch(/text-(base|lg|xl)/);
+    for (const b of r.querySelectorAll('button')) {
+      expect(b.className, `"${b.textContent}" is a large button`).not.toMatch(/\bpx-4\b|\bpy-2\b|text-(sm|base)/);
+    }
+    expect(r.className, 'the card lost its frame').toMatch(/border-primary/);
+  });
+
   it('names who is asking, quietly - orange is for the move', () => {
     const chip = rail(asked()).querySelector('[data-part="rail-actor"]')!;
     expect(chip.textContent).toBe('Product Owner');
