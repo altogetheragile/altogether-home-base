@@ -119,6 +119,45 @@ are the rules the screens now follow, so the next one does not have to be correc
    choosing work, `ExplainButton` for "where are the words". If two screens do the same thing they
    look the same doing it.
 
+### The Game Patterns Behind Them
+
+Asked on 10 November 2026: "Are we using recognised game design patterns?" Partly, and without
+naming them. These are the named ones the screens follow from now on. Check a redesign against
+them before building it.
+
+9. **Trading-card anatomy** (Magic, Hearthstone). Cost top left, then name, type line and text,
+   the same parts in the same places everywhere; the frame is the state. A row in a list, a card on
+   a board and the card you opened are one card at three sizes (`pbi/PbiCardShell.tsx`,
+   `OpenCard.tsx`). Acceptance criteria are on the back.
+10. **The objective tracker.** The goal is always on screen, in the same place, in full. The
+    Sprint Goal rides in the band from Planning's second topic to the end of the Sprint
+    (`SeatBand.tsx`). Nothing else repeats it.
+11. **Colour means one thing** (`ui/tokens.ts`). Orange is yours to do now: the move, its button,
+    the card it is about. Teal is the Developers' work in progress, green is Done and only Done,
+    red is the Sprint Goal in danger, violet is a wizard or teaching. A screen where most things
+    are orange says nothing is.
+12. **Three levels of message.** What blocks you takes the screen (an event, such as the Daily
+    Scrum). What is waiting on you is your move, above the thing it is about, one at a time, until
+    it is answered (`ActionRail.tsx`). Everything else is the log: the team chat and Learn. A
+    message is only ever at one level.
+13. **The end-turn button names what blocks it** (Civilization). The button that moves the day on
+    says the next thing waiting on you, takes you to it, and says "End Day" only when nothing is.
+    One button that always says what to do next, not a loud button beside a louder question.
+14. **Interesting decisions** (Sid Meier). A choice shows what each answer costs, on the answer,
+    and none is drawn as the right one. A judgement with one orange button is a prompt.
+15. **Dialogue choices.** What you say in the room is picked from lines, not typed, and every line
+    is true; what differs is what it is about (the stand-up in `DailyScrum.tsx`).
+16. **A small HUD, a big play area.** Status lives at the edges and the board gets the middle.
+    Chrome above the board is a cost, paid in board, and every strip of it has to earn its place.
+17. **Spotlight the first move.** A newcomer meeting a mechanic for the first time sees the one
+    control to press, with the rest of the screen quieter, rather than a paragraph about it. Not
+    built yet.
+18. **Feedback on every action.** Press something and something visible happens at once: the card
+    moves, the tick appears, the number changes. If nothing visibly happens the press reads as
+    broken.
+19. **The debrief.** What you decided is logged as you play and read back at the Retrospective, so
+    the lesson comes from your own Sprint rather than from the game's opinion of it.
+
 ## Increment 2: Close The Flow Gaps
 
 - **Sprint Review agenda** restructured to the common pattern the flow describes: Product Goal and
