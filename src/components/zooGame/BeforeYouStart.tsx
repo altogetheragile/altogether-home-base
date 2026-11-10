@@ -8,6 +8,7 @@ import { ORIENTATION } from './scrumContent';
 import { CopyEditor, type CopyEditorProps } from './CopyEditor';
 import { ShowTeachingAgain } from './ShowTeachingAgain';
 import { GameLinks } from './GameLinks';
+import { ResumeSavedGame } from './ResumeSavedGame';
 import { motionWanted } from './motion';
 import { cn } from '@/lib/utils';
 import { ACTION_BAR, BAR_ACTION, FOCUS, TAB_ROW } from './ui/tokens';
@@ -39,7 +40,7 @@ const TABS: { id: StartTab; label: () => string; icon: typeof Trees }[] = [
   { id: 'scrum', label: () => 'Scrum on one page', icon: Repeat },
 ];
 
-export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching, copy }: {
+export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching, onOpenSaves, copy }: {
   tab: StartTab;
   onTab: (t: StartTab) => void;
   onDone: () => void;
@@ -47,6 +48,8 @@ export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching,
    *  this screen, and only shows when there is something to forget. */
   read?: number;
   onForgetTeaching?: () => void;
+  /** Signed-in players can resume a saved game, from the first screen as well as the second. */
+  onOpenSaves?: () => void;
   copy?: CopyEditorProps;
 }) {
   // The chosen tab brings itself into view. On a phone the row scrolls rather than squashing, so
@@ -128,6 +131,7 @@ export function BeforeYouStart({ tab, onTab, onDone, read = 0, onForgetTeaching,
             children apart, so the lone survivor of a pair slid to the left end of a wide pill and
             sat there looking like the escape rather than the way on. */}
         <div className={ACTION_BAR}>
+          {onOpenSaves && <ResumeSavedGame onOpen={onOpenSaves} />}
           <button type="button" onClick={onDone} data-part="start-done"
             className={cn(FOCUS, BAR_ACTION, 'rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 sm:ml-auto')}>
             {ORIENTATION.onward} &rarr;
