@@ -26,6 +26,9 @@ type RailAction = {
   /** Whose call it is, in the words the game uses for accountabilities. */
   actor: string;
   text: string;
+  /** How long it has waited, or that only you can answer it: said beside the count, not in the
+   *  sentence, where it made the question twice as long. */
+  meta?: string;
   answers: { label: string; act: () => void; primary?: boolean }[];
   /** What one of these answers costs, said on the row rather than in a tooltip nobody sees on a
    *  tablet. "Accept it" and "Send it back" are a thumb-width apart and one of them undoes finished
@@ -106,9 +109,8 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
     const theirs = theirsToAnswer(q);
     actions.push({
       id: q.id, actor: whoIs(q.of),
-      text: `${q.from}: ${q.text}  ·  ${theirs
-        ? `waiting ${waited}s of ${QUESTION_PATIENCE}`
-        : 'this one waits for you - nobody else can answer it'}`,
+      text: `${q.from}: ${q.text}`,
+      meta: theirs ? `waiting ${waited}s of ${QUESTION_PATIENCE}` : 'nobody else can answer it',
       answers: q.choices.map((c) => ({
         // Accepting is the answer that moves the work on, so it is the one that looks like the
         // action. The refusal is a real choice and not a mistake to make quickly.
@@ -286,8 +288,11 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
   const rest = ordered.map((a, i) => ({ a, i })).filter(({ i }) => i !== idx);
   return (
     <div data-part="action-rail" data-kind={yours ? 'yours' : 'waiting'}
-      className={cn('shrink-0 space-y-2 rounded-lg px-3 py-2.5',
-        yours ? 'border-2 border-primary bg-primary/[0.07] shadow-sm' : 'border border-dashed border-border bg-muted/30',
+      // Yours is the loudest thing on the screen: a white card in orange, at reading size, with its
+      // answers at button size. It was a pale orange box of 14px text with 12px buttons, the same
+      // weight as the board and the chat beside it, and in a screen where most things were orange.
+      className={cn('shrink-0 space-y-2 rounded-xl',
+        yours ? 'border-[3px] border-primary bg-card px-4 py-3 shadow-[4px_4px_0_hsl(var(--zoo-ink))]' : 'border border-dashed border-border bg-muted/30 px-3 py-2.5',
         className)}>
       <div className="flex flex-wrap items-center gap-1.5">
         {yours ? (
@@ -304,39 +309,43 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
         <span data-part="rail-actor" className={cn('rounded-full px-1.5 py-0.5 text-[10px] font-semibold', actorTone(actor))}>
           {actor}
         </span>
+        {action.meta && <span data-part="rail-meta" className="text-[11px] text-muted-foreground">{action.meta}</span>}
         {total > 1 && (
           <span data-part="rail-count" className="ml-auto text-[10px] font-medium text-muted-foreground">
             {idx + 1} of {total}
           </span>
         )}
       </div>
-      <p className={cn('text-sm leading-snug', yours ? 'font-medium text-foreground' : 'text-muted-foreground')}>
+      <p className={cn('leading-snug', yours ? 'text-base font-semibold text-foreground lg:text-lg' : 'text-sm text-muted-foreground')}>
         {action.text}
         {action.note && (
-          <span className="mt-0.5 block text-[11px] font-normal leading-snug text-amber-700 dark:text-amber-300">{action.note}</span>
+          <span className="mt-1 block text-xs font-normal leading-snug text-muted-foreground">{action.note}</span>
         )}
       </p>
       {/* An action with buttons is never dismissed: it is answered, or it waits. Somebody else's has
           no buttons here, because pressing them would be answering for them. */}
       {yours && action.answers.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {action.answers.map((a) => (
             <button key={a.label} type="button" onClick={a.act}
-              className={cn(FOCUS, 'shrink-0 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+              className={cn(FOCUS, 'shrink-0 rounded-lg border-2 px-4 py-2 text-sm font-semibold transition-colors',
                 a.primary ? 'border-primary bg-primary text-primary-foreground hover:bg-primary/90'
-                  : 'border-border bg-card hover:bg-muted/60')}>
+                  : 'border-[hsl(var(--zoo-ink))] bg-card hover:bg-muted/60')}>
               {a.label}
             </button>
           ))}
         </div>
       )}
       {rest.length > 0 && (
-        <ul data-part="rail-rest" className="space-y-0.5 border-t border-border/70 pt-1.5">
+        // One line, not a row each: the queue is seen, and it does not push the board off the
+        // screen. Each one is still a button that brings it up.
+        <ul data-part="rail-rest" className="flex min-w-0 items-center gap-2 border-t border-border/70 pt-1.5">
+          <li className="shrink-0 text-[11px] text-muted-foreground">Also waiting</li>
           {rest.slice(0, 3).map(({ a, i }) => (
-            <li key={a.id}>
+            <li key={a.id} className="min-w-0 max-w-[32%] flex-1">
               <button type="button" onClick={() => setAt(i)}
-                className={cn(FOCUS, 'flex w-full min-w-0 items-center gap-1.5 rounded px-1 py-0.5 text-left text-[11px] hover:bg-muted/60')}>
-                <span className={cn('shrink-0 font-semibold', mine(a) ? 'text-primary' : 'text-muted-foreground')}>
+                className={cn(FOCUS, 'flex w-full min-w-0 items-center gap-1 rounded border border-border px-1.5 py-0.5 text-left text-[11px] hover:bg-muted/60')}>
+                <span className={cn('shrink-0 font-semibold', mine(a) ? 'text-foreground' : 'text-muted-foreground')}>
                   {mine(a) ? 'Yours' : `${a.actor.replace(/^The /, '')}'s`}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-muted-foreground">{a.text}</span>
@@ -345,7 +354,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
             </li>
           ))}
           {rest.length > 3 && (
-            <li className="px-1 text-[10px] text-muted-foreground">and {rest.length - 3} more</li>
+            <li className="shrink-0 text-[10px] text-muted-foreground">and {rest.length - 3} more</li>
           )}
         </ul>
       )}

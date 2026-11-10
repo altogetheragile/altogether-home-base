@@ -33,8 +33,10 @@ interface SprintBoardProps {
   state: ZooGameState;
   onEstimate: (id: string, points: number) => void;
   onToggleTask: (id: string, taskId: string) => void;
-  /** The message centre, rendered under the board: the game's one action channel. */
+  /** The team's conversation, rendered under the board. */
   rail?: ReactNode;
+  /** Your move: what is waiting on you, one thing at a time, above the board it is about. */
+  move?: ReactNode;
   /** Move it to Done: built, standing where it stands, and open to visitors. */
   onFinishItem: (id: string) => void;
   onStartItem: (id: string) => void;
@@ -191,7 +193,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -467,7 +469,9 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
           64px of nothing under the message centre and the bench. */}
       {/* The bar between the board and the messages drags, up and down: the two halves start the
           same height, and whoever is busier with one can give it the room. */}
-      <SplitPanes id="sprint-board" direction="vertical" from="xl" sizes={[55, 45]} min={[25, 20]} clip
+      {/* A new id, so a split saved at the old half-and-half does not hold the board down now
+          that your move sits above it. */}
+      <SplitPanes id="sprint-board-v2" direction="vertical" from="xl" sizes={[68, 32]} min={[40, 15]} clip
         className="flex-1" stackedClassName="contents"
         // The board's pane is sized from nothing only where the panes are split. Stacked, below xl,
         // nothing above it has a height to share out, so a zero basis drew the board as an empty
@@ -499,6 +503,12 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
               blocks, so the board sized itself to its cards and pushed what is being asked and the
               thing in your hands off the bottom of the screen - reported from a live game with a
               full To Do column. */}
+          {/* Your move, first and loudest, above the board it is about. It sat at the top of the
+              team chat under the board, so the screen was three things of the same weight - the
+              board, the move, the chat - and the chat could contradict the move under it. Asked
+              while playing it: "The Scrum Board, Your Move messages and team chat all clash with
+              each other." */}
+          {move}
           <div className="flex min-h-0 flex-1 flex-col">
             <div className="flex min-h-0 min-w-0 flex-1 flex-col space-y-2">
               {/* The tab says which artifact this is; in Build the item in hand is the heading. */}
@@ -937,8 +947,10 @@ export function SprintBoard({ state, rail,  onEstimate,    onFinishItem, onStart
               End the Sprint{doing.length > 0 ? ` \u00b7 ${doing.length} unfinished` : ''} &rarr;
             </Button>
           ) : (
+            // Quiet while something waits on you. It was the loudest button on the screen while the
+            // move above the board was the thing to do, so the screen said two things at once.
             <Button data-part={state.dayNumber === state.sprintDays ? 'end-sprint-confirm' : 'end-day'}
-              onClick={onEndDay}>
+              variant={pressing || state.proposed ? 'outline' : 'default'} onClick={onEndDay}>
               {state.dayNumber === state.sprintDays
                 ? doing.length > 0
                   ? `Yes \u00b7 ${doing.length} go back to the Product Backlog`
