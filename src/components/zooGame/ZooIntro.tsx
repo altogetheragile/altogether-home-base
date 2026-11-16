@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { PRODUCT_GOAL } from './config';
-import { Pencil, FolderOpen, Wand2 } from 'lucide-react';
+import { Pencil, Wand2 } from 'lucide-react';
+import { ResumeSavedGame } from './ResumeSavedGame';
 import { BoardIcon, BOARD } from './board/BoardIcon';
 import { ExplainButton } from './Explain';
 import { INTRO_COPY } from './scrumContent';
@@ -231,14 +232,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
         <div className="flex-1" aria-hidden />
 
         <div className={ACTION_BAR}>
-          {onOpenSaves ? (
-            // Grey text on a white pill is not a button anyone finds. Bordered, in the foreground
-            // colour, with the icon that says what it does.
-            <button type="button" onClick={onOpenSaves}
-              className={cn(FOCUS, BAR_ACTION, "flex items-center gap-1.5 rounded-full border-2 border-border bg-background px-3 py-1.5 text-xs font-semibold text-foreground transition-colors hover:border-foreground/40 hover:bg-muted")}>
-              <FolderOpen className="h-3.5 w-3.5 text-muted-foreground" /> Resume a saved game
-            </button>
-          ) : <span />}
+          {onOpenSaves ? <ResumeSavedGame onOpen={onOpenSaves} /> : <span />}
           {/* The Product Goal is the commitment of the Product Backlog, and every Sprint aims at
               it. Starting with none is not a state the game should let a Product Owner into - it
               arrives written, so this only ever catches somebody who cleared it. */}
