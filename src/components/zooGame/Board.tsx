@@ -840,7 +840,9 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
         </h3>
         {mode !== 'view' && (
           <div className="flex items-center gap-1.5">
-            <Button size="sm" variant={laterFolds ? 'outline' : 'default'} className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
+            {/* In the Sprint, adding to the Product Backlog is something you may do, not the move
+                waiting on you: blue there said it was. */}
+            <Button size="sm" variant={laterFolds || mode === 'sprint' ? 'outline' : 'default'} className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
             <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setEditingPbi('new')}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
           </div>
         )}

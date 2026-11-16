@@ -850,7 +850,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                 writing it down, and there was nowhere to do that without leaving the Sprint. */}
             {onAddPbi && (
               <div className="flex shrink-0 items-center gap-1.5">
-                <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
+                <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setShowToolbox(true)}><Boxes className="mr-1 h-3.5 w-3.5" /> Toolbox</Button>
                 <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setWriting(true)}><FilePlus className="mr-1 h-3.5 w-3.5" /> New PBI</Button>
               </div>
             )}
