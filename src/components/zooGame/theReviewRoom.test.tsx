@@ -66,10 +66,9 @@ describe('the room at the Review', () => {
       .toMatch(/Nothing is being signed off/);
   });
 
-  it('gives the verdict the game already reached, rather than a new one', () => {
+  it('leaves the verdict for her to call, rather than announcing one the game reached', () => {
     const met = reviewed(3);
-    expect(room(met)[0].text).toMatch(met.sprintGoalMet === true ? /We met the Sprint Goal/
-      : met.sprintGoalMet === false ? /We did not meet the Sprint Goal/ : /no Sprint Goal/);
+    expect(room(met)[0].text).toMatch(met.sprintGoal.trim() ? /my call/ : /no Sprint Goal/);
   });
 
   it('does not fill up twice when you come back to it', () => {

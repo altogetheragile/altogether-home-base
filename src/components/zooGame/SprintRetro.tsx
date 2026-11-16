@@ -204,7 +204,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
           <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
             <div className="text-sm font-semibold">What it cost, and what it earned</div>
             <p className={cn('text-sm font-semibold', state.sprintGoalMet ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
-              Delivered {delivered} of {forecast} points · goal {state.sprintGoalMet ? 'met' : 'not met'}
+              Delivered {delivered} of {forecast} points · goal {state.sprintGoalMet === null ? 'not called' : state.sprintGoalMet ? 'met' : 'not met'}
             </p>
             {prog.essentialsTotal > 0 && (
               <p className="text-[12px] text-muted-foreground">

@@ -7,6 +7,7 @@ import { SplitPanes } from './SplitPanes';
 import { whatGotOut } from './engine';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, yourReviewTurn } from './engine';
 import { PbiCard } from './PbiCard';
+import { SEAT } from './seats';
 import { CardDetail } from './Board';
 // The showcase carries the isometric artwork - props, and every vehicle in the car park - and
 // nobody needs any of it until they reach a Review. Loading it with the game made opening the game
@@ -54,6 +55,8 @@ interface SprintReviewProps {
    *  work and never refuse it - the only refusal in the game was the one on the Developers' own
    *  question during the Sprint. */
   onSendBack?: (id: string) => void;
+  /** The Product Owner calling the Sprint Goal met or not met. */
+  onCallGoal?: (met: boolean) => void;
   /** The Sprint Review teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
   onMarkTaught?: (id: string) => void;
@@ -123,8 +126,15 @@ function TheRoom({ state, onSay }: { state: ZooGameState; onSay?: (text: string,
 
 /** What the Sprint Goal came to: the headline of the Review. It was a box halfway down the first
  *  step, under the bet, the Product Goal's progress bar and its measures, so the one thing the
- *  Sprint promised was the fourth thing you read about it. */
-function GoalHeadline({ state }: { state: ZooGameState }) {
+ *  Sprint promised was the fourth thing you read about it.
+ *
+ *  ...and it is called here, not computed. The game used to decide it: every item marked essential
+ *  Done, or with none marked, every item forecast. A Sprint that opened both big cat habitats with
+ *  their animals and a kiosk, and left one small thing unfinished, was told its Goal of "open big
+ *  cat attractions" was not met. "How is the Sprint Goal not met?" ... "Priya." So the facts are
+ *  laid out and the Product Owner calls it - a rule of this game, said as one, because the Guide
+ *  names nobody. */
+function GoalHeadline({ state, onCall }: { state: ZooGameState; onCall?: (met: boolean) => void }) {
   const goal = state.sprintGoal.trim();
   if (!goal) {
     return (
@@ -140,7 +150,56 @@ function GoalHeadline({ state }: { state: ZooGameState }) {
       </div>
     );
   }
-  const met = !!state.sprintGoalMet;
+  const facts = state.sprintGoalFacts;
+  const called = state.sprintGoalMet;
+  const left = facts?.unfinished ?? [];
+  // What the game can see, said as facts and nothing more. Which of it matters to the Goal is the call.
+  const seen = facts && (
+    <ul data-part="goal-facts" className="mt-1 space-y-0.5 text-sm">
+      <li><span className="font-semibold">Done:</span> {facts.done.length ? facts.done.join(', ') : 'nothing'}</li>
+      <li data-part="goal-unfinished"><span className="font-semibold">Left unfinished:</span> {left.length ? left.join(', ') : 'nothing'}</li>
+      <li className="text-muted-foreground">
+        {facts.essentials.length
+          ? `Marked essential to the Goal: ${facts.essentials.join(', ')}.`
+          : 'Nothing was marked essential to the Goal, so the forecast says nothing about which of it the Goal needed.'}
+      </li>
+    </ul>
+  );
+  if (called === null) {
+    return (
+      <div data-part="review-goal" data-met="uncalled" className="space-y-2">
+        <h2 className="text-3xl font-bold leading-tight tracking-tight">Was the Sprint Goal met?</h2>
+        <p className="text-base font-medium">{goal}</p>
+        {seen}
+        {onCall && (
+          // Two answers, each saying what it means, and neither drawn as the right one: this is a
+          // judgement, not a confirmation (rule 14).
+          <div data-part="goal-call" className="rounded-xl border-2 border-primary bg-card px-3 py-2 shadow-[3px_3px_0_hsl(var(--zoo-ink))]">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="rounded bg-primary px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary-foreground">Your move</span>
+              <span className={cn(SEAT.productOwner.soft, 'rounded-full px-1.5 py-0.5 text-[10px] font-semibold')}>Priya&rsquo;s call</span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[
+                { met: true, label: 'Met', means: left.length ? `What it was for is there. ${left.join(', ')} can flex, and goes back to the Product Backlog.` : 'What it was for is there.' },
+                { met: false, label: 'Not met', means: 'What it was for is not there yet. The Retrospective asks what got in the way.' },
+              ].map((c) => (
+                <button key={c.label} type="button" data-part={c.met ? 'call-met' : 'call-not-met'} onClick={() => onCall(c.met)}
+                  className={cn(FOCUS, 'max-w-xs rounded-md border-2 border-[hsl(var(--zoo-ink))] bg-card px-3 py-1.5 text-left transition-colors hover:bg-muted/60')}>
+                  <span className="block text-xs font-semibold">{c.label}</span>
+                  <span className="block text-[11px] leading-snug text-muted-foreground">{c.means}</span>
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              The Product Owner calls it in this game. The Guide names nobody: the Sprint Goal is the Developers&rsquo; commitment, and the Scrum Team inspects the outcome here.
+            </p>
+          </div>
+        )}
+      </div>
+    );
+  }
+  const met = !!called;
   return (
     <div data-part="review-goal" data-met={met ? 'yes' : 'no'} className="flex items-start gap-3">
       {met ? <CheckCircle2 className={cn(TONE.done.text, 'mt-1 h-7 w-7 shrink-0')} /> : <CircleDashed className={cn(TONE.attention.text, 'mt-1 h-7 w-7 shrink-0')} />}
@@ -149,19 +208,22 @@ function GoalHeadline({ state }: { state: ZooGameState }) {
           Sprint Goal {met ? 'met' : 'not met'}
         </h2>
         <p className="text-base font-medium">{goal}</p>
+        {seen}
         <p className="text-[12px] text-muted-foreground">
-          {met
-            ? 'The work the Goal depended on was delivered. Dropping less-essential scope to protect the Goal is a win, not a miss.'
-            : 'Work the Goal depended on was left unfinished. Inspect why, and adapt: protect the Goal by forecasting less, or marking fewer items essential.'}
+          Priya&rsquo;s call. {met
+            ? (left.length ? 'What was left unfinished goes back to the Product Backlog, re-sized to what is left of it.' : 'Everything forecast got Done.')
+            : 'The Retrospective asks what got in the way, and what is within the team’s control to change.'}
+          {onCall && (
+            <button type="button" data-part="call-again" onClick={() => onCall(!met)}
+              className={cn(FOCUS, 'ml-1.5 underline underline-offset-2 hover:text-foreground')}>Change the call</button>
+          )}
         </p>
       </div>
     </div>
   );
 }
 
-/** Sprint Review: inspect what was Done and how the visitors responded, then adapt.
- *  It is a working conversation, not a release gate. */
-export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, teachCard, onMarkTaught, onSay }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, onCallGoal, teachCard, onMarkTaught, onSay }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   // What they TOOK, which is not what they thought they could do. The header counts against this
@@ -214,6 +276,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
     'velocity',
   ];
   const [step, setStep] = useState<Step>('done');
+  const uncalled = !!onCallGoal && !!state.sprintGoal.trim() && state.sprintGoalMet === null;
   const [taken, setTaken] = useState(0); // signals turned into Product Backlog items in this Review
   const [declined, setDeclined] = useState(0);
   // Every call made on what the visitors said, this Sprint - both answers, in the order they were
@@ -242,7 +305,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         </div>
         {/* The Review opens on what the Sprint promised, met or not. The other two steps open on
             their own question. */}
-        {step === 'done' ? <GoalHeadline state={state} /> : (
+        {step === 'done' ? <GoalHeadline state={state} onCall={onCallGoal} /> : (
           <div>
             <h2 className="text-3xl font-bold leading-tight tracking-tight">{current.question}</h2>
             <p className="text-sm text-muted-foreground">{current.lead}</p>
@@ -816,7 +879,10 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       </div>} />
 
       <ActionBar left={step !== 'done' ? <BackButton to={STEPS.find((s) => s.key === (step === 'next' ? 'visitors' : 'done'))!.label} onClick={() => setStep(step === 'next' ? 'visitors' : 'done')} /> : undefined}>
-        {step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
+        {/* The call before the visitors: the dock names it while it waits, and takes you to it (rule 13). */}
+        {step === 'done' && uncalled
+          ? <Button data-part="call-first" onClick={() => document.querySelector<HTMLButtonElement>('[data-part="call-met"]')?.focus()}>Call the Sprint Goal &uarr;</Button>
+          : step === 'done' ? <Button onClick={() => setStep('visitors')}>Next: the visitors &rarr;</Button>
           : step === 'visitors' ? <Button onClick={() => setStep('next')}>Next: what we do about it &rarr;</Button>
             : <Button onClick={onContinue}>Retrospective &rarr;</Button>}
       </ActionBar>

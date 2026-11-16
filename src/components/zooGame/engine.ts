@@ -303,6 +303,29 @@ export const lineFor = (state: ZooGameState, who: string): StakeholderLine | und
  *  Priya goes first because the Goal is the thing being inspected and it is hers to judge. The
  *  stakeholders answer the Increment, not her - the Review is not an approval meeting, and nothing
  *  any of them says signs anything off. */
+/** The Product Owner calls the Sprint Goal: met, or not met.
+ *
+ *  This game's rule, not the Guide's. The Guide makes the Sprint Goal "a commitment by the
+ *  Developers" and the Review the place to "inspect the outcome of the Sprint", and names nobody
+ *  who calls it. The game gives the call to the Product Owner, on what got Done, because whether
+ *  what the Goal was for is now true is a judgement no count of items can make - and somebody has
+ *  to say it out loud for the Retrospective to have it. It can be changed while the Review is on. */
+export function callSprintGoal(state: ZooGameState, met: boolean): ZooGameState {
+  if (state.phase !== 'review' || !state.sprintGoal.trim()) return state;
+  if (state.sprintGoalMet === met) return state;
+  const left = state.sprintGoalFacts?.unfinished ?? [];
+  const text = met
+    ? `I am calling the Sprint Goal met. What it was for is open to visitors${left.length ? `, and ${listOf(left)} can flex: ${left.length === 1 ? 'it goes' : 'they go'} back to the Product Backlog` : ''}.`
+    : `I am calling the Sprint Goal not met. What it was for is not there yet${left.length ? `: ${listOf(left)} ${left.length === 1 ? 'was' : 'were'} left unfinished` : ''}.`;
+  return { ...say(state, { who: 'product_owner', from: state.team.productOwner.name, kind: 'review', text }),
+    sprintGoalMet: met };
+}
+
+/** "A", "A and B", "A, B and C". */
+function listOf(names: string[]): string {
+  return names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
+}
+
 export function openReview(state: ZooGameState): ZooGameState {
   if ((state.chat ?? []).some((m) => m.kind === 'review')) return state;
   const sim = state.lastReview;
@@ -312,7 +335,9 @@ export function openReview(state: ZooGameState): ZooGameState {
     ? 'We met the Sprint Goal.'
     : state.sprintGoalMet === false
       ? 'We did not meet the Sprint Goal.'
-      : 'We set no Sprint Goal this time, so there is nothing to measure this against.';
+      : state.sprintGoal.trim()
+        ? 'Whether we met the Sprint Goal is my call, and I will make it once we have looked at what got Done.'
+        : 'We set no Sprint Goal this time, so there is nothing to measure this against.';
   let said = say({ ...state, chat: [], stakeholderBag: bag },
     { who: 'product_owner', from: state.team.productOwner.name, kind: 'review',
       text: `${verdict} Here is what is open to visitors, and here is what they did with it. Nothing is being signed off - I want to know what you make of it.` });
@@ -4352,14 +4377,25 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
   const deliveredThisSprint = committedThisSprint.filter((it) => it.status === 'done' || it.status === 'open');
   const velocityPts = deliveredThisSprint.reduce((s, it) => s + it.estimate, 0);
 
-  // The Sprint Goal is an OUTCOME, not "finish everything". It is met when the items the
-  // team marked as essential to the Goal were delivered - the rest is scope that can flex.
-  // If nothing was marked essential, fall back to all committed items.
+  // The Sprint Goal is an OUTCOME, not "finish everything" - and whether it was reached is the
+  // Product Owner's call at the Review, not a sum. The game used to make it: met when every item
+  // marked essential was delivered, or with none marked, every item forecast. So a Sprint that
+  // opened both big cat habitats with their animals and a kiosk, and left one small thing
+  // unfinished, was told its Goal of "open big cat attractions" was not met. "How is the Sprint
+  // Goal not met?" ... "Priya."
+  //
+  // What the game knows is kept as facts for her to call it on, and that reading is what she
+  // falls back to only when nobody is in her seat.
+  const isDone = (it: BacklogItem) => it.status === 'done' || it.status === 'open';
   const essentials = committedThisSprint.filter((it) => it.goalCritical);
   const goalItems = essentials.length ? essentials : committedThisSprint;
-  const sprintGoalMet = state.sprintGoal.trim()
-    ? goalItems.length > 0 && goalItems.every((it) => it.status === 'done' || it.status === 'open')
-    : null;
+  const sprintGoalFacts = state.sprintGoal.trim() ? {
+    done: committedThisSprint.filter(isDone).map((it) => it.name),
+    unfinished: committedThisSprint.filter((it) => !isDone(it)).map((it) => it.name),
+    essentials: essentials.map((it) => it.name),
+    reading: goalItems.length > 0 && goalItems.every(isDone),
+  } : null;
+  const sprintGoalMet = null;
 
   const ledger = whatItWasWorth(state, result, escaped);
 
@@ -4393,6 +4429,7 @@ export function reviewSprint(state: ZooGameState): ZooGameState {
     lastLedger: ledger,
     happiness: [...(state.happiness ?? []), result.overallHappiness],
     sprintGoalMet,
+    sprintGoalFacts,
     signals,
     signalAge,
     committedIds: [],
@@ -4421,6 +4458,7 @@ export function cancelSprint(state: ZooGameState): ZooGameState {
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
+    sprintGoalFacts: null,
     // A new Sprint, a new conversation. The thread is this Sprint's - what the Retrospective reads
     // back should be the Sprint it is about, and a thread that never emptied would mean scrolling
     // through every Sprint the team has ever had to find Tuesday.
@@ -4550,6 +4588,7 @@ export function startNextSprint(state: ZooGameState, improvement: string): ZooGa
     sprintNumber: state.sprintNumber + 1,
     sprintGoal: '',
     sprintGoalMet: null,
+    sprintGoalFacts: null,
     // A new Sprint, a new conversation. The thread is this Sprint's - what the Retrospective reads
     // back should be the Sprint it is about, and a thread that never emptied would mean scrolling
     // through every Sprint the team has ever had to find Tuesday.

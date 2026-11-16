@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, SKIP_PENALTY_MULT, DAILY_SCRUM_FLOOR_SECONDS, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
-  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, dayTotalSeconds, scrumSpent, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
+  planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, callSprintGoal, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, dayTotalSeconds, scrumSpent, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
 import type { ZooGameState, BacklogItem, PoDecisions } from './types';
 import type { ItemDesign } from './design';
 import { itemKind, KIND_LABEL } from './itemKinds';
@@ -375,13 +375,17 @@ describe('zoo game: arranging the park layout', () => {
 });
 
 describe('zoo game: the Sprint Goal', () => {
-  it('is set at Planning and coached from the selection, and is judged at the Review', () => {
+  it('is set at Planning and coached from the selection, and called at the Review', () => {
     let s = setSprintGoal({ ...bigCatsSplit(1), adopted: ['sprint-planning'] } as ZooGameState,
       'Open Big Cats so families have more to see.');
     expect(s.sprintGoal).toContain('Big Cats');
     expect(s.sprintGoalMet).toBeNull();
-    // Deliver everything committed -> goal met.
+    // Deliver everything committed: it reads as met, and stays uncalled until the Product Owner
+    // calls it. "How is the Sprint Goal not met?" ... "Priya."
     s = reviewSprint(buildAndOpen(s, ['lion', 'kiosk']));
+    expect(s.sprintGoalFacts?.reading).toBe(true);
+    expect(s.sprintGoalMet, 'the game called the Goal itself').toBeNull();
+    s = callSprintGoal(s, true);
     expect(s.sprintGoalMet).toBe(true);
     // A new Sprint clears the goal.
     s = startNextSprint(s, 'x');
@@ -389,31 +393,38 @@ describe('zoo game: the Sprint Goal', () => {
     expect(s.sprintGoalMet).toBeNull();
   });
 
-  it('is not met when committed work is left unfinished (with nothing marked essential)', () => {
+  it('reads as not met when committed work is left unfinished (with nothing marked essential), and names it', () => {
     let s = setSprintGoal(bigCatsSplit(1), 'Fill Big Cats.');
     s = planSprint(s, ['lion', 'tiger']);
     s = openItem(finish(s, 'lion'), 'lion'); // tiger left unbuilt
     s = reviewSprint(s);
-    expect(s.sprintGoalMet).toBe(false);
+    expect(s.sprintGoalFacts?.reading).toBe(false);
+    expect(s.sprintGoalFacts?.unfinished).toEqual([s.backlog.find((i) => i.id === 'tiger')!.name]);
+    // ...and it is only a reading. Priya can call it met: the tiger was scope that could flex.
+    s = callSprintGoal(s, true);
+    expect(s.sprintGoalMet).toBe(true);
   });
 
-  it('is MET when the goal-critical items are delivered, even if other scope is dropped', () => {
+  it('reads as MET when the goal-critical items are delivered, even if other scope is dropped', () => {
     let s = setSprintGoal(bigCatsSplit(1), 'Open the lion for families.');
     s = planSprint(s, ['lion', 'tiger']);
     s = toggleGoalCritical(s, 'lion'); // lion is essential to the Goal; tiger is not
     s = openItem(finish(s, 'lion'), 'lion'); // deliver lion, drop tiger
     s = reviewSprint(s);
-    expect(s.sprintGoalMet).toBe(true); // the essential landed -> outcome met
+    expect(s.sprintGoalFacts?.reading).toBe(true); // the essential landed -> reads as met
     expect(s.backlog.find((i) => i.id === 'tiger')!.status).toBe('backlog'); // tiger returns, fine
   });
 
-  it('is NOT met when a goal-critical item is unfinished, even if others are done', () => {
+  it('reads as NOT met when a goal-critical item is unfinished, even if others are done', () => {
     let s = setSprintGoal(bigCatsSplit(1), 'Open the tiger.');
     s = planSprint(s, ['lion', 'tiger']);
     s = toggleGoalCritical(s, 'tiger'); // tiger essential
     s = openItem(finish(s, 'lion'), 'lion'); // lion done, tiger not
     s = reviewSprint(s);
+    expect(s.sprintGoalFacts?.reading).toBe(false);
+    s = callSprintGoal(s, false);
     expect(s.sprintGoalMet).toBe(false);
+    expect((s.chat ?? []).slice(-1)[0]?.text, 'the call does not say what was left').toMatch(/not met.*Tiger/i);
   });
 
   it('drafts the Goal in the house shape: one objective, and the reason for it', () => {

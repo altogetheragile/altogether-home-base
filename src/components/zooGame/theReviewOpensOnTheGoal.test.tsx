@@ -2,7 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { initialZooState } from './config';
-import { reviewSprint, openReview, openGround } from './engine';
+import { reviewSprint, openReview, openGround, callSprintGoal } from './engine';
+import { fireEvent } from '@testing-library/react';
+import { vi } from 'vitest';
 import { plotOrder } from './parkZones';
 import { SprintReview } from './SprintReview';
 import type { ZooGameState } from './types';
@@ -32,6 +34,8 @@ const reviewed = (open = 6, over: Partial<ZooGameState> = {}): ZooGameState => {
   } as ZooGameState;
   return openReview(reviewSprint(s));
 };
+/** ...and called, the way Priya calls it. */
+const called = (s: ZooGameState, met = !!s.sprintGoalFacts?.reading) => callSprintGoal(s, met);
 
 const screen = (s: ZooGameState) => render(
   <MemoryRouter>
@@ -41,7 +45,7 @@ const screen = (s: ZooGameState) => render(
 
 describe('the Sprint Review opens on the Sprint Goal', () => {
   it('as the headline, before anything else the step says', () => {
-    const c = screen(reviewed());
+    const c = screen(called(reviewed()));
     const h = c.querySelector('h2')!;
     expect(h.closest('[data-part="review-goal"]'), 'the first heading is not the Sprint Goal').toBeTruthy();
     expect(h.textContent).toBe('Sprint Goal met');
@@ -49,7 +53,7 @@ describe('the Sprint Review opens on the Sprint Goal', () => {
   });
 
   it('says not met when it was not', () => {
-    const c = screen(reviewed(0));
+    const c = screen(called(reviewed(0)));
     expect(c.querySelector('[data-part="review-goal"]')!.getAttribute('data-met')).toBe('no');
     expect(c.querySelector('h2')!.textContent).toBe('Sprint Goal not met');
   });
@@ -103,7 +107,44 @@ describe('round the room', () => {
 describe('the header, once the Sprint is over', () => {
   it('gives the same verdict as the Review, not "Goal safe"', async () => {
     const { goalLine } = await import('./header');
-    expect(goalLine(reviewed(0))).toEqual({ line: 'Sprint Goal not met', risk: true });
-    expect(goalLine(reviewed())).toEqual({ line: 'Sprint Goal met', risk: false });
+    expect(goalLine(called(reviewed(0)))).toEqual({ line: 'Sprint Goal not met', risk: true });
+    expect(goalLine(called(reviewed()))).toEqual({ line: 'Sprint Goal met', risk: false });
+    expect(goalLine(reviewed()), 'before the call the header gives a verdict').toEqual({ line: 'Sprint Goal: Priya’s call', risk: false });
+  });
+});
+
+describe('before Priya calls it', () => {
+  // "How is the Sprint Goal not met?" The game called it on a count, with nothing marked essential,
+  // over a Sprint that had opened both big cat habitats. "Priya." So it is called, not computed.
+  const callable = (s: ZooGameState, onCallGoal = () => {}) => render(
+    <MemoryRouter>
+      <SprintReview state={s} onTakeSignal={() => {}} onContinue={() => {}} onSay={() => {}} onCallGoal={onCallGoal} />
+    </MemoryRouter>,
+  ).container;
+
+  it('asks the question, and lays out what got Done and what was left', () => {
+    const s = reviewed(4);
+    const c = callable(s);
+    expect(c.querySelector('h2')!.textContent).toBe('Was the Sprint Goal met?');
+    const left = c.querySelector('[data-part="goal-unfinished"]')!.textContent!;
+    for (const name of s.sprintGoalFacts!.unfinished) expect(left, `${name} is not named`).toContain(name);
+    expect(c.textContent, 'it does not say nothing was marked essential').toMatch(/Nothing was marked essential/);
+  });
+
+  it('offers met and not met, neither drawn as the right one, and says whose rule it is', () => {
+    const onCallGoal = vi.fn();
+    const c = callable(reviewed(4), onCallGoal);
+    const met = c.querySelector('[data-part="call-met"]')!;
+    const not = c.querySelector('[data-part="call-not-met"]')!;
+    expect(met.className).toBe(not.className);
+    expect(c.querySelector('[data-part="goal-call"]')!.textContent).toMatch(/The Guide names nobody/);
+    fireEvent.click(not);
+    expect(onCallGoal).toHaveBeenCalledWith(false);
+  });
+
+  it('is what the dock names, and the visitors wait for it', () => {
+    callable(reviewed(4));
+    expect(document.querySelector('[data-part="call-first"]'), 'the dock moves on past an uncalled Goal').toBeTruthy();
+    expect(document.body.textContent).not.toMatch(/Next: the visitors/);
   });
 });

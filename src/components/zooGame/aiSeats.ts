@@ -60,7 +60,9 @@ export const SOLO_AI_SEATS: SeatName[] = ['product_owner'];
  *  Only when a player is there. In a shared session with nobody in the Product Owner's seat the
  *  game still has to accept, or work builds up against a sign-off that is never coming. An empty
  *  chair is not the same as somebody choosing not to decide yet. */
-const PLAYER_DECIDES: ReadonlySet<string> = new Set(['CONFIRM_AC']);
+// ...and calling the Sprint Goal, for the same reason: "How is the Sprint Goal not met?" was a
+// verdict the game handed down. Alone, the player calls it in Priya's name, at the Review.
+const PLAYER_DECIDES: ReadonlySet<string> = new Set(['CONFIRM_AC', 'CALL_SPRINT_GOAL']);
 
 /** ...and the one that is an answer rather than an action: accepting at the Product Owner's own
  *  door. Matched on the choice rather than the type, because the same action refuses it too. */
@@ -216,6 +218,13 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   if (state.phase === 'review' && state.signals.length > 0) {
     return { action: { type: 'ACCEPT_SIGNAL', index: 0 },
              says: `Visitors asked for this. I am putting it on the Product Backlog: ${state.signals[0].suggestion}.` };
+  }
+  // The Sprint Goal, called on what the game can read when nobody is in this seat to call it: the
+  // essentials, or with none marked, everything forecast. A player at the table calls it instead.
+  if (state.phase === 'review' && state.sprintGoal.trim() && state.sprintGoalMet === null && state.sprintGoalFacts) {
+    const met = state.sprintGoalFacts.reading;
+    return { action: { type: 'CALL_SPRINT_GOAL', met },
+             says: met ? 'What the Sprint Goal was for got Done.' : 'What the Sprint Goal was for is not Done yet.' };
   }
   return null;
 }
