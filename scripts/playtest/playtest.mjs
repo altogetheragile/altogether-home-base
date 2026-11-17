@@ -1,5 +1,6 @@
 #!/usr/bin/env node
-// A newcomer plays the game, and says where it confused them.
+// Somebody plays the game, and says where it confused them. A newcomer unless --persona says
+// otherwise: see ./personas.
 //
 // Asked for as "an AI agent to play the game as a user to test usability ... a newbie ... like a
 // real new user". The value is in what it does NOT know: it sees the rendered screen and nothing
@@ -9,6 +10,7 @@
 // Run it:
 //   ANTHROPIC_API_KEY=... node scripts/playtest/playtest.mjs
 //   ... --url http://localhost:4173/zoo-game --steps 20 --headed
+//   ... --persona keyboard-only        (or scrum-master, product-owner, impatient, or a .md path)
 //
 // It costs money: one Claude call per step. Deliberately not in CI, and deliberately capped.
 //
@@ -16,9 +18,10 @@
 // the point - a newcomer is not deterministic either.
 
 import { chromium } from 'playwright';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-import { askTheNewcomer } from './ask.mjs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { askThePlayer } from './ask.mjs';
 import { readScreen, readPark, doAction } from './screen.mjs';
 
 const arg = (name, fallback) => {
@@ -31,6 +34,25 @@ const URL = arg('url', 'https://altogetheragile.com/zoo-game');
 const MAX_STEPS = Number(arg('steps', 18));
 const OUT = resolve(arg('out', 'playtest-report'));
 
+// Who plays. A name from ./personas, or a path to a file of your own in the same shape: a few
+// lines of front matter (title, and hands: mouse or keyboard), then who they are in plain words.
+const PERSONAS = resolve(dirname(fileURLToPath(import.meta.url)), 'personas');
+const presets = () => readdirSync(PERSONAS).filter((f) => f.endsWith('.md')).map((f) => basename(f, '.md'));
+const loadPersona = (which) => {
+  const file = existsSync(which) ? resolve(which) : resolve(PERSONAS, `${which}.md`);
+  if (!existsSync(file)) {
+    console.error(`\nNo persona called "${which}". The presets are: ${presets().join(', ')}.\nOr pass a path to a .md file of your own, shaped like the ones in ${PERSONAS}.\n`);
+    process.exit(2);
+  }
+  const raw = readFileSync(file, 'utf8');
+  const m = raw.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
+  const front = Object.fromEntries((m?.[1] ?? '').split('\n').map((l) => l.split(/:\s*/, 2)).filter((kv) => kv.length === 2));
+  const hands = front.hands === 'keyboard' ? 'keyboard' : 'mouse';
+  return { name: basename(file, '.md'), title: front.title || basename(file, '.md'), hands, brief: (m?.[2] ?? raw).trim() };
+};
+const PERSONA = loadPersona(arg('persona', 'newcomer'));
+const KEYBOARD_ONLY = PERSONA.hands === 'keyboard';
+
 // A stand-in that needs no key and no model, for checking the harness itself: does it read the
 // screen, can it press what it found, does the report come out. Everything except the judgement.
 // Without this the first thing anybody learns about a broken screen reader is the bill.
@@ -38,6 +60,13 @@ const SCRIPTED = [
   { thinking: 'Dry run: pressing whatever the first button is.', expect: 'something happens', confused_by: null, surprised_by: null, action: { kind: 'click', ref: 'FIRST' } },
   { thinking: 'Dry run: scrolling.', expect: 'more of the page', confused_by: null, surprised_by: null, action: { kind: 'scroll' } },
   { thinking: 'Dry run: typing into the first field.', expect: 'the words appear', confused_by: 'nothing, this is a dry run', surprised_by: null, action: { kind: 'type', ref: 'FIRSTFIELD', text: 'a zoo the whole county talks about' } },
+  { thinking: 'Dry run: done.', expect: 'it ends', confused_by: null, surprised_by: null, action: { kind: 'stop' } },
+];
+// The same, with no mouse: it must Tab its way in, and a click must be refused.
+const SCRIPTED_KEYS = [
+  { thinking: 'Dry run: tabbing in.', expect: 'the focus moves', confused_by: null, surprised_by: null, action: { kind: 'key', text: 'Tab', times: 3 } },
+  { thinking: 'Dry run: trying to click, which should be refused.', expect: 'nothing', confused_by: null, surprised_by: null, action: { kind: 'click', ref: 'FIRST' } },
+  { thinking: 'Dry run: pressing what has the focus.', expect: 'something happens', confused_by: null, surprised_by: null, action: { kind: 'key', text: 'Enter' } },
   { thinking: 'Dry run: done.', expect: 'it ends', confused_by: null, surprised_by: null, action: { kind: 'stop' } },
 ];
 
@@ -64,7 +93,8 @@ judgement:
 
 /** The stand-in, with its refs resolved against whatever is actually on the screen. */
 const dryStep = (step, screen) => {
-  const said = SCRIPTED[Math.min(step, SCRIPTED.length) - 1];
+  const script = KEYBOARD_ONLY ? SCRIPTED_KEYS : SCRIPTED;
+  const said = script[Math.min(step, script.length) - 1];
   const ref = said.action.ref;
   if (ref === 'FIRST') return { ...said, action: { ...said.action, ref: screen.controls[0]?.ref } };
   if (ref === 'FIRSTFIELD') {
@@ -81,7 +111,7 @@ const run = async () => {
 
   const log = [];
   const history = [];
-  console.log(`A newcomer is opening ${URL}\n`);
+  console.log(`${PERSONA.title} (${PERSONA.name}) is opening ${URL}\n`);
   await page.goto(URL, { waitUntil: 'networkidle' }).catch(() => page.goto(URL));
 
   for (let step = 1; step <= MAX_STEPS; step += 1) {
@@ -96,7 +126,7 @@ const run = async () => {
     let said = null;
     for (let go = 1; go <= 3 && !said?.action; go += 1) {
       try {
-        said = has('dry') ? dryStep(step, screen) : await askTheNewcomer({ apiKey: KEY, screen, history, step, maxSteps: MAX_STEPS, park });
+        said = has('dry') ? dryStep(step, screen) : await askThePlayer({ apiKey: KEY, persona: PERSONA, screen, history, step, maxSteps: MAX_STEPS, park });
       } catch (e) {
         console.error(`    (step ${step}, try ${go}: ${e.message.slice(0, 120)})`);
         if (go === 3) break;
@@ -108,7 +138,7 @@ const run = async () => {
       break;
     }
 
-    let did = await doAction(page, said.action);
+    let did = await doAction(page, said.action, { keyboardOnly: KEYBOARD_ONLY });
     // Settle, because a decision taken on a half-rendered screen is not the screen's fault.
     await page.waitForTimeout(900);
 
@@ -134,7 +164,9 @@ const run = async () => {
 
   const trouble = log.filter((l) => l.confused_by || l.surprised_by);
   const report = [
-    `# A newcomer plays ${URL}`,
+    `# ${PERSONA.title} plays ${URL}`,
+    '',
+    `Persona: \`${PERSONA.name}\` (${PERSONA.hands === 'keyboard' ? 'keyboard only' : 'mouse and keyboard'}).`,
     '',
     `${log.length} steps. ${trouble.length} of them produced confusion or surprise.`,
     '',
@@ -159,7 +191,7 @@ const run = async () => {
     '',
     '---',
     '',
-    'Written by scripts/playtest/playtest.mjs. Not a test: two runs will differ, and a newcomer is',
+    'Written by scripts/playtest/playtest.mjs. Not a test: two runs will differ, and a person is',
     'not deterministic either. What is worth acting on is the same complaint turning up twice.',
   ].join('\n');
 

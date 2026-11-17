@@ -1,14 +1,37 @@
-# A newcomer plays the game
+# Somebody plays the game
 
-An AI agent that opens the game knowing nothing and says where it got confused.
+An AI agent that opens the game as a given persona, a newcomer by default, and says where it got
+confused.
 
 ```bash
 node scripts/playtest/playtest.mjs --dry            # check the harness, costs nothing
-ANTHROPIC_API_KEY=sk-... node scripts/playtest/playtest.mjs
+set -a && . ./.env && set +a                        # load ANTHROPIC_API_KEY from .env
+node scripts/playtest/playtest.mjs --persona scrum-master --steps 250 --out playtest-report-sm
 ```
 
-Options: `--url` (default the live zoo game), `--steps` (18), `--out` (playtest-report),
-`--headed` to watch it, `--dry` to run the plumbing with a scripted stand-in.
+Options: `--persona` (newcomer), `--url` (default the live zoo game), `--steps` (18), `--out`
+(playtest-report), `--headed` to watch it, `--dry` to run the plumbing with a scripted stand-in.
+
+## Who plays
+
+`--persona` picks who is at the keyboard. The presets live in `personas/`:
+
+| Persona | Who | Watches for |
+| --- | --- | --- |
+| `newcomer` | Has heard of Scrum, could not explain it | Anything a stranger cannot follow |
+| `scrum-master` | Knows the 2020 Guide well, judging it for a class | Where it gets Scrum wrong, noted as "Scrum:" |
+| `product-owner` | A first-time Product Owner on a course | Decisions without enough to go on, or taken from them |
+| `keyboard-only` | No mouse at all | Things Tab cannot reach, lost or trapped focus |
+| `impatient` | Skims, presses whatever says "carry on" | Screens that only work if you read all of them |
+
+A persona is a short Markdown file: front matter with a `title` and `hands` (`mouse` or
+`keyboard`), then who they are in plain words. Write your own and pass its path:
+`--persona ./my-trainer.md`. The rules of a turn and the answer format are shared, in `ask.mjs`,
+so a persona only has to say who the person is.
+
+`hands: keyboard` is enforced, not just described: clicks are refused, refs are ignored, and
+every key goes wherever the focus actually is. Otherwise the harness would put the focus on a
+control for them, which is exactly what a keyboard user cannot do.
 
 ## What makes it worth anything
 
