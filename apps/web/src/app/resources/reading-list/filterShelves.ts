@@ -40,19 +40,18 @@ export function filterShelves(shelves: ListedShelf[], { category, query }: { cat
     .filter((s) => s.books.length > 0);
 }
 
-/** What the page shows for a topic and a search: the favourites, lifted out of their topics into
- *  one group at the top, and the topics with what is left.
+/** What the page shows for a topic and a search: the favourites, collected into one group at the
+ *  top, and every topic in full underneath.
  *
- *  A favourite appears once, at the top, not again in its topic. Picking a topic narrows the
- *  favourites too, so "Coaching" shows the coaching favourites above the rest of Coaching. */
+ *  A favourite appears twice: at the top, and in its own topic, so somebody reading one topic still
+ *  sees its best books there. `shown` counts each book once, so the count matches the list rather
+ *  than the number of tiles. Picking a topic narrows the favourites too, so "Coaching" shows the
+ *  coaching favourites above Coaching. */
 export function arrangeForView(
   shelves: ListedShelf[],
   { category, query }: { category: string; query: string },
 ): { favourites: ListedBook[]; shelves: ListedShelf[]; shown: number } {
   const narrowed = filterShelves(shelves, { category, query });
   const favourites = narrowed.flatMap((s) => s.books.filter((b) => b.featured));
-  const rest = narrowed
-    .map((s) => ({ ...s, books: s.books.filter((b) => !b.featured) }))
-    .filter((s) => s.books.length > 0);
-  return { favourites, shelves: rest, shown: favourites.length + rest.reduce((n, s) => n + s.books.length, 0) };
+  return { favourites, shelves: narrowed, shown: narrowed.reduce((n, s) => n + s.books.length, 0) };
 }
