@@ -88,16 +88,16 @@ export default async function ReadingListPage({
       <JsonLd data={breadcrumbJsonLd(await pageCrumbs('readingList', PATH, 'Reading List'))} />
       <JsonLd data={itemList} />
 
-      <div id="main-content" style={{ background: c.paleTeal, padding: '56px 16px', textAlign: 'center' }}>
+      <div id="main-content" style={{ background: c.paleTeal, padding: '20px 16px', textAlign: 'center' }}>
         <Editable k="readingList.hero.heading" label="this text" as="div" block>
-          <h1 style={{ fontFamily: fonts.serif, color: c.deepTeal, fontSize: 'clamp(30px, 5vw, 42px)', fontWeight: 400, margin: '0 0 12px', lineHeight: 1.15 }}>
+          <h1 style={{ fontFamily: fonts.serif, color: c.deepTeal, fontSize: 'clamp(26px, 4vw, 34px)', fontWeight: 400, margin: '0 0 6px', lineHeight: 1.15 }}>
             {t('readingList.hero.heading')}
           </h1>
         </Editable>
         <Editable k="readingList.hero.intro" label="this text" as="div" block>
-          <p style={{ color: c.body, fontSize: 16, lineHeight: 1.6, margin: '0 auto', maxWidth: 640 }}>{t('readingList.hero.intro')}</p>
+          <p style={{ color: c.body, fontSize: 15, lineHeight: 1.5, margin: '0 auto', maxWidth: 860 }}>{t('readingList.hero.intro')}</p>
         </Editable>
-        <p style={{ color: c.body, fontSize: 13, margin: '14px auto 0', maxWidth: 640 }}>{AMAZON_DISCLOSURE}</p>
+        <p style={{ color: c.body, fontSize: 12, margin: '6px auto 0', maxWidth: 720 }}>{AMAZON_DISCLOSURE}</p>
       </div>
 
       <ReadingListBrowser

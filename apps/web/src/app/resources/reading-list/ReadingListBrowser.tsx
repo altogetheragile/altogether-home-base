@@ -118,7 +118,7 @@ export function ReadingListBrowser({
         type="button"
         aria-pressed={on}
         onClick={() => pick(slug)}
-        className="rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
+        className="rounded-full px-3 py-1 text-[13px] font-medium transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
         style={{
           background: on ? c.deepTeal : c.white,
           color: on ? c.white : c.deepTeal,
@@ -230,19 +230,19 @@ export function ReadingListBrowser({
   const grid = 'mt-4 grid list-none grid-cols-1 gap-4 p-0 sm:grid-cols-2 lg:grid-cols-3';
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-      <div className="flex flex-col gap-4">
+    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-3">
         {admin && <AddBookPanel topics={shelves.map((s) => ({ id: s.category.id, name: s.category.name }))} />}
-        <div role="group" aria-label={words.filterLabel} className="flex flex-wrap gap-2">
+        <div role="group" aria-label={words.filterLabel} className="flex flex-wrap gap-1.5">
           {chip('', words.all)}
           {shelves.map((s) => chip(s.category.slug, s.category.name))}
         </div>
 
-        <div className="max-w-md">
-          <label htmlFor="reading-list-search" className="mb-1.5 block text-sm font-medium" style={{ color: c.body }}>
-            {words.searchLabel}
-          </label>
-          <div className="relative">
+        {/* The search and the count share a row; the label is kept for screen readers, and the box
+            says the same thing as its placeholder. */}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+          <label htmlFor="reading-list-search" className="sr-only">{words.searchLabel}</label>
+          <div className="relative w-full max-w-md">
             <Search aria-hidden size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" style={{ color: c.muted }} />
             <input
               id="reading-list-search"
@@ -250,15 +250,15 @@ export function ReadingListBrowser({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               autoComplete="off"
-              className="w-full rounded-lg py-2 pl-9 pr-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
+              placeholder={words.searchLabel}
+              className="w-full rounded-lg py-1.5 pl-9 pr-3 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1"
               style={{ border: `1px solid ${CARD_BORDER}`, color: c.body, outlineColor: c.deepTeal }}
             />
           </div>
+          <p aria-live="polite" className="m-0 text-sm" style={{ color: c.muted }}>
+            {words.count.replace('{shown}', String(view.shown)).replace('{total}', String(total))}
+          </p>
         </div>
-
-        <p aria-live="polite" className="text-sm" style={{ color: c.muted }}>
-          {words.count.replace('{shown}', String(view.shown)).replace('{total}', String(total))}
-        </p>
         {problem && <p role="alert" className="text-sm font-medium" style={{ color: c.danger }}>{problem}</p>}
       </div>
 
