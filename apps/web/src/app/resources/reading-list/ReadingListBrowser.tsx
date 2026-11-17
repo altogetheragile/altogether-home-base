@@ -6,6 +6,7 @@ import { colors as c, fonts, radii } from '@/lib/brand';
 import { AMAZON_LINK_ATTRS } from '@altogether/ui/amazon';
 import { setBookCover, setBookFlags } from '@/app/actions/readingList';
 import { uploadCover } from './coverUpload';
+import { AddBookPanel } from './AddBookPanel';
 import { arrangeForView, type ListedBook, type ListedShelf } from './filterShelves';
 
 // Narrows the books the server already rendered. Nothing here fetches: the full list arrived with
@@ -231,6 +232,7 @@ export function ReadingListBrowser({
   return (
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="flex flex-col gap-4">
+        {admin && <AddBookPanel topics={shelves.map((s) => ({ id: s.category.id, name: s.category.name }))} />}
         <div role="group" aria-label={words.filterLabel} className="flex flex-wrap gap-2">
           {chip('', words.all)}
           {shelves.map((s) => chip(s.category.slug, s.category.name))}

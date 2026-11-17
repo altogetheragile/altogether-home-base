@@ -6,6 +6,7 @@ import { render, screen, within, fireEvent, waitFor } from '@testing-library/rea
 const uploadCover = vi.fn(async () => 'https://example.supabase.co/storage/v1/object/public/assets/reading-covers/b-1.jpg');
 const setBookCover = vi.fn(async () => ({ ok: true as const }));
 vi.mock('./coverUpload', async (orig) => ({ ...(await orig<typeof import('./coverUpload')>()), uploadCover }));
+vi.mock('next/navigation', () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 vi.mock('@/app/actions/readingList', () => ({ setBookFlags: vi.fn(), setBookCover }));
 
 const { ReadingListBrowser } = await import('./ReadingListBrowser');
