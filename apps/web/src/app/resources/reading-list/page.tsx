@@ -97,7 +97,6 @@ export default async function ReadingListPage({
         <Editable k="readingList.hero.intro" label="this text" as="div" block>
           <p style={{ color: c.body, fontSize: 15, lineHeight: 1.5, margin: '0 auto', maxWidth: 860 }}>{t('readingList.hero.intro')}</p>
         </Editable>
-        <p style={{ color: c.body, fontSize: 12, margin: '6px auto 0', maxWidth: 720 }}>{AMAZON_DISCLOSURE}</p>
       </div>
 
       <ReadingListBrowser
