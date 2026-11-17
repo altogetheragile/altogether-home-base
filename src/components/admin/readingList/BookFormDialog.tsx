@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, Loader2, Wand2 } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
 import { amazonLink, amazonLinkKind, extractAsin, AMAZON_LINK_ATTRS } from '@altogether/ui/amazon';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -40,6 +41,9 @@ export function BookFormDialog({
   const [form, setForm] = useState<BookInput>(() => (book ? { ...book } : { ...EMPTY, category_id: categories[0]?.id ?? '' }));
   const [asinText, setAsinText] = useState(book?.asin ?? '');
   const [asinProblem, setAsinProblem] = useState<string | null>(null);
+  const [link, setLink] = useState('');
+  const [looking, setLooking] = useState(false);
+  const [lookupNote, setLookupNote] = useState<{ error: boolean; text: string } | null>(null);
 
   const set = <K extends keyof BookInput>(k: K, v: BookInput[K]) => setForm((f) => ({ ...f, [k]: v }));
   const text = (v: string) => (v.trim() ? v : null);
@@ -59,6 +63,37 @@ export function BookFormDialog({
     }
   };
 
+  /** Fills the form from an Amazon link, through the reading-book-lookup edge function, which
+   *  asks Open Library and never reads Amazon. Replaces the title, author and ASIN with what it
+   *  found; a cover only when the book has none, so a cover chosen here is never swapped out. */
+  const fillFromLink = async () => {
+    setLooking(true);
+    setLookupNote(null);
+    try {
+      const { data, error } = await supabase.functions.invoke('reading-book-lookup', { body: { url: link } });
+      if (error) {
+        const said = await (error as { context?: Response }).context?.json?.().catch(() => null);
+        throw new Error(said?.error ?? error.message);
+      }
+      if (data?.error) throw new Error(data.error);
+      setForm((f) => ({
+        ...f,
+        title: data.title ?? f.title,
+        author: data.author ?? f.author,
+        asin: data.asin ?? f.asin,
+        ...(data.cover_url && !f.cover_url ? { cover_url: data.cover_url, cover_source: 'openlibrary' } : {}),
+      }));
+      if (data.asin) { setAsinText(data.asin); setAsinProblem(null); }
+      const authors = data.matchedBy && String(data.author ?? '').includes(',')
+        ? ' Check the authors: Open Library sometimes lists a foreword writer or illustrator as one.' : '';
+      setLookupNote({ error: false, text: `${data.note}${authors}` });
+    } catch (e) {
+      setLookupNote({ error: true, text: (e as Error).message });
+    } finally {
+      setLooking(false);
+    }
+  };
+
   const href = amazonLink(form, tag);
   const kind = amazonLinkKind(form);
   const valid = form.title.trim() !== '' && form.category_id !== '' && !asinProblem;
@@ -75,6 +110,19 @@ export function BookFormDialog({
           className="min-w-0 space-y-4"
           onSubmit={(e) => { e.preventDefault(); if (valid) onSave({ ...form, title: form.title.trim(), author: form.author.trim() }); }}
         >
+          <div className="space-y-1.5 rounded-md border border-primary/30 bg-primary/5 p-3">
+            <Label htmlFor="rb-link">Fill in from an Amazon link</Label>
+            <div className="flex min-w-0 gap-2">
+              <Input id="rb-link" type="url" value={link} onChange={(e) => setLink(e.target.value)} placeholder="https://www.amazon.co.uk/..." className="min-w-0" />
+              <Button type="button" variant="outline" disabled={!link.trim() || looking} onClick={fillFromLink}>
+                {looking ? <Loader2 className="mr-1 h-4 w-4 animate-spin" aria-hidden /> : <Wand2 className="mr-1 h-4 w-4" aria-hidden />} Fill in
+              </Button>
+            </div>
+            <p className={`text-xs ${lookupNote?.error ? 'text-destructive' : 'text-muted-foreground'}`} role={lookupNote?.error ? 'alert' : undefined}>
+              {lookupNote?.text ?? 'Title, author, ASIN and a cover, looked up on Open Library. Amazon itself is not read.'}
+            </p>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="rb-title">Title</Label>
