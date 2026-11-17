@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
+import { ImagePicker } from '@/components/ui/image-picker';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { AdminBook, AdminCategory, BookInput } from '@/hooks/useReadingList';
@@ -13,6 +14,7 @@ import type { AdminBook, AdminCategory, BookInput } from '@/hooks/useReadingList
 const EMPTY: BookInput = {
   title: '', author: '', category_id: '', asin: null, amazon_url: null, blurb: null,
   is_visible: true, is_featured: false, sort_order: 0, owned_format: null, source_note: null,
+  cover_url: null, cover_source: null,
 };
 
 const LINK_WORDS = {
@@ -128,6 +130,22 @@ export function BookFormDialog({
               <span className="min-w-0 text-xs text-muted-foreground">{LINK_WORDS[kind]}{tag ? '' : '. No Associates tag is set'}.</span>
             </div>
           </fieldset>
+
+          <div className="space-y-1.5">
+            <ImagePicker
+              value={form.cover_url ?? ''}
+              onChange={(url) => setForm((f) => ({ ...f, cover_url: url || null, cover_source: url ? 'upload' : null }))}
+              bucket="assets"
+              path="reading-covers/"
+              aspect={2 / 3}
+              label="Cover"
+            />
+            <p className="text-xs text-muted-foreground">
+              {form.cover_source === 'openlibrary'
+                ? 'From Open Library. Choose another to replace it; the cover script never overwrites one chosen here.'
+                : 'Shown beside the title on the page. Empty, and the tile is text only.'}
+            </p>
+          </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="rb-blurb">Blurb</Label>

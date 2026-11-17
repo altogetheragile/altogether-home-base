@@ -44,7 +44,7 @@ export default async function ReadingListPage({
   const withLinks = shelves.map((s) => ({
     category: { id: s.category.id, name: s.category.name, slug: s.category.slug, description: s.category.description },
     books: s.books.map((b) => ({
-      id: b.id, title: b.title, author: b.author, blurb: b.blurb, featured: b.is_featured,
+      id: b.id, title: b.title, author: b.author, blurb: b.blurb, featured: b.is_featured, cover: b.cover_url ?? null,
       href: amazonLink(b, tag),
     })),
   }));
@@ -71,6 +71,7 @@ export default async function ReadingListPage({
           ...(b.author ? { author: b.author.split(/,\s*|\s+and\s+/).map((name) => ({ '@type': 'Person', name })) } : {}),
           genre,
           url: b.href,
+          ...(b.cover ? { image: b.cover } : {}),
         },
       })),
   };

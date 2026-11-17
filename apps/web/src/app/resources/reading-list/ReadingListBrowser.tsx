@@ -141,8 +141,28 @@ export function ReadingListBrowser({
                       {words.featured}
                     </span>
                   )}
-                  <h3 className="m-0 text-base font-semibold leading-snug" style={{ color: c.deepTeal }}>{b.title}</h3>
-                  {b.author && <p className="mt-1 text-sm" style={{ color: c.body }}>{b.author}</p>}
+                  <div className="flex min-w-0 gap-3">
+                    {b.cover && (
+                      // A plain img, not next/image: the file is already a small, fixed-size cover in
+                      // this project's storage, and the width and height stop the card jumping as it
+                      // loads. Lazy, because most of the 130 are below the fold.
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={b.cover}
+                        alt={`Cover of ${b.title}`}
+                        width={64}
+                        height={96}
+                        loading="lazy"
+                        decoding="async"
+                        className="h-24 w-16 shrink-0 rounded object-cover"
+                        style={{ border: `1px solid ${CARD_BORDER}`, background: c.skyTeal }}
+                      />
+                    )}
+                    <div className="min-w-0">
+                      <h3 className="m-0 text-base font-semibold leading-snug" style={{ color: c.deepTeal }}>{b.title}</h3>
+                      {b.author && <p className="mt-1 text-sm" style={{ color: c.body }}>{b.author}</p>}
+                    </div>
+                  </div>
                   {b.blurb && <p className="mt-2 text-sm" style={{ color: c.muted }}>{b.blurb}</p>}
                   {/* Pushed to the bottom, so the buttons in a row line up whatever the titles do. */}
                   <div className="mt-auto pt-4">
