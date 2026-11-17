@@ -40,12 +40,15 @@ export interface Shelf {
 
 const byTitle = (a: { title: string }, b: { title: string }) => a.title.localeCompare(b.title, 'en-GB');
 
-/** Categories in their order, each with its books: featured first, then by sort order, then by
- *  title so two books with the same number do not swap places between requests.
+/** Categories in their order, each with its books by sort order, then by title so two books with
+ *  the same number do not swap places between requests. Favourites are not sorted first here: the
+ *  page lifts them into a group of their own at the top.
  *
- *  Drops anything marked hidden, and any book whose category is not on the list. The database has
- *  already done both for a visitor; this is the second lock, and the one the tests can reach. */
-export function arrangeShelves(categories: ShelfCategory[], books: ShelfBook[]): Shelf[] {
+ *  Drops hidden categories, and any book whose category is not on the list. Drops hidden books too,
+ *  unless `includeHidden` - which only an admin's page asks for, so a hidden book can be shown
+ *  again from where it would appear. The database has already refused all of it to a visitor; this
+ *  is the second lock, and the one the tests can reach. */
+export function arrangeShelves(categories: ShelfCategory[], books: ShelfBook[], { includeHidden = false } = {}): Shelf[] {
   const shown = categories
     .filter((c) => c.is_visible !== false)
     .sort((a, b) => a.sort_order - b.sort_order || a.name.localeCompare(b.name, 'en-GB'));
@@ -53,18 +56,23 @@ export function arrangeShelves(categories: ShelfCategory[], books: ShelfBook[]):
     .map((category) => ({
       category,
       books: books
-        .filter((b) => b.category_id === category.id && b.is_visible !== false)
-        .sort((a, b) => Number(b.is_featured) - Number(a.is_featured) || a.sort_order - b.sort_order || byTitle(a, b)),
+        .filter((b) => b.category_id === category.id && (includeHidden || b.is_visible !== false))
+        .sort((a, b) => a.sort_order - b.sort_order || byTitle(a, b)),
     }))
     .filter((s) => s.books.length > 0);
 }
 
 const BOOK_COLUMNS = 'id, title, author, category_id, asin, amazon_url, blurb, is_featured, sort_order, is_visible';
 
-export async function getReadingList(): Promise<Shelf[]> {
+/** `includeHidden` is for an admin's own view of the page, and nothing else. A visitor's session
+ *  could not read a hidden book even if this asked; an admin's can, which is the point. */
+export async function getReadingList({ includeHidden = false } = {}): Promise<Shelf[]> {
   try {
     const supabase = await createClient();
-    const visibleBooks = (columns: string) => supabase.from('reading_books').select(columns).eq('is_visible', true);
+    const visibleBooks = (columns: string) => {
+      const q = supabase.from('reading_books').select(columns);
+      return includeHidden ? q : q.eq('is_visible', true);
+    };
     const [cats, withCovers] = await Promise.all([
       supabase
         .from('reading_categories')
@@ -75,7 +83,7 @@ export async function getReadingList(): Promise<Shelf[]> {
     // The page and the column that gives books a cover deploy separately. If the column is not
     // there yet, the books are still worth showing without pictures, rather than an empty page.
     const books = withCovers.error ? await visibleBooks(BOOK_COLUMNS) : withCovers;
-    return arrangeShelves((cats.data ?? []) as ShelfCategory[], (books.data ?? []) as unknown as ShelfBook[]);
+    return arrangeShelves((cats.data ?? []) as ShelfCategory[], (books.data ?? []) as unknown as ShelfBook[], { includeHidden });
   } catch {
     return [];
   }

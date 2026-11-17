@@ -160,7 +160,7 @@ export function ReadingBooksTab({ books, categories, tag }: { books: AdminBook[]
                         ? <img src={b.cover_url} alt="" width={28} height={42} loading="lazy" className="h-[42px] w-7 shrink-0 rounded-sm border object-cover" />
                         : <div className="h-[42px] w-7 shrink-0 rounded-sm border border-dashed" aria-hidden />}
                       <div className="min-w-0">
-                    <div className="font-medium">{b.title}{b.is_featured && <Badge variant="secondary" className="ml-2">Featured</Badge>}</div>
+                    <div className="font-medium">{b.title}{b.is_featured && <Badge variant="secondary" className="ml-2">Favourite</Badge>}</div>
                     <div className="text-sm text-muted-foreground">{b.author}</div>
                       </div>
                     </div>

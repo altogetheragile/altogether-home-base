@@ -159,7 +159,7 @@ export function BookFormDialog({
             </div>
             <div className="flex items-center gap-2">
               <Switch id="rb-featured" checked={form.is_featured} onCheckedChange={(v) => set('is_featured', v)} />
-              <Label htmlFor="rb-featured">Featured</Label>
+              <Label htmlFor="rb-featured">Favourite (top of the page)</Label>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="rb-order">Sort order</Label>

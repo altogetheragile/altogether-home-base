@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 
 vi.mock('@/lib/supabase/server', () => ({ createClient: vi.fn() }));
 import { arrangeShelves, type ShelfBook, type ShelfCategory } from './readingList';
-import { filterShelves, type ListedShelf } from '@/app/resources/reading-list/filterShelves';
+import { filterShelves, arrangeForView, type ListedShelf } from '@/app/resources/reading-list/filterShelves';
 
 // Hidden books and hidden categories never reach a visitor's browser. Three locks, tested here
 // from the outside in: the database policy, the page's own query, and the page's arranging.
@@ -52,6 +52,18 @@ describe('the database', () => {
 describe("the page's query", () => {
   const src = readFileSync(resolve(__dirname, 'readingList.ts'), 'utf8');
 
+  it('asks for hidden books only when told to, and the page tells it to only for an admin view', () => {
+    const page = readFileSync(resolve(__dirname, '../app/resources/reading-list/page.tsx'), 'utf8');
+    expect(page).toMatch(/const admin = await showsAdminView\(\);/);
+    expect(page).toMatch(/getReadingList\(\{ includeHidden: admin \}\)/);
+    expect(src).toMatch(/includeHidden \? q : q\.eq\('is_visible', true\)/);
+  });
+
+  it('keeps hidden books out of the structured data, even on an admin page', () => {
+    const page = readFileSync(resolve(__dirname, '../app/resources/reading-list/page.tsx'), 'utf8');
+    expect(page).toMatch(/s\.books\.filter\(\(b\) => !b\.hidden\)/);
+  });
+
   it('asks for visible rows itself, because an admin session would otherwise get the hidden ones', () => {
     // One for the categories, one for the books (used for both the cover query and its fallback).
     expect(src.match(/\.eq\('is_visible', true\)/g)).toHaveLength(2);
@@ -74,7 +86,17 @@ describe('arranging the shelves', () => {
     expect(shelves.flatMap((s) => s.books.map((b) => b.id))).toEqual(['shown']);
   });
 
-  it('orders categories by sort order, then featured books first, then by sort order and title', () => {
+  it('keeps hidden books only when an admin page asks, and still drops hidden categories', () => {
+    const shelves = arrangeShelves(
+      [cat('a', 1), cat('b', 2, false)],
+      [book('shown', 'a'), book('hidden', 'a', { is_visible: false }), book('in-hidden-cat', 'b')],
+      { includeHidden: true },
+    );
+    // Same sort order, so by title.
+    expect(shelves.flatMap((s) => s.books.map((b) => b.id))).toEqual(['hidden', 'shown']);
+  });
+
+  it('orders categories by sort order, then books by sort order and title; favourites are not lifted here', () => {
     const shelves = arrangeShelves(
       [cat('second', 20), cat('first', 10)],
       [
@@ -86,7 +108,7 @@ describe('arranging the shelves', () => {
       ],
     );
     expect(shelves.map((s) => s.category.id)).toEqual(['first', 'second']);
-    expect(shelves[0].books.map((b) => b.id)).toEqual(['Starred', 'Early', 'Alpha', 'Zed']);
+    expect(shelves[0].books.map((b) => b.id)).toEqual(['Early', 'Alpha', 'Zed', 'Starred']);
   });
 
   it('leaves out a category with nothing to show', () => {
@@ -125,3 +147,42 @@ describe('the topic buttons and the search box', () => {
     expect(out).toEqual([]);
   });
 });
+
+describe('favourites', () => {
+  const fav = (id: string, featured = false) => ({ id, title: id, author: 'Someone', blurb: null, featured, href: '#' });
+  const shelves: ListedShelf[] = [
+    { category: { id: '1', name: 'Scrum', slug: 'scrum', description: null }, books: [fav('s1'), fav('s2', true)] },
+    { category: { id: '2', name: 'Coaching', slug: 'coaching', description: null }, books: [fav('c1', true), fav('c2')] },
+  ];
+
+  it('are lifted to one group at the top, in topic order, and not shown again in their topic', () => {
+    const v = arrangeForView(shelves, { category: '', query: '' });
+    expect(v.favourites.map((b) => b.id)).toEqual(['s2', 'c1']);
+    expect(v.shelves.flatMap((s) => s.books.map((b) => b.id))).toEqual(['s1', 'c2']);
+    expect(v.shown).toBe(4);
+  });
+
+  it('follow the topic and the search like everything else', () => {
+    expect(arrangeForView(shelves, { category: 'coaching', query: '' }).favourites.map((b) => b.id)).toEqual(['c1']);
+    expect(arrangeForView(shelves, { category: '', query: 's1' }).favourites).toEqual([]);
+  });
+
+  it('leave a topic out when all of its books are favourites', () => {
+    const allFav: ListedShelf[] = [{ category: shelves[0].category, books: [fav('x', true)] }];
+    expect(arrangeForView(allFav, { category: '', query: '' }).shelves).toEqual([]);
+  });
+});
+
+describe('the heart and the eye', () => {
+  const action = readFileSync(resolve(__dirname, '../app/actions/readingList.ts'), 'utf8');
+
+  it('re-check that the person pressing is an admin, whatever rendered the button', () => {
+    expect(action).toMatch(/if \(!\(await isAdmin\(\)\)\) return \{ ok: false/);
+  });
+
+  it('can change only the two flags', () => {
+    expect(action).toMatch(/const clean: \{ is_featured\?: boolean; is_visible\?: boolean \}/);
+    expect(action).not.toMatch(/update\(patch\)/);
+  });
+});
+

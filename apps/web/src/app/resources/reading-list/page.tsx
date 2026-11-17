@@ -7,6 +7,7 @@ import { getSiteSettings } from '@/lib/site-settings';
 import { getCopy } from '@/lib/copy';
 import { pageCrumbs } from '@/lib/copy/pageName';
 import { getReadingList } from '@/lib/readingList';
+import { showsAdminView } from '@/lib/auth';
 import { amazonLink, AMAZON_DISCLOSURE } from '@altogether/ui/amazon';
 import { ReadingListBrowser } from './ReadingListBrowser';
 
@@ -35,8 +36,11 @@ export default async function ReadingListPage({
   searchParams: Promise<{ category?: string | string[] }>;
 }) {
   await requireModule('reading_list');
+  // An admin's page carries the hidden books too, marked, with a heart and an eye on every tile.
+  // A visitor's never does: the query does not ask, and the database would not answer.
+  const admin = await showsAdminView();
   const [shelves, settings, t, params] = await Promise.all([
-    getReadingList(), getSiteSettings(), getCopy('readingList'), searchParams,
+    getReadingList({ includeHidden: admin }), getSiteSettings(), getCopy('readingList'), searchParams,
   ]);
   const tag = (settings as { amazon_associate_tag?: string | null }).amazon_associate_tag ?? '';
 
@@ -45,6 +49,7 @@ export default async function ReadingListPage({
     category: { id: s.category.id, name: s.category.name, slug: s.category.slug, description: s.category.description },
     books: s.books.map((b) => ({
       id: b.id, title: b.title, author: b.author, blurb: b.blurb, featured: b.is_featured, cover: b.cover_url ?? null,
+      hidden: b.is_visible === false,
       href: amazonLink(b, tag),
     })),
   }));
@@ -59,9 +64,11 @@ export default async function ReadingListPage({
     '@type': 'ItemList',
     name: t('readingList.hero.heading'),
     url: `${SITE_URL}${PATH}`,
-    numberOfItems: withLinks.reduce((n, s) => n + s.books.length, 0),
+    numberOfItems: withLinks.reduce((n, s) => n + s.books.filter((b) => !b.hidden).length, 0),
     itemListElement: withLinks
-      .flatMap((s) => s.books.map((b) => ({ b, genre: s.category.name })))
+      // Favourites first, as the page shows them; and never a hidden book, even on an admin's page.
+      .flatMap((s) => s.books.filter((b) => !b.hidden).map((b) => ({ b, genre: s.category.name })))
+      .sort((x, y) => Number(y.b.featured) - Number(x.b.featured))
       .map(({ b, genre }, i) => ({
         '@type': 'ListItem',
         position: i + 1,
@@ -96,6 +103,7 @@ export default async function ReadingListPage({
       <ReadingListBrowser
         shelves={withLinks}
         initialCategory={initialCategory}
+        admin={admin}
         words={{
           all: t('readingList.filter.all'),
           reset: t('readingList.reset'),
@@ -104,7 +112,7 @@ export default async function ReadingListPage({
           count: t('readingList.count'),
           empty: t('readingList.empty'),
           button: t('readingList.button'),
-          featured: t('readingList.featured'),
+          favourites: t('readingList.favourites.heading'),
         }}
       />
 
