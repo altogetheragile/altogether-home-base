@@ -28,6 +28,7 @@ const RESOURCE_LINKS = [
   { key: 'nav.exams', href: '/exams', flag: 'show_exams' },
   { key: 'nav.ai_tools', href: '/ai-tools', flag: 'show_ai_tools' },
   { key: 'nav.flow_game', href: '/flow-game', flag: 'show_flow_game' },
+  { key: 'nav.reading_list', href: '/resources/reading-list', flag: 'show_reading_list' },
 ] as const;
 
 /** Shipped wording, so this renders correctly in a test and if the copy fetch fails. */
@@ -40,7 +41,7 @@ const FALLBACK: Record<string, string> = {
   'nav.events': 'Events', 'nav.coaching': 'Coaching', 'nav.about': 'About',
   'nav.contact': 'Contact', 'nav.testimonials': 'Testimonials', 'nav.resources': 'Resources',
   'nav.knowledge': 'Knowledge Base', 'nav.blog': 'Blog', 'nav.exams': 'Practice Exams',
-  'nav.ai_tools': 'AI Tools', 'nav.flow_game': 'Flow Game',
+  'nav.ai_tools': 'AI Tools', 'nav.flow_game': 'Flow Game', 'nav.reading_list': 'Reading List',
   'nav.signIn': 'Sign In', 'nav.dashboard': 'Dashboard', 'nav.greeting': 'Hi', 'nav.signOut': 'Sign Out',
 };
 

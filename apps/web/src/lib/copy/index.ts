@@ -11,6 +11,7 @@ import eventsJson from './events.json';
 import examsJson from './exams.json';
 import examJson from './exam.json';
 import trainingJson from './training.json';
+import readingListJson from './readingList.json';
 import { navigationRegistry, siteRegistry } from '@altogether/ui/editor/registries';
 
 // ============= The site's words, editable without a deploy =============
@@ -32,7 +33,7 @@ export * from './fields';
 import type { CopyRegistry } from './fields';
 
 export const REGISTRIES: CopyRegistry[] = [
-  homeJson, aboutJson, coachingJson, contactJson, testimonialsJson, blogJson, eventsJson, examsJson, examJson, trainingJson,
+  homeJson, aboutJson, coachingJson, contactJson, testimonialsJson, blogJson, eventsJson, examsJson, examJson, trainingJson, readingListJson,
   navigationRegistry,
   siteRegistry,
 ] as CopyRegistry[];

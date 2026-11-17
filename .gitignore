@@ -65,3 +65,7 @@ packages/ui/dist/
 
 # A playtest run writes screenshots and a report.
 playtest-report*/
+
+# The reading list export carries internal notes and this repository is public. It stays local;
+# seed with: node scripts/seed-reading-list.mjs --file <path>
+data/reading-list.csv

@@ -32,6 +32,14 @@
       "types": "./dist/modules.d.ts",
       "import": "./dist/modules.js"
     },
+    "./amazon": {
+      "types": "./dist/amazon.d.ts",
+      "import": "./dist/amazon.js"
+    },
+    "./reading-list-csv": {
+      "types": "./dist/readingListCsv.d.ts",
+      "import": "./dist/readingListCsv.js"
+    },
     "./editor/*": {
       "types": "./dist/editor/*.d.ts",
       "import": "./dist/editor/*.js"

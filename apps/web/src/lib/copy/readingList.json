@@ -1,0 +1,89 @@
+{
+  "page": "readingList",
+  "label": "Reading List",
+  "entries": {
+    "readingList.visible": {
+      "value": "",
+      "label": "Show this page to visitors",
+      "hint": "Off, and the reading list disappears from the menu and answers Not Found for everybody except you. Useful while it is still being written.",
+      "type": "switch",
+      "store": "column",
+      "path": "show_reading_list"
+    },
+    "readingList.tag": {
+      "value": "",
+      "label": "Amazon Associates tag",
+      "hint": "Put on every Amazon link on this page, so a purchase is credited to you. Empty, and the links still work but earn nothing.",
+      "store": "column",
+      "path": "amazon_associate_tag"
+    },
+    "readingList.meta.titlePrefix": {
+      "value": "Recommended Agile Books",
+      "label": "Browser tab and search result title",
+      "hint": "What comes before the business name in the browser tab and in a search result."
+    },
+    "readingList.meta.description": {
+      "value": "Books we recommend on Scrum, Kanban, product discovery, coaching, facilitation and leading agile teams, grouped by topic.",
+      "label": "Search description",
+      "hint": "The sentence Google shows under the page title in search results. Around 150 to 160 characters; longer is cut off mid-word."
+    },
+    "readingList.hero.heading": {
+      "value": "Recommended Reading",
+      "label": "Heading",
+      "hint": "The band at the top of the page"
+    },
+    "readingList.hero.intro": {
+      "value": "The books we come back to and recommend on our courses, grouped by topic. Search by title or author, or pick a topic.",
+      "label": "Introduction",
+      "hint": "The band at the top of the page, under the heading"
+    },
+    "readingList.filter.all": {
+      "value": "All",
+      "label": "Every topic",
+      "hint": "The first topic button, which shows every book",
+      "group": "Finding a book"
+    },
+    "readingList.filter.label": {
+      "value": "Topic",
+      "label": "Topic buttons, as a screen reader names them",
+      "hint": "Not shown on screen",
+      "group": "Finding a book"
+    },
+    "readingList.search.label": {
+      "value": "Search by title or author",
+      "label": "Search box label",
+      "hint": "Above the search box",
+      "group": "Finding a book"
+    },
+    "readingList.count": {
+      "value": "Showing {shown} of {total} books",
+      "label": "How many are showing",
+      "hint": "Under the search box. {shown} and {total} are filled in",
+      "group": "Finding a book"
+    },
+    "readingList.empty": {
+      "value": "No books match that. Try another word, or show every topic.",
+      "label": "Nothing matches",
+      "hint": "Shown when a search or topic finds no book",
+      "group": "Finding a book"
+    },
+    "readingList.reset": {
+      "value": "Show Every Book",
+      "label": "Start again",
+      "hint": "Under the message when nothing matches. Clears the search and the topic",
+      "group": "Finding a book"
+    },
+    "readingList.button": {
+      "value": "View on Amazon",
+      "label": "Book button",
+      "hint": "On every book. Opens Amazon in a new tab",
+      "group": "Each book"
+    },
+    "readingList.featured": {
+      "value": "Recommended",
+      "label": "Featured label",
+      "hint": "On a book marked as featured",
+      "group": "Each book"
+    }
+  }
+}

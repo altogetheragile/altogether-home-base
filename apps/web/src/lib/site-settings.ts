@@ -26,6 +26,9 @@ export type SiteSettings = {
   show_exams?: boolean | null;
   show_ai_tools?: boolean | null;
   show_flow_game?: boolean | null;
+  show_reading_list?: boolean | null;
+  /** Amazon Associates tag put on every reading list link. Empty builds untagged links. */
+  amazon_associate_tag?: string | null;
   show_bookings?: boolean | null;
   show_testimonial_first_name_only?: boolean | null;
   show_testimonial_name?: boolean | null;

@@ -116,6 +116,7 @@ const AdminBlogPost = lazy(() => import('@/pages/admin/AdminBlogPost'));
 
 // Admin Pages - Exam Question Bank
 const AdminExams = lazy(() => import('@/pages/admin/AdminExams'));
+const AdminReadingList = lazy(() => import('@/pages/admin/AdminReadingList'));
 const AdminBookings = lazy(() => import('@/pages/admin/AdminBookings'));
 const AdminSEO = lazy(() => import('@/pages/admin/AdminSEO'));
 const AdminExamQuestions = lazy(() => import('@/pages/admin/AdminExamQuestions'));
@@ -686,6 +687,11 @@ export const AdminRoutes = () => {
         <Route path="exams" element={
           <Suspense fallback={<LoadingFallback />}>
             <AdminExams />
+          </Suspense>
+        } />
+        <Route path="reading-list" element={
+          <Suspense fallback={<LoadingFallback />}>
+            <AdminReadingList />
           </Suspense>
         } />
         <Route path="exams/:examId/questions" element={

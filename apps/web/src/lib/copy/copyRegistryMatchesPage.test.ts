@@ -17,6 +17,7 @@ const PAGES: Record<string, string | null> = {
   blog: 'src/app/blog/page.tsx',
   events: 'src/app/events/page.tsx',
   exams: 'src/app/exams/page.tsx',
+  readingList: 'src/app/resources/reading-list/page.tsx',
   // One registry for every paper: the player's furniture, the same on each.
   exam: 'src/app/exams/[slug]/page.tsx',
   // One page per course, all sharing these words.

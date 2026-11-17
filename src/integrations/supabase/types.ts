@@ -3815,6 +3815,121 @@ export type Database = {
           },
         ]
       }
+      reading_book_notes: {
+        Row: {
+          book_id: string
+          owned_format: string | null
+          source_note: string | null
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          owned_format?: string | null
+          source_note?: string | null
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          owned_format?: string | null
+          source_note?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_book_notes_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: true
+            referencedRelation: "reading_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_books: {
+        Row: {
+          amazon_url: string | null
+          asin: string | null
+          author: string
+          blurb: string | null
+          category_id: string
+          created_at: string
+          id: string
+          is_featured: boolean
+          is_visible: boolean
+          sort_order: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amazon_url?: string | null
+          asin?: string | null
+          author?: string
+          blurb?: string | null
+          category_id: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          sort_order?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          amazon_url?: string | null
+          asin?: string | null
+          author?: string
+          blurb?: string | null
+          category_id?: string
+          created_at?: string
+          id?: string
+          is_featured?: boolean
+          is_visible?: boolean
+          sort_order?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reading_books_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "reading_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reading_categories: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_visible: boolean
+          name: string
+          slug: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          name: string
+          slug: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_visible?: boolean
+          name?: string
+          slug?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       search_analytics: {
         Row: {
           clicked_technique_id: string | null
@@ -3853,6 +3968,7 @@ export type Database = {
       }
       site_settings: {
         Row: {
+          amazon_associate_tag: string | null
           company_description: string | null
           company_name: string | null
           contact_email: string | null
@@ -3878,6 +3994,7 @@ export type Database = {
           show_protected_projects: boolean | null
           show_recommendations: boolean | null
           show_resources: boolean | null
+          show_reading_list: boolean | null
           show_scrum_game: boolean | null
           show_testimonial_company: boolean | null
           show_testimonial_first_name_only: boolean | null
@@ -3894,6 +4011,7 @@ export type Database = {
           updated_by: string | null
         }
         Insert: {
+          amazon_associate_tag?: string | null
           company_description?: string | null
           company_name?: string | null
           contact_email?: string | null
@@ -3919,6 +4037,7 @@ export type Database = {
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
           show_resources?: boolean | null
+          show_reading_list?: boolean | null
           show_scrum_game?: boolean | null
           show_testimonial_company?: boolean | null
           show_testimonial_first_name_only?: boolean | null
@@ -3935,6 +4054,7 @@ export type Database = {
           updated_by?: string | null
         }
         Update: {
+          amazon_associate_tag?: string | null
           company_description?: string | null
           company_name?: string | null
           contact_email?: string | null
@@ -3960,6 +4080,7 @@ export type Database = {
           show_protected_projects?: boolean | null
           show_recommendations?: boolean | null
           show_resources?: boolean | null
+          show_reading_list?: boolean | null
           show_scrum_game?: boolean | null
           show_testimonial_company?: boolean | null
           show_testimonial_first_name_only?: boolean | null

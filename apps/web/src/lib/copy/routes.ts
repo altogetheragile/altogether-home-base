@@ -17,6 +17,7 @@ export const COPY_ROUTES: Record<string, string> = {
   '/blog': 'blog',
   '/events': 'events',
   '/exams': 'exams',
+  '/resources/reading-list': 'readingList',
 };
 
 /** Pages that answer many addresses, one per row of something in the database, whose furniture is
