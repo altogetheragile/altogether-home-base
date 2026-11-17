@@ -95,7 +95,9 @@ export async function readScreen(page) {
           : declared || 'button';
       const ref = `c${i}`;
       el.setAttribute('data-playtest-ref', ref);
-      const one = { ref, role, name };
+      // Where the focus is, on every control and not only on fields. A keyboard player has
+      // nothing else to steer by.
+      const one = { ref, role, name, focused: el === document.activeElement };
       if (field) {
         // A tick box is ticked or it is not. Its `value` is the string "on" whatever its state,
         // which is a detail of HTML and not a thing anybody can see - so the newcomer was handed
@@ -106,21 +108,41 @@ export async function readScreen(page) {
         one.value = tick ? (el.checked ? 'ticked' : 'not ticked')
           : (el.value ?? '').replace(/\s+/g, ' ').slice(0, 200);
         if (!tick) one.hint = (el.getAttribute('placeholder') ?? '').replace(/\s+/g, ' ').slice(0, 120);
-        one.focused = el === document.activeElement;
       }
       controls.push(one);
     });
 
     // Long pages are read, not memorised: enough to judge the screen without paying for the lot.
     const text = [...new Set(blocks)].join('\n').slice(0, 6000);
-    return { text, controls };
+    // When the focus is on something that is not in the list - the page itself, or a box with no
+    // name - say what it is in a few words, because "I cannot tell where I am" is a finding only if
+    // it is the page's fault.
+    const a = document.activeElement;
+    const focus = !a || a === document.body ? 'the page itself, not any one control'
+      : `${a.tagName.toLowerCase()}${a.getAttribute('role') ? ` (${a.getAttribute('role')})` : ''} `
+        + `"${(a.getAttribute('aria-label') || a.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 60)}"`
+        + (seen(a) ? '' : ', which is not visible');
+    return { text, controls, focus };
   });
 }
 
 /** Does what the newcomer decided, and says plainly when it could not. */
-export async function doAction(page, action) {
-  const { kind, ref, text } = action ?? {};
+export async function doAction(page, action, { keyboardOnly = false } = {}) {
+  const { kind, text } = action ?? {};
+  // A keyboard player never points at anything, so a ref is ignored rather than obeyed: obeying it
+  // would focus the control for them, and whether they can get there is what is being tested.
+  const ref = keyboardOnly ? undefined : action?.ref;
   if (kind === 'stop') return 'stopped';
+  if (keyboardOnly && kind === 'type') {
+    const into = await page.evaluate(() => {
+      const a = document.activeElement;
+      return a && (['INPUT', 'TEXTAREA'].includes(a.tagName) || a.isContentEditable);
+    });
+    if (!into) return 'nothing happened: the focus is not on a box you can type in';
+    await page.keyboard.type(text ?? '');
+    return `typed "${(text ?? '').slice(0, 60)}"`;
+  }
+  if (keyboardOnly && kind !== 'key') return `nothing happened: you have no mouse, so you cannot ${kind}`;
   // Pressing a key, because some of this game can only be played with one.
   //
   // The park says "picked up - arrow keys move it, Enter puts it down", which is a real keyboard
@@ -129,7 +151,9 @@ export async function doAction(page, action) {
   // with the enclosure still in its hands: "I cannot use arrow keys in this interface, so I am
   // stuck." Nothing wrong with the page. The tester could not do what the page told it to.
   if (kind === 'key') {
-    const name = (text ?? '').trim() || 'Enter';
+    // Playwright spells the space bar " " and wants "Shift+Tab" as it is; a person says "Space".
+    const said = (text ?? '').trim() || 'Enter';
+    const name = /^space$/i.test(said) ? ' ' : said;
     // Held down, rather than tapped once.
     //
     // A pace is a tile, and a park is a lot of tiles. One press per turn meant a newcomer could
@@ -139,7 +163,7 @@ export async function doAction(page, action) {
     const times = Math.max(1, Math.min(30, Number(action?.times) || 1));
     if (ref) await page.locator(`[data-playtest-ref="${ref}"]`).focus().catch(() => {});
     for (let i = 0; i < times; i += 1) await page.keyboard.press(name);
-    return times > 1 ? `pressed ${name} ${times} times` : `pressed ${name}`;
+    return times > 1 ? `pressed ${said} ${times} times` : `pressed ${said}`;
   }
   if (kind === 'scroll') {
     await page.evaluate(() => window.scrollBy(0, Math.round(window.innerHeight * 0.8)));
