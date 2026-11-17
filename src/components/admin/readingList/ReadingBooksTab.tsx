@@ -26,6 +26,7 @@ export function ReadingBooksTab({ books, categories, tag }: { books: AdminBook[]
   const [category, setCategory] = useState('all');
   const [shown, setShown] = useState<Shown>('all');
   const [searchOnly, setSearchOnly] = useState(false);
+  const [noCover, setNoCover] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [moveTo, setMoveTo] = useState('');
   const [editing, setEditing] = useState<AdminBook | null>(null);
@@ -39,6 +40,7 @@ export function ReadingBooksTab({ books, categories, tag }: { books: AdminBook[]
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
   const order = useMemo(() => new Map(categories.map((c, i) => [c.id, i])), [categories]);
   const needingAsin = books.filter((b) => amazonLinkKind(b) === 'search').length;
+  const withoutCover = books.filter((b) => !b.cover_url).length;
 
   const rows = useMemo(() => {
     const words = query.trim().toLowerCase().split(/\s+/).filter(Boolean);
@@ -46,10 +48,11 @@ export function ReadingBooksTab({ books, categories, tag }: { books: AdminBook[]
       .filter((b) => category === 'all' || b.category_id === category)
       .filter((b) => shown === 'all' || (shown === 'visible') === b.is_visible)
       .filter((b) => !searchOnly || amazonLinkKind(b) === 'search')
+      .filter((b) => !noCover || !b.cover_url)
       .filter((b) => words.every((w) => `${b.title} ${b.author}`.toLowerCase().includes(w)))
       .sort((a, b) => (order.get(a.category_id) ?? 0) - (order.get(b.category_id) ?? 0)
         || Number(b.is_featured) - Number(a.is_featured) || a.sort_order - b.sort_order || a.title.localeCompare(b.title));
-  }, [books, query, category, shown, searchOnly, order]);
+  }, [books, query, category, shown, searchOnly, noCover, order]);
 
   const allOnPage = rows.length > 0 && rows.every((r) => selected.has(r.id));
   const toggleAll = () => setSelected(allOnPage ? new Set() : new Set(rows.map((r) => r.id)));
@@ -107,6 +110,10 @@ export function ReadingBooksTab({ books, categories, tag }: { books: AdminBook[]
           <Checkbox id="rb-search-only" checked={searchOnly} onCheckedChange={(v) => setSearchOnly(v === true)} />
           <Label htmlFor="rb-search-only">Needs an ASIN ({needingAsin})</Label>
         </div>
+        <div className="flex items-center gap-2 pb-2">
+          <Checkbox id="rb-no-cover" checked={noCover} onCheckedChange={(v) => setNoCover(v === true)} />
+          <Label htmlFor="rb-no-cover">No cover ({withoutCover})</Label>
+        </div>
         <Button onClick={() => { setEditing(null); setFormOpen(true); }} disabled={!categories.length}>
           <Plus className="mr-1 h-4 w-4" aria-hidden /> Add Book
         </Button>
@@ -148,8 +155,15 @@ export function ReadingBooksTab({ books, categories, tag }: { books: AdminBook[]
                 <TableRow key={b.id} data-state={selected.has(b.id) ? 'selected' : undefined}>
                   <TableCell><Checkbox checked={selected.has(b.id)} onCheckedChange={() => toggle(b.id)} aria-label={`Select ${b.title}`} /></TableCell>
                   <TableCell className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-3">
+                      {b.cover_url
+                        ? <img src={b.cover_url} alt="" width={28} height={42} loading="lazy" className="h-[42px] w-7 shrink-0 rounded-sm border object-cover" />
+                        : <div className="h-[42px] w-7 shrink-0 rounded-sm border border-dashed" aria-hidden />}
+                      <div className="min-w-0">
                     <div className="font-medium">{b.title}{b.is_featured && <Badge variant="secondary" className="ml-2">Featured</Badge>}</div>
                     <div className="text-sm text-muted-foreground">{b.author}</div>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="text-sm">{cat?.name}{cat && !cat.is_visible && <span className="text-muted-foreground"> (hidden)</span>}</TableCell>
                   <TableCell>

@@ -29,6 +29,8 @@ export interface ShelfBook {
   is_featured: boolean;
   sort_order: number;
   is_visible?: boolean;
+  /** A picture in this project's own storage, or null for a text-only tile. */
+  cover_url?: string | null;
 }
 
 export interface Shelf {
@@ -57,20 +59,23 @@ export function arrangeShelves(categories: ShelfCategory[], books: ShelfBook[]):
     .filter((s) => s.books.length > 0);
 }
 
+const BOOK_COLUMNS = 'id, title, author, category_id, asin, amazon_url, blurb, is_featured, sort_order, is_visible';
+
 export async function getReadingList(): Promise<Shelf[]> {
   try {
     const supabase = await createClient();
-    const [cats, books] = await Promise.all([
+    const visibleBooks = (columns: string) => supabase.from('reading_books').select(columns).eq('is_visible', true);
+    const [cats, withCovers] = await Promise.all([
       supabase
         .from('reading_categories')
         .select('id, name, slug, description, sort_order, is_visible')
         .eq('is_visible', true),
-      supabase
-        .from('reading_books')
-        .select('id, title, author, category_id, asin, amazon_url, blurb, is_featured, sort_order, is_visible')
-        .eq('is_visible', true),
+      visibleBooks(`${BOOK_COLUMNS}, cover_url`),
     ]);
-    return arrangeShelves((cats.data ?? []) as ShelfCategory[], (books.data ?? []) as ShelfBook[]);
+    // The page and the column that gives books a cover deploy separately. If the column is not
+    // there yet, the books are still worth showing without pictures, rather than an empty page.
+    const books = withCovers.error ? await visibleBooks(BOOK_COLUMNS) : withCovers;
+    return arrangeShelves((cats.data ?? []) as ShelfCategory[], (books.data ?? []) as unknown as ShelfBook[]);
   } catch {
     return [];
   }

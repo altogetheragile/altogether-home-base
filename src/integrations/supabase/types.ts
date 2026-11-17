@@ -3851,6 +3851,8 @@ export type Database = {
           author: string
           blurb: string | null
           category_id: string
+          cover_source: string | null
+          cover_url: string | null
           created_at: string
           id: string
           is_featured: boolean
@@ -3865,6 +3867,8 @@ export type Database = {
           author?: string
           blurb?: string | null
           category_id: string
+          cover_source?: string | null
+          cover_url?: string | null
           created_at?: string
           id?: string
           is_featured?: boolean
@@ -3879,6 +3883,8 @@ export type Database = {
           author?: string
           blurb?: string | null
           category_id?: string
+          cover_source?: string | null
+          cover_url?: string | null
           created_at?: string
           id?: string
           is_featured?: boolean

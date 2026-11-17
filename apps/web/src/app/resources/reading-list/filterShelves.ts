@@ -7,6 +7,8 @@ export interface ListedBook {
   blurb: string | null;
   featured: boolean;
   href: string;
+  /** Optional: a book with no cover is a text-only tile. */
+  cover?: string | null;
 }
 
 export interface ListedShelf {

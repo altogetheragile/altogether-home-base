@@ -28,6 +28,9 @@ export interface AdminBook {
   sort_order: number;
   owned_format: string | null;
   source_note: string | null;
+  cover_url: string | null;
+  /** 'openlibrary' when fetched by the script, 'upload' when chosen here. */
+  cover_source: string | null;
 }
 
 export type BookInput = Omit<AdminBook, 'id'>;
@@ -55,7 +58,7 @@ export function useReadingBooks() {
     queryFn: async (): Promise<AdminBook[]> => {
       const { data, error } = await supabase
         .from('reading_books')
-        .select('id, title, author, category_id, asin, amazon_url, blurb, is_visible, is_featured, sort_order, reading_book_notes(owned_format, source_note)')
+        .select('id, title, author, category_id, asin, amazon_url, blurb, is_visible, is_featured, sort_order, cover_url, cover_source, reading_book_notes(owned_format, source_note)')
         .order('sort_order')
         .order('title');
       if (error) throw error;

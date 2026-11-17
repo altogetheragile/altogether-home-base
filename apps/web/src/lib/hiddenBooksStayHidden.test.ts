@@ -53,7 +53,9 @@ describe("the page's query", () => {
   const src = readFileSync(resolve(__dirname, 'readingList.ts'), 'utf8');
 
   it('asks for visible rows itself, because an admin session would otherwise get the hidden ones', () => {
+    // One for the categories, one for the books (used for both the cover query and its fallback).
     expect(src.match(/\.eq\('is_visible', true\)/g)).toHaveLength(2);
+    expect(src).toMatch(/visibleBooks\(BOOK_COLUMNS\)/);
   });
 
   it('never reads the internal notes', () => {
