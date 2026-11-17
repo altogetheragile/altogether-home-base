@@ -79,11 +79,10 @@
       "hint": "On every book. Opens Amazon in a new tab",
       "group": "Each book"
     },
-    "readingList.featured": {
-      "value": "Recommended",
-      "label": "Featured label",
-      "hint": "On a book marked as featured",
-      "group": "Each book"
+    "readingList.favourites.heading": {
+      "value": "Our Favourites",
+      "label": "Favourites heading",
+      "hint": "Above the hearted books, which are grouped at the top of the page"
     }
   }
 }
