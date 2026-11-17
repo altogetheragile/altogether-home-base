@@ -23,6 +23,7 @@ const NAV_KEY: Record<string, string> = {
   events: 'nav.events',
   blog: 'nav.blog',
   exams: 'nav.exams',
+  readingList: 'nav.reading_list',
 };
 
 /** The name to show for a page, as the site calls it.

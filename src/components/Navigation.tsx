@@ -28,6 +28,7 @@ const RESOURCE_LINKS = [
   { key: 'nav.flow_game', label: 'Flow Game', to: '/flow-game', flag: 'show_flow_game' as const },
   { label: 'Zoo Game', to: '/zoo-game', flag: 'show_zoo_game' as const },
   { label: 'Scrum Game', to: '/scrum-game', flag: 'show_scrum_game' as const },
+  { key: 'nav.reading_list', label: 'Reading List', to: '/resources/reading-list', flag: 'show_reading_list' as const },
 ];
 
 // The shared list of what a site has on by default (packages/ui/src/modules.ts), not this file's

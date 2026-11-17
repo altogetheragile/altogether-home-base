@@ -38,6 +38,7 @@ export const MODULES: SiteModule[] = [
   { feature: 'events', label: 'Events & Courses', blurb: 'The schedule, course pages, instructors and locations.', defaultOn: MODULE_DEFAULTS['events' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
   { feature: 'bookings', label: 'Bookings', blurb: 'Taking appointments against your availability.', defaultOn: MODULE_DEFAULTS['bookings' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
   { feature: 'exams', label: 'Practice Exams', blurb: 'Practice papers, their questions and attempts.', defaultOn: MODULE_DEFAULTS['exams' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
+  { feature: 'reading_list', label: 'Reading List', blurb: 'Recommended books, grouped by topic, with Amazon links.', defaultOn: MODULE_DEFAULTS['reading_list' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Content' },
   { feature: 'knowledge', label: 'Knowledge Base', blurb: 'Techniques, the lattice and the pattern builder.', defaultOn: MODULE_DEFAULTS['knowledge' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Training' },
 
   { feature: 'ai_tools', label: 'Canvases & AI Tools', blurb: 'Business Model Canvas, story mapping, personas, impact maps.', defaultOn: MODULE_DEFAULTS['ai_tools' as keyof typeof MODULE_DEFAULTS] ?? false, group: 'Tools' },

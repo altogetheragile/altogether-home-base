@@ -15,7 +15,7 @@ export type GatedFeature =
   | 'events' | 'blog' | 'knowledge' | 'exams' | 'bookings'
   | 'about' | 'coaching' | 'contact' | 'testimonials' | 'dashboard'
   | 'ai_tools' | 'protected_projects' | 'dynamic_pages'
-  | 'flow_game' | 'zoo_game' | 'scrum_game';
+  | 'flow_game' | 'zoo_game' | 'scrum_game' | 'reading_list';
 
 interface SiteSettingsRouteGuardProps {
   feature: GatedFeature;
@@ -28,6 +28,7 @@ const FEATURE_NAMES: Record<GatedFeature, string> = {
   about: 'About', coaching: 'Coaching', contact: 'Contact', testimonials: 'Testimonials',
   dashboard: 'Dashboard', ai_tools: 'AI Tools', protected_projects: 'Projects',
   dynamic_pages: 'Dynamic Pages', flow_game: 'Flow Game', zoo_game: 'Zoo Game', scrum_game: 'Scrum Game',
+  reading_list: 'Reading List',
 };
 
 /** A module that is switched off is a 404 to the public and open to an admin, with a banner saying

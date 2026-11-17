@@ -125,6 +125,12 @@ export const navigationRegistry: CopyRegistry = {
       "path": "show_flow_game",
       "group": "Inside Resources"
     },
+    "nav.reading_list": {
+      "value": "Reading List",
+      "label": "Reading list link",
+      "hint": "Inside the Resources drop-down",
+      "group": "Inside Resources"
+    },
     "nav.home": {
       "value": "Home",
       "label": "Home link",

@@ -1,7 +1,7 @@
 import {
   Settings, Calendar, Users, MapPin, BookOpen, Shield, Tag,
   FolderOpen, BarChart3, Upload, Layers, LayoutDashboard, MessageSquare, Database, FileText, ClipboardList, CalendarClock,
-  Search, Inbox, Flag, ListChecks,
+  Search, Inbox, Flag, ListChecks, BookMarked,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -50,6 +50,7 @@ export const navigation: NavGroup[] = [
           { label: 'Pattern Feedback', href: '/admin/knowledge/pattern-feedback', icon: MessageSquare },
         ],
       },
+      { label: 'Reading List', icon: BookMarked, href: '/admin/reading-list' },
       { label: 'Assets', icon: Upload, href: '/admin/assets' },
       { label: 'SEO', icon: Search, href: '/admin/seo' },
     ],

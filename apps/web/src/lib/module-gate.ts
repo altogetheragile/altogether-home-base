@@ -29,7 +29,9 @@ export type GatedModule =
   // asset - the board is the reference layer the course moves to and from, and a site that does
   // not run the game has no use for a page of this practice's icons. Off by default, which is why
   // the second site does not inherit it.
-  | 'zoo_game';
+  | 'zoo_game'
+  // The recommended books at /resources/reading-list. Off by default: a new site has no books.
+  | 'reading_list';
 
 
 /** Is this page switched on? The one place that answers it, so the gate, the menu and the banner

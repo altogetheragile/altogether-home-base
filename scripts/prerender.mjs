@@ -699,8 +699,18 @@ async function main() {
     console.log(`  og   /exams/${exam.slug}`);
   }
 
+  // The reading list is listed only while it is switched on: a sitemap naming a page that answers
+  // Not Found is the soft-404 this file exists to avoid. Its own query, so a database the column
+  // has not reached yet costs this one URL and not the brand read above.
+  let readingListOn = false;
+  try {
+    const { data, error } = await supabase.from('site_settings').select('show_reading_list').limit(1).maybeSingle();
+    readingListOn = !error && data?.show_reading_list === true;
+  } catch { /* off */ }
+
   // Sitemap — generated from the same data so new exams/courses/posts auto-appear.
   const sitemapEntries = [
+    ...(readingListOn ? [{ loc: `${SITE_URL}/resources/reading-list`, lastmod: '' }] : []),
     ...Object.keys(STATIC_PAGES)
       .filter((route) => !SITEMAP_EXCLUDE.has(route))
       .map((route) => ({

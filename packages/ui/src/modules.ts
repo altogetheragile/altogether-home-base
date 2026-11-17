@@ -32,6 +32,8 @@ export const MODULE_DEFAULTS = {
   flow_game: false,
   zoo_game: false,
   scrum_game: false,
+  // This practice's own book recommendations. A new site with no books has nothing to show.
+  reading_list: false,
 } as const;
 
 export type ModuleName = keyof typeof MODULE_DEFAULTS;
