@@ -94,7 +94,7 @@ export function GoalShapes({ goal, shape, measures, onSet }: {
     <section className="rounded-lg border border-dashed border-border bg-muted/20">
       <button type="button" onClick={() => setOpen((o) => !o)} className={cn(FOCUS, "flex w-full items-center justify-between gap-2 px-3 py-2 text-left")}>
         <span className="min-w-0">
-          <span className="text-sm font-semibold">Other ways to write a Product Goal</span>
+          <span className="text-sm font-semibold">Other ways to write a Product Goal</span>{" "}
           <span className={cn(TONE.attention.text, "ml-1.5 text-[11px]")}>common, but not from the Guide</span>
         </span>
         <ChevronDown className={cn('h-4 w-4 shrink-0 text-muted-foreground transition-transform', !open && '-rotate-90')} />
