@@ -33,3 +33,31 @@ export async function setBookFlags(
   revalidatePath('/resources/reading-list');
   return { ok: true };
 }
+
+/** Where an uploaded cover may live: this project's own storage, in the reading list's folder. A
+ *  cover is shown to every visitor, so the address is checked here rather than trusted from the
+ *  browser, which could otherwise point a tile at any picture anywhere. */
+function coverFolder(): string {
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '');
+  return `${base}/storage/v1/object/public/assets/reading-covers/`;
+}
+
+/** Sets a book's cover to one an admin has just uploaded from the page. Marked as chosen by hand,
+ *  so the Open Library script never replaces it. */
+export async function setBookCover(id: string, url: string): Promise<FlagResult> {
+  if (!(await isAdmin())) return { ok: false, error: 'Not allowed.' };
+  if (typeof id !== 'string' || !/^[0-9a-f-]{36}$/i.test(id)) return { ok: false, error: 'No such book.' };
+  const folder = coverFolder();
+  if (typeof url !== 'string' || !url.startsWith(folder) || !/^[\w.-]+$/.test(url.slice(folder.length))) {
+    return { ok: false, error: 'That picture is not in the reading list covers folder.' };
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.from('reading_books')
+    .update({ cover_url: url, cover_source: 'upload' }).eq('id', id).select('id');
+  if (error) return { ok: false, error: error.message };
+  if (!data?.length) return { ok: false, error: 'That book could not be changed.' };
+
+  revalidatePath('/resources/reading-list');
+  return { ok: true };
+}

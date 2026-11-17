@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, within, fireEvent, waitFor } from '@testing-library/react';
 
 const setBookFlags = vi.fn(async () => ({ ok: true as const }));
-vi.mock('@/app/actions/readingList', () => ({ setBookFlags }));
+vi.mock('@/app/actions/readingList', () => ({ setBookFlags, setBookCover: vi.fn() }));
 
 const { ReadingListBrowser } = await import('./ReadingListBrowser');
 

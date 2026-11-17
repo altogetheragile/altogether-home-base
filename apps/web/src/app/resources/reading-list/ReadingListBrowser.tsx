@@ -1,10 +1,11 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Eye, EyeOff, Heart, Search } from 'lucide-react';
+import { Eye, EyeOff, Heart, ImagePlus, Loader2, Search } from 'lucide-react';
 import { colors as c, fonts, radii } from '@/lib/brand';
 import { AMAZON_LINK_ATTRS } from '@altogether/ui/amazon';
-import { setBookFlags } from '@/app/actions/readingList';
+import { setBookCover, setBookFlags } from '@/app/actions/readingList';
+import { uploadCover } from './coverUpload';
 import { arrangeForView, type ListedBook, type ListedShelf } from './filterShelves';
 
 // Narrows the books the server already rendered. Nothing here fetches: the full list arrived with
@@ -35,7 +36,7 @@ export interface BrowserWords {
   favourites: string;
 }
 
-type Flags = { featured?: boolean; hidden?: boolean };
+type Flags = { featured?: boolean; hidden?: boolean; cover?: string | null };
 
 export function ReadingListBrowser({
   shelves,
@@ -71,6 +72,26 @@ export function ReadingListBrowser({
       window.history.replaceState(window.history.state, '', url.toString());
     } catch {
       // The filter still works; only the shareable address does not follow it.
+    }
+  };
+
+  const [uploading, setUploading] = useState<string | null>(null);
+
+  /** Uploads a cover for one book and shows it at once. Nothing changes on the tile unless both
+   *  the upload and the save worked. */
+  const chooseCover = async (b: ListedBook, file: File | undefined) => {
+    if (!file) return;
+    setProblem('');
+    setUploading(b.id);
+    try {
+      const url = await uploadCover(b.id, file);
+      const res = await setBookCover(b.id, url);
+      if (!res.ok) throw new Error(res.error);
+      setChanged((m) => ({ ...m, [b.id]: { ...m[b.id], cover: url } }));
+    } catch (e) {
+      setProblem(`The cover for "${b.title}" was not saved: ${(e as Error).message}`);
+    } finally {
+      setUploading(null);
     }
   };
 
@@ -143,6 +164,23 @@ export function ReadingListBrowser({
           >
             {b.hidden ? <EyeOff size={17} aria-hidden /> : <Eye size={17} aria-hidden />}
           </button>
+          {/* A label wrapping a hidden file input: the whole button opens the picker, by mouse or by
+              keyboard, with no script needed to forward the click. */}
+          <label
+            className={`${iconButton} cursor-pointer focus-within:outline focus-within:outline-2 focus-within:outline-offset-1`}
+            style={{ color: c.muted, outlineColor: c.deepTeal }}
+            title={b.cover ? 'Replace the cover' : 'Upload a cover'}
+          >
+            {uploading === b.id ? <Loader2 size={17} className="animate-spin" aria-hidden /> : <ImagePlus size={17} aria-hidden />}
+            <span className="sr-only">{b.cover ? 'Replace the cover' : 'Upload a cover'}: {b.title}</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              disabled={uploading === b.id}
+              onChange={(e) => { void chooseCover(b, e.target.files?.[0]); e.target.value = ''; }}
+            />
+          </label>
         </div>
       )}
       <div className="flex min-w-0 flex-1 gap-4" style={{ opacity: b.hidden ? 0.5 : 1 }}>
@@ -162,7 +200,7 @@ export function ReadingListBrowser({
             style={{ border: `1px solid ${CARD_BORDER}`, background: c.skyTeal }}
           />
         )}
-        <div className={`flex min-w-0 flex-1 flex-col ${admin ? 'pr-16' : ''}`}>
+        <div className={`flex min-w-0 flex-1 flex-col ${admin ? 'pr-24' : ''}`}>
           {b.hidden && (
             <span className="mb-1.5 self-start rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: '#FEE2E2', color: '#991B1B' }}>
               Hidden from visitors
