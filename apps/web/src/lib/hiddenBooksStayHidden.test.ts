@@ -155,11 +155,14 @@ describe('favourites', () => {
     { category: { id: '2', name: 'Coaching', slug: 'coaching', description: null }, books: [fav('c1', true), fav('c2')] },
   ];
 
-  it('are lifted to one group at the top, in topic order, and not shown again in their topic', () => {
+  it('are collected at the top in topic order, and stay in their own topic too', () => {
     const v = arrangeForView(shelves, { category: '', query: '' });
     expect(v.favourites.map((b) => b.id)).toEqual(['s2', 'c1']);
-    expect(v.shelves.flatMap((s) => s.books.map((b) => b.id))).toEqual(['s1', 'c2']);
-    expect(v.shown).toBe(4);
+    expect(v.shelves.flatMap((s) => s.books.map((b) => b.id))).toEqual(['s1', 's2', 'c1', 'c2']);
+  });
+
+  it('are counted once, though they appear twice', () => {
+    expect(arrangeForView(shelves, { category: '', query: '' }).shown).toBe(4);
   });
 
   it('follow the topic and the search like everything else', () => {
@@ -167,9 +170,9 @@ describe('favourites', () => {
     expect(arrangeForView(shelves, { category: '', query: 's1' }).favourites).toEqual([]);
   });
 
-  it('leave a topic out when all of its books are favourites', () => {
+  it('keep a topic whose books are all favourites', () => {
     const allFav: ListedShelf[] = [{ category: shelves[0].category, books: [fav('x', true)] }];
-    expect(arrangeForView(allFav, { category: '', query: '' }).shelves).toEqual([]);
+    expect(arrangeForView(allFav, { category: '', query: '' }).shelves.map((s) => s.category.slug)).toEqual(['scrum']);
   });
 });
 
