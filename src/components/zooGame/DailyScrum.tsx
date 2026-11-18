@@ -351,7 +351,17 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
       </div>
     </Move>
   );
-  steps.push({ title: 'Change today\u2019s plan', body: plan });
+  // What the team escalated and is still waiting on, said, so it is not mistaken for something new
+  // or for an escalation that did nothing.
+  const waiting = state.carriedImpediment?.waitDays ? state.carriedImpediment : null;
+  steps.push({ title: 'Change today\u2019s plan', body: waiting ? (
+    <div className="space-y-2">
+      <p data-part="still-waiting" className="text-sm text-muted-foreground">
+        <span className="font-semibold text-foreground">Still waiting: {waiting.title}.</span> Escalated, so it is out of the team&rsquo;s hands, and it clears {waiting.waitDays === 1 ? 'by tomorrow' : 'in a day or two'}.
+      </p>
+      {plan}
+    </div>
+  ) : plan });
 
   return (
     <div className="space-y-4">
