@@ -37,7 +37,9 @@ export function handover(state: ZooGameState): Handover | null {
         key: 'refinement',
         says: 'Here is my starter, one epic for each area, in the order I would like them. We need enough split and sized to get started, now or in Sprint Planning. The rest we refine as we go.',
         asks: 'Refine enough to start: now, or in Sprint Planning. The team decides.',
-        progress: `${pts(ready)} Ready of about ${pts(Math.round(cap * START_READY))} to start`,
+        // Says where the number comes from: "0 points Ready of about 11 points to start - I don't
+        // know what 'about 11 points' means or where that figure comes from" (scrum-master playtest).
+        progress: `${ready} of ${pts(Math.round(cap * START_READY))} Ready to start (half a Sprint\u2019s work)`,
       };
     }
     if (!state.dodAgreed) {

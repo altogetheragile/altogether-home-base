@@ -186,7 +186,8 @@ export function ActionRail({ state, seat, solo = false, onAnswerPlacement, onSta
         id: `ahead-${p.id}`, actor: whoIs('product_owner'), text: p.why,
         answers: [
           { label: p.label, primary: true, act: () => (p.kind === 'add' ? onAddProposal?.(p.draft) : onSplitEpic?.(p.epicId, p.memberIds)) },
-          { label: 'Not this one', act: () => onDeclineProposal(p.id) },
+          // Says what it turns down: "'Not this one' is ambiguous - not this one what?"
+          { label: p.kind === 'add' ? 'Don\u2019t add it' : 'Leave it in the epic', act: () => onDeclineProposal(p.id) },
         ],
       });
     }

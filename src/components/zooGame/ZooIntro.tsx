@@ -190,7 +190,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                 title={goal.trim()
                   ? 'Puts what you wrote into the shape of a Product Goal, and says what it changed. Your words, the Goal’s shape.'
                   : 'Write a rough one first and I will shape it. The Product Goal is the Product Owner’s to decide.'}>
-                <Wand2 className={cn('h-3.5 w-3.5', isCoaching && 'animate-spin')} /> {isCoaching ? 'Reading it' : 'Reword mine'}
+                <Wand2 className={cn('h-3.5 w-3.5', isCoaching && 'animate-spin')} /> {isCoaching ? 'Reading it' : 'Reword it for me'}
               </Button>
             </span>
           </label>
