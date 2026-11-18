@@ -40,10 +40,15 @@ describe('you are one of the three', () => {
     // so "Ada" + "you" reads as "Adayou" and a word boundary finds nothing.
     const yours = [...c.querySelectorAll('[data-part="seat-you"]')]
       .map((n) => n.closest('[data-part="seat"]')!);
-    // Your Developer and the Scrum Master: alone you are both, and only the Product Owner is played.
-    expect(yours.length, 'the band does not say which of them you are').toBe(2);
-    expect(yours[0].textContent + yours[1].textContent, 'your Developer is not marked as you').toContain(yourDev(s)!.name);
-    expect(yours.map((y) => y.textContent).join(' '), 'the Scrum Master is not marked as you').toMatch(/^SM/m);
+    // All three Developers and the Scrum Master: alone you are all of them, and only the Product
+    // Owner is played. Marking only the first Developer said Ben and Cara were somebody else, and
+    // nobody else has played them since 28 October: "Is it true that the other developers are
+    // played by the game?"
+    expect(yours.length, 'the band does not mark every seat you hold').toBe(4);
+    const marked = yours.map((y) => y.textContent).join(' ');
+    for (const d of s.team.developers) expect(marked, `${d.name} is not marked as you`).toContain(d.name.replace(/\s*\(Dev\)$/, ''));
+    expect(marked, 'the Scrum Master is not marked as you').toMatch(/^SM/m);
+    expect(marked, 'your own Developer is not among them').toContain(yourDev(s)!.name.replace(/\s*\(Dev\)$/, ''));
   });
 
   it('and never the Product Owner', () => {
