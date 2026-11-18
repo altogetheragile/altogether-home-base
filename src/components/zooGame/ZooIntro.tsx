@@ -165,7 +165,7 @@ export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMa
                   : goalShape === 'okr' ? 'The objective: the future state you are aiming at'
                   : 'Open a zoo that visitors love and come back to'}
                 aria-label="Product Goal"
-                className="min-h-[1.75rem] w-full resize-y bg-transparent text-base font-medium leading-snug outline-none placeholder:font-normal placeholder:text-muted-foreground/70"
+                className="min-h-[1.75rem] w-full resize-y bg-transparent text-base font-medium leading-snug outline-none placeholder:font-normal placeholder:text-zoo-quiet"
               />
               {/* The same wand the Sprint Goal has, and deliberately only half of it. That one will
                   write a Sprint Goal from nothing, because by then there is a forecast to write it

@@ -195,7 +195,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                 yours && 'border-2 border-[hsl(var(--zoo-ink))] bg-card',
                 cover && !absent && 'border-2 border-dashed border-[hsl(var(--zoo-ink))]/60',
                 absent && 'border-2 border-dashed border-amber-400/70 bg-amber-500/[0.04]',
-                !s.present && 'opacity-40')}>
+                // Not in the room: the figure fades and the words say so. The whole seat faded to
+                // 40% read at 1.8:1 - "not in the room", unreadable, was the message.
+                !s.present && 'border border-dashed border-border')}>
               {/* The board's person, not a coloured disc with a letter in it. Taller than it is
                   wide, because a person is - so it is given height rather than a square. */}
               {/* No letters on a Developer: the name is right there, and "A" beside "Ada" is the
@@ -203,7 +205,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                   are the accountability rather than the person, and they are what the board writes
                   on them. */}
               <Person hex={colourOf(s.role)} initials={s.role === 'developer' ? undefined : s.initials}
-                className="h-7 w-[1.45rem] shrink-0" />
+                className={cn('h-7 w-[1.45rem] shrink-0', !s.present && 'opacity-40')} />
               <span className="min-w-0 leading-tight">
                 <span className="block truncate text-[11px] font-semibold">
                   {s.name}
@@ -218,7 +220,7 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                       words as well as in colour: a faded chip is not a message, and dimming was all
                       this had. */}
                   {absent
-                    ? <span data-part="seat-away" className="ml-1 text-[10px] font-medium text-amber-700 dark:text-amber-300">away</span>
+                    ? <span data-part="seat-away" className="ml-1 text-[10px] font-medium text-amber-800 dark:text-amber-300">away</span>
                     : cover && <span className="ml-1 text-[10px] font-medium text-foreground">covering</span>}
                 </span>
                 <span className="block truncate text-[10px] text-muted-foreground">{s.doing}</span>

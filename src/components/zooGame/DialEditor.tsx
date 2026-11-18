@@ -129,7 +129,7 @@ export function DialEditor({ overrides, onChanged }: {
               <section key={g} className="space-y-2">
                 <div>
                   <h3 className="text-xs font-bold uppercase tracking-wide text-muted-foreground">{g}</h3>
-                  <p className="text-[11px] text-muted-foreground/80">{GROUP_HINT[g]}</p>
+                  <p className="text-[11px] text-zoo-quiet">{GROUP_HINT[g]}</p>
                 </div>
                 {DIALS.filter((d) => d.group === g).map((d) => (
                   <DialRow key={d.key} dial={d} current={overrides[d.key]} onSaved={onChanged} />

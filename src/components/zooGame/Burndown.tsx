@@ -29,7 +29,7 @@ export function BurndownChip({ state, className, onDark }: { state: ZooGameState
     <span title={title}
       className={cn('flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[11px] font-medium',
         onDark ? 'border-white/40 bg-white/10 text-white/80'
-          : behind ? 'border-amber-300 bg-card text-amber-700 dark:border-amber-700/60 dark:text-amber-300'
+          : behind ? 'border-amber-300 bg-card text-amber-800 dark:border-amber-700/60 dark:text-amber-300'
             : 'border-border bg-card text-muted-foreground', className)}>
       <span className={cn('h-1.5 w-12 overflow-hidden rounded-full', onDark ? 'bg-white/25' : 'bg-muted')} aria-hidden>
         <span className="block h-full rounded-full transition-[width]" style={{ width: `${pct}%`, background: behind ? '#f59e0b' : '#e6842a' }} />

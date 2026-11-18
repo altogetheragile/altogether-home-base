@@ -144,7 +144,7 @@ function TheBet({ state, onSetBet }: { state: ZooGameState; onSetBet: (bet: { wh
   if (bet && !open) {
     return (
       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-lg border border-amber-300/70 bg-amber-50/70 px-3 py-2 text-sm dark:border-amber-800/50 dark:bg-amber-950/20">
-        <span className={cn(EYEBROW, 'text-amber-700 dark:text-amber-400')}>Our bet</span>
+        <span className={cn(EYEBROW, 'text-amber-800 dark:text-amber-400')}>Our bet</span>
         <span className="font-medium">{betLine(bet)}</span>
         <span className="text-[11px] text-muted-foreground">
           {state.lastReview
@@ -173,7 +173,7 @@ function TheBet({ state, onSetBet }: { state: ZooGameState; onSetBet: (bet: { wh
   );
   return (
     <div className="space-y-2 rounded-lg border border-amber-300/70 bg-amber-50/70 p-3 dark:border-amber-800/50 dark:bg-amber-950/20">
-      <div className={cn(EYEBROW, 'text-amber-700 dark:text-amber-400')}>Our bet on this Sprint</div>
+      <div className={cn(EYEBROW, 'text-amber-800 dark:text-amber-400')}>Our bet on this Sprint</div>
       <div className="flex flex-wrap items-center gap-1.5">
         {(['families', 'enthusiasts', 'comfortSeekers', 'all'] as SprintBet['who'][]).map((k) => pick(k, who, setWho, WHO_LABEL[k]))}
       </div>
@@ -224,7 +224,7 @@ function BacklogHeading({ count, note, onRefine }: { count: number; note?: strin
       {onRefine
         ? <button type="button" onClick={onRefine} title="You can refine here, but it goes better in the Sprint before this one."
           className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline")}>Refine the Product Backlog</button>
-        : note && <span className="text-[11px] text-muted-foreground/70">{note}</span>}
+        : note && <span className="text-[11px] text-zoo-quiet">{note}</span>}
     </div>
   );
 }
@@ -369,7 +369,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         <PlanColumns
           left={<>
             <BacklogHeading count={items.length} note="ordered by the Product Owner - open one to read it" />
-            <p className="text-[11px] text-muted-foreground/70">
+            <p className="text-[11px] text-zoo-quiet">
               {candidates.length
                 ? <>What the Product Owner is proposing value from. The marked items are about a Sprint&rsquo;s worth off the
                   top, which is what a Sprint Goal is usually about.</>
@@ -378,7 +378,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             </p>
             <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
               {items.map((it) => (
-                <div key={it.id} className={cn(candidates.some((c) => c.id === it.id) ? 'border-l-4 border-l-primary pl-1' : 'pl-1 opacity-60')}>
+                <div key={it.id} className={cn(candidates.some((c) => c.id === it.id) ? 'border-l-4 border-l-primary pl-1' : 'border-l-4 border-l-transparent pl-1')}>
                   <PickCard item={it} why={notReady(it, state)} readOnly onPick={() => {}} />
                 </div>
               ))}
@@ -468,7 +468,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             {chosen.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border px-3 py-4 text-center">
                 <p className="text-xs font-medium text-muted-foreground">Nothing forecast yet</p>
-                <p className="text-[11px] text-muted-foreground/70">The Sprint Backlog fills at topic two, once you know what this Sprint is for.</p>
+                <p className="text-[11px] text-zoo-quiet">The Sprint Backlog fills at topic two, once you know what this Sprint is for.</p>
               </div>
             ) : (
               <div className="space-y-1.5">
@@ -541,7 +541,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   finding out has no reason to want to predict first. Absent until they take it on. */}
               {onSetBet && adopted(state, 'sprint-bet') && <TheBet state={state} onSetBet={onSetBet} />}
               {over && <CoachTip>More than you can finish. Over-forecasting tends to miss the Sprint Goal and carry work over - pick what you can take all the way to Done.</CoachTip>}
-              {chosen.length === 0 && <p className="py-6 text-center text-xs text-muted-foreground/70">Nothing yet. Pick items from the Product Backlog that serve the Sprint Goal.</p>}
+              {chosen.length === 0 && <p className="py-6 text-center text-xs text-zoo-quiet">Nothing yet. Pick items from the Product Backlog that serve the Sprint Goal.</p>}
               <div className="max-h-[34vh] space-y-1.5 overflow-y-auto pr-1">
                 {chosen.map((it) => (
                   <div key={it.id}>
@@ -555,7 +555,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 ))}
               </div>
               {chosen.length > 1 && onReorderForecast && (
-                <p className="text-[11px] text-muted-foreground/70">You can arrange the order of work on the board once the Sprint starts.</p>
+                <p className="text-[11px] text-zoo-quiet">You can arrange the order of work on the board once the Sprint starts.</p>
               )}
             </>} />
         </div>
@@ -609,7 +609,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                         aria-label={`Essential to the Sprint Goal: ${it.name}`}
                         title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'}
                         className={cn(FOCUS, 'flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-muted')}>
-                        <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40')} />
+                        <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-zoo-quiet')} />
                       </button>
                     )}
                     <button type="button" onClick={() => setOpenPlan(it.id)}

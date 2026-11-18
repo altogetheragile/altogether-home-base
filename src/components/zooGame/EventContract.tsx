@@ -30,7 +30,7 @@ export function EventContractStrip({ phase }: { phase: string }) {
       {/* Why these strips exist at all: the events are the formal chances to inspect and adapt, and
           what they inspect and adapt are the artifacts. Naming the pillars here ties the machinery
           the learner can see to the idea it serves. */}
-      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-muted-foreground/80">
+      <div className="text-[9px] font-bold uppercase tracking-[0.08em] text-zoo-quiet">
         Inspect and adapt &middot; transparency, inspection, adaptation
       </div>
       <div className="flex flex-wrap items-center gap-x-2 gap-y-1">

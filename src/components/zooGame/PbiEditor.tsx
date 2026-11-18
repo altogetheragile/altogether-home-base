@@ -211,7 +211,7 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
             <option value="">Generic creature</option>
             {SPECIES_SHAPES.map((sh) => <option key={sh.key} value={sh.key}>{sh.label}</option>)}
           </select>
-          <p className="text-[11px] text-muted-foreground/70">The silhouette the studio starts from - just a starting point you tailor (parts, markings, colours). Pick one close to your animal.</p>
+          <p className="text-[11px] text-zoo-quiet">The silhouette the studio starts from - just a starting point you tailor (parts, markings, colours). Pick one close to your animal.</p>
         </div>
       )}
 
@@ -222,7 +222,7 @@ export function PbiEditor({ zones, state, item, enclosures = [], useStories, onT
             <option value={NO_ENCLOSURE}>No enclosure yet</option>
             {enclosures.map((en) => <option key={en.id} value={en.id}>{en.name}</option>)}
           </select>
-          <p className="text-[11px] text-muted-foreground/70">An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.</p>
+          <p className="text-[11px] text-zoo-quiet">An animal is built into its enclosure, so the enclosure must be built first. Add an Enclosure PBI, then point the animal at it.</p>
         </div>
       )}
       {category === 'flora' && (

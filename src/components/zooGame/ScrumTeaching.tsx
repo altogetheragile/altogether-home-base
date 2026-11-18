@@ -132,10 +132,10 @@ export function ScrumReferenceBody() {
 // actually see - so the page reads as five separate things at a glance rather than one grey wall.
 // Five colours and no more: the discipline is what keeps it from becoming noise.
 const SECTION = {
-  founded: { wrap: 'border-sky-500/40 bg-sky-500/[0.08]', spine: TONE.coach.solid, chip: 'bg-sky-600 text-white dark:bg-sky-500' },
+  founded: { wrap: 'border-sky-500/40 bg-sky-500/[0.08]', spine: TONE.coach.solid, chip: 'bg-sky-700 text-white dark:bg-sky-500' },
   team: { wrap: 'border-violet-500/40 bg-violet-500/[0.08]', spine: TONE.teach.solid, chip: 'bg-violet-600 text-white dark:bg-violet-500' },
-  artifacts: { wrap: 'border-amber-500/45 bg-amber-500/[0.10]', spine: TONE.attention.solid, chip: 'bg-amber-600 text-white dark:bg-amber-500' },
-  events: { wrap: 'border-emerald-500/40 bg-emerald-500/[0.08]', spine: TONE.done.solid, chip: 'bg-emerald-600 text-white dark:bg-emerald-500' },
+  artifacts: { wrap: 'border-amber-500/45 bg-amber-500/[0.10]', spine: TONE.attention.solid, chip: 'bg-amber-700 text-white dark:bg-amber-500' },
+  events: { wrap: 'border-emerald-500/40 bg-emerald-500/[0.08]', spine: TONE.done.solid, chip: 'bg-emerald-700 text-white dark:bg-emerald-500' },
   values: { wrap: 'border-rose-500/40 bg-rose-500/[0.08]', spine: TONE.reflect.solid, chip: 'bg-rose-600 text-white dark:bg-rose-500' },
 } as const;
 

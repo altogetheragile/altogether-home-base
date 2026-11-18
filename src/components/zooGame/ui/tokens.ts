@@ -44,12 +44,13 @@ export const TONE = {
     chip: 'bg-sky-500/15 text-sky-700 dark:text-sky-300',
     solid: 'bg-sky-500',
   },
-  /** Attention: not ready, over capacity, a blocker, something waiting on you. */
+  /** Attention: not ready, over capacity, a blocker, something waiting on you. Amber-800 as words
+   *  (18 Nov 2026): amber-700 measured 4.3:1 on its own tints, under the 4.5 small text needs. */
   attention: {
-    text: 'text-amber-700 dark:text-amber-400',
+    text: 'text-amber-800 dark:text-amber-400',
     soft: 'border-amber-300 bg-amber-50/70 dark:border-amber-800/50 dark:bg-amber-950/20',
-    strong: 'border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-400',
-    chip: 'bg-amber-500/15 text-amber-700 dark:text-amber-400',
+    strong: 'border-amber-400 bg-amber-500/10 text-amber-800 dark:text-amber-400',
+    chip: 'bg-amber-500/15 text-amber-800 dark:text-amber-400',
     solid: 'bg-amber-500',
   },
   /** Done: met, delivered, live to visitors. */

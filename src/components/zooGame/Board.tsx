@@ -65,7 +65,7 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
           : <>Each piece becomes a Product Backlog item of its own. </>}
         Untick anything you don&rsquo;t want yet - the epic stays for the rest.
       </p>
-      <p className="text-[11px] text-muted-foreground/70">
+      <p className="text-[11px] text-zoo-quiet">
         &ldquo;Epic&rdquo; and splitting are common practice, not Scrum. The Guide has one kind of thing on a Product Backlog and
         asks only that an item you forecast can be Done inside a Sprint - splitting is how you get there.
       </p>
@@ -98,7 +98,7 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
       )}
       <div className="flex flex-wrap items-center justify-end gap-2">
         {!!costSeconds && (
-          <span className="text-[11px] text-amber-700 dark:text-amber-300">
+          <span className="text-[11px] text-amber-800 dark:text-amber-300">
             Refining mid-Sprint costs {costSeconds}s of today&rsquo;s build time.
           </span>
         )}
@@ -209,7 +209,7 @@ export function BoardColumn({ title, count, hint, limit, note, children }: { tit
           has reached it; what is Done is said by the cards in it, and by the tick on the heading. */}
       <div className={cn('flex items-center justify-between rounded-t-lg border border-b-0 border-border px-3 py-2',
         full ? 'bg-amber-100/70 dark:bg-amber-950/30' : 'bg-muted')}>
-        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? ` of ${limit}` : ''})</span></h3>
+        <h3 className="text-sm font-semibold">{title} <span className={cn('font-normal', full ? 'text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>({count}{limit != null ? ` of ${limit}` : ''})</span></h3>
         <span className="flex items-center gap-1">
           {limit != null && <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground" title="Work-in-progress limit - Lean thinking that supports Scrum, not a Scrum Guide rule">WIP</span>}
           {note}
@@ -219,7 +219,7 @@ export function BoardColumn({ title, count, hint, limit, note, children }: { tit
           push everything under the board - what is being asked, and the thing in your hands - off
           the bottom of it. Reported from a live game: "we need it all on one page". */}
       <div className="min-h-0 flex-1 space-y-1.5 overflow-y-auto rounded-b-lg border border-border bg-card/40 p-2" style={{ minHeight: 84 }}>
-        {count === 0 && <div className="py-5 text-center text-[11px] text-muted-foreground/50">{hint ?? '—'}</div>}
+        {count === 0 && <div className="py-5 text-center text-[11px] text-zoo-quiet">{hint ?? '—'}</div>}
         {children}
       </div>
     </div>
@@ -248,7 +248,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
             <button type="button" onClick={() => onToggleGoalCritical(item.id)}
               title={item.goalCritical ? 'Essential to the Sprint Goal - click to unmark' : 'Mark essential to the Sprint Goal'}
               className={cn(FOCUS, 'flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors',
-                item.goalCritical ? 'border-amber-400 bg-amber-50 text-amber-700 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-300'
+                item.goalCritical ? 'border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-700/60 dark:bg-amber-950/30 dark:text-amber-300'
                   : 'border-border text-muted-foreground hover:border-amber-400 hover:text-amber-600')}>
               <Star className={cn('h-3.5 w-3.5', item.goalCritical && 'fill-amber-400')} /> Goal
             </button>
@@ -277,17 +277,17 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
       <div className="mt-2 space-y-1">
         {tasks.length === 0 && (
           <div className="space-y-1">
-            <p className="text-[11px] text-muted-foreground/70">Write a first step. Then Fill in the gaps in this plan adds the ones you have not thought of, and leaves yours alone.</p>
+            <p className="text-[11px] text-zoo-quiet">Write a first step. Then Fill in the gaps in this plan adds the ones you have not thought of, and leaves yours alone.</p>
             {/* What a step looks like: a piece of work a Developer can pick up and finish, in a day or
                 less. An example, not one of theirs - it is never added to the plan. */}
             <p data-part="step-example" className="flex items-center gap-1.5 rounded border border-dashed border-border px-2 py-1 text-[11px] italic text-muted-foreground">
-              <ListChecks aria-hidden className="h-3.5 w-3.5 shrink-0 not-italic text-muted-foreground/60" /> For example: Lay the path from the main gate
+              <ListChecks aria-hidden className="h-3.5 w-3.5 shrink-0 not-italic text-zoo-quiet" /> For example: Lay the path from the main gate
             </p>
           </div>
         )}
         {tasks.map((t) => (
           <div key={t.id} className="flex items-center gap-1.5">
-            <ListChecks className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
+            <ListChecks className="h-3.5 w-3.5 shrink-0 text-zoo-quiet" />
             <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
             <button type="button" onClick={() => remove(t.id)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove this step"><X className="h-3.5 w-3.5" /></button>
@@ -321,7 +321,7 @@ export function TaskChecklist({ item, onToggle, readOnly }: { item: BacklogItem;
               <input type="checkbox" checked={t.done} disabled={readOnly || signOff} onChange={() => onToggle(item.id, t.id)} className="mt-0.5 h-3 w-3 shrink-0" />
               <span className={cn(t.done && 'text-muted-foreground line-through', signOff && !t.done && 'text-muted-foreground')}>
                 {t.label}
-                {signOff && !t.done && <span className="block text-[11px] text-muted-foreground/70">Once every acceptance criterion is met, including where it stands on the park.</span>}
+                {signOff && !t.done && <span className="block text-[11px] text-zoo-quiet">Once every acceptance criterion is met, including where it stands on the park.</span>}
               </span>
             </label>
           );
@@ -350,7 +350,7 @@ export function DodList({ state, item }: { state: ZooGameState; item: BacklogIte
   if (!lines.length) {
     return (
       <div data-part="no-dod" className="rounded-md border border-dashed border-amber-400/60 bg-amber-500/[0.06] px-2 py-1.5">
-        <div className="text-[9px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400">No Definition of Done</div>
+        <div className="text-[9px] font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-400">No Definition of Done</div>
         <p className="text-[11px] text-muted-foreground">
           Nothing was agreed, so Done means whatever anybody says it means. You can write one at any Retrospective.
         </p>
@@ -361,10 +361,10 @@ export function DodList({ state, item }: { state: ZooGameState; item: BacklogIte
   const met = facts.filter((l) => l.answer?.kind === 'fact' && l.answer.met).length;
   return (
     <div>
-      <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+      <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-zoo-quiet">
         Definition of Done <span className="font-normal normal-case tracking-normal">the same bar for every item</span>
         {facts.length > 0 && (
-          <span className="ml-1 font-normal normal-case tracking-normal text-muted-foreground/70">
+          <span className="ml-1 font-normal normal-case tracking-normal text-zoo-quiet">
             &middot; {met} of {facts.length} met
           </span>
         )}
@@ -379,7 +379,7 @@ export function DodList({ state, item }: { state: ZooGameState; item: BacklogIte
               <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{line}</span>
               <span className={cn('ml-auto shrink-0 rounded px-1 text-[9px] font-medium',
                 answer?.kind === 'fact'
-                  ? answer.met ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400'
+                  ? answer.met ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-800 dark:text-amber-400'
                   : 'bg-muted text-muted-foreground')}
                 title={answer ? undefined : 'Nothing in the park can measure this one - it is yours to judge'}>
                 {answer ? answer.evidence : 'your word'}
@@ -458,10 +458,10 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
         <div className={cn('space-y-1.5', !bare && 'mt-1')}>
           {criteria.length > 0 && (
             <div>
-              <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">
+              <div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wide text-zoo-quiet">
                 Acceptance criteria{interactive && onConfirmAc ? ' - tick what your build meets' : ''}
                 {state && criteria.some((c) => checkCriterion(state, item, c)) && (
-                  <span className="ml-1 font-normal normal-case tracking-normal text-muted-foreground/70">the park answers the ones it can</span>
+                  <span className="ml-1 font-normal normal-case tracking-normal text-zoo-quiet">the park answers the ones it can</span>
                 )}
               </div>
               <ul className="space-y-0.5">
@@ -478,7 +478,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                       <span className={cn(ok ? 'text-muted-foreground line-through decoration-emerald-500/40' : 'text-muted-foreground')}>{c}</span>
                       {v && (
                         <span className={cn('ml-auto shrink-0 rounded px-1 text-[9px] font-medium',
-                          v.met ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400')}
+                          v.met ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400' : 'bg-amber-500/10 text-amber-800 dark:text-amber-400')}
                           title="The park measured this one - it is not yours to tick">
                           {v.evidence}
                         </span>
@@ -516,7 +516,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                       <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-200">
                         Send {item.name} back to the Developers?
                       </p>
-                      <p className="text-[11px] leading-snug text-amber-700 dark:text-amber-300">
+                      <p className="text-[11px] leading-snug text-amber-800 dark:text-amber-300">
                         {criteria.length - acMet} of its criteria {criteria.length - acMet === 1 ? 'is' : 'are'} not met.
                         It goes back to Doing with what they built kept as a draft, and they finish it
                         and ask again - which costs Sprint time.
@@ -536,7 +536,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
                   ) : (
                     <button type="button" data-part="send-back-ask"
                       onClick={(e) => { e.stopPropagation(); setRefusing(true); }}
-                      className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-amber-400/70 px-2 py-1 text-[11px] font-medium text-amber-700 hover:bg-amber-500/10 dark:text-amber-300')}>
+                      className={cn(FOCUS, 'flex items-center gap-1 rounded-md border border-amber-400/70 px-2 py-1 text-[11px] font-medium text-amber-800 hover:bg-amber-500/10 dark:text-amber-300')}>
                       {/* "to Doing", because the other "back" on this screen means out of the
                           Sprint altogether. Refused work does not leave the Sprint: it goes back to
                           the Developers, inside it, and is asked again. */}
@@ -549,7 +549,7 @@ export function CardDetail({ item, state, showAcceptance = false, interactive = 
           )}
           {/* It has been sent back once already, and the Developers have not finished it again. */}
           {item.sentBack && (
-            <p className="rounded-md border border-amber-400/60 bg-amber-500/5 px-1.5 py-1 text-[11px] text-amber-700 dark:text-amber-300">
+            <p className="rounded-md border border-amber-400/60 bg-amber-500/5 px-1.5 py-1 text-[11px] text-amber-800 dark:text-amber-300">
               <span className="font-semibold">Sent back by the Product Owner:</span> {item.sentBack.criteria.join('; ')}
             </p>
           )}
@@ -784,10 +784,10 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
             {it.story && <div className="text-[11px] italic text-muted-foreground">{it.story}</div>}
             {it.acceptance && it.acceptance.length > 0 && (
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">Acceptance criteria</div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide text-zoo-quiet">Acceptance criteria</div>
                 <ul className="mt-0.5 space-y-0.5">
                   {it.acceptance.map((c, i) => (
-                    <li key={i} className="flex gap-1.5 text-[11px] text-muted-foreground"><span className="text-muted-foreground/50">&bull;</span><span>{c}</span></li>
+                    <li key={i} className="flex gap-1.5 text-[11px] text-muted-foreground"><span className="text-zoo-quiet">&bull;</span><span>{c}</span></li>
                   ))}
                 </ul>
               </div>
@@ -835,7 +835,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
             // How far ahead the Product Backlog is prepared. Refining here costs the day's build time, and
             // what it prepares is for LATER Sprints - this Sprint's plan is already settled.
             <span className={cn('ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] font-medium',
-              horizon > 3 ? 'bg-amber-500/15 text-amber-700 dark:text-amber-400'
+              horizon > 3 ? 'bg-amber-500/15 text-amber-800 dark:text-amber-400'
                 : horizon >= 1 ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-400'
                 : 'bg-muted text-muted-foreground')}
               title="Sprints' worth of Ready work waiting. Refine ahead during this Sprint - it costs build time - so the next Planning has something to choose from. Aim for one to three.">
@@ -905,7 +905,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
       )}
 
       <div className="space-y-2.5">
-        {items.length === 0 && <p className="text-xs text-muted-foreground/60">Nothing left in the Product Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
+        {items.length === 0 && <p className="text-xs text-zoo-quiet">Nothing left in the Product Backlog. Add a PBI{mode === 'sprint' ? ' or accept a signal at the Review' : ''}.</p>}
         {zoneOrder.map((zone, zi) => {
           const zoneItems = byZone.get(zone)!;
           const collapsed = collapsedZones.has(zone);
@@ -915,7 +915,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
                 <button type="button" onClick={() => toggleZone(zone)}
                   className={cn(FOCUS, "flex min-w-0 flex-1 items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:text-foreground")}>
                   <ChevronDown className={cn('h-3.5 w-3.5 shrink-0 transition-transform', collapsed && '-rotate-90')} />
-                  <span className="truncate">{zone}</span> <span className="font-normal text-muted-foreground/60">({zoneItems.length})</span>
+                  <span className="truncate">{zone}</span> <span className="font-normal text-zoo-quiet">({zoneItems.length})</span>
                 </button>
                 {/* Move the whole theme (epic) up or down among the zones - the PO ordering by
                     value. A labelled, bordered pill so it reads as a reorder control, distinct
@@ -925,7 +925,7 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
                     {/* "The whole ... area", because an area and the epic in it share a name: "Move Big
                         Cats down" beside "Move Big Cats down the Product Backlog" was two controls the
                         scrum-master playtest could not tell apart. */}
-                    <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Move</span>
+                    <span className="text-[9px] font-semibold uppercase tracking-wide text-zoo-quiet">Move</span>
                     <button type="button" aria-label={`Move the whole ${zone} area up`} title={`Move the whole ${zone} area up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3.5 w-3.5" /></button>
                     <button type="button" aria-label={`Move the whole ${zone} area down`} title={`Move the whole ${zone} area down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3.5 w-3.5" /></button>
                   </div>

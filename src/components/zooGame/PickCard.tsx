@@ -55,12 +55,12 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
               {item.category === 'epic' && (
                 // The model reserves "not Scrum" labelling for practices the game uses anyway, and
                 // an epic is one of them: the Guide has one kind of thing on a Product Backlog.
-                <p className="text-[11px] text-muted-foreground/70">
+                <p className="text-[11px] text-zoo-quiet">
                   &ldquo;Epic&rdquo; is a common word for an item too big to finish in a Sprint. The Scrum Guide does not define it -
                   it has Product Backlog items, and says a ready one can be Done inside a Sprint.
                 </p>
               )}
-              {note && <p className="text-[11px] text-muted-foreground/70">{note}</p>}
+              {note && <p className="text-[11px] text-zoo-quiet">{note}</p>}
             </div>
           ) : null} />
           {why && onFix && (

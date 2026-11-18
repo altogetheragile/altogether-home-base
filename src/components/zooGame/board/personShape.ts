@@ -35,3 +35,16 @@ export const PERSON_SHIFT = 'translate(0 -2.25)';
  *  the size is a number rather than a class - an avatar that several screens ask for at 16, 18 and
  *  24 across. */
 export const personSize = (width: number) => ({ width, height: Math.round(width * 29.5 / 24) });
+
+/** White or ink, whichever reads on this colour. White on the Product Owner's orange was 2.2:1; the
+ *  board's ink on it is 7.5. Worked out from the colour rather than listed, so a new shade cannot
+ *  bring the problem back. */
+export function labelOn(hex: string): string {
+  const ch = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
+  const lum = 0.2126 * ch[0] + 0.7152 * ch[1] + 0.0722 * ch[2];
+  const INK = '#2b1d14';
+  // Contrast with white is 1.05 / (lum + 0.05); with the ink (luminance about 0.014) it is
+  // (lum + 0.05) / 0.064. Take whichever is higher.
+  return 1.05 / (lum + 0.05) >= (lum + 0.05) / 0.064 ? '#fff' : INK;
+}

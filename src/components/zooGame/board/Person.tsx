@@ -1,5 +1,5 @@
 import {
-  PERSON_BOX, PERSON_HEAD, PERSON_BODY, PERSON_LABEL, PERSON_SHIFT,
+  PERSON_BOX, PERSON_HEAD, PERSON_BODY, PERSON_LABEL, PERSON_SHIFT, labelOn,
 } from './personShape';
 
 // One person, drawn the way the board draws people.
@@ -32,7 +32,7 @@ export function Person({ hex, initials, className, style, title }: {
         <path d={PERSON_BODY} fill={hex} />
         {initials && (
           <text x={PERSON_LABEL.x} y={PERSON_LABEL.y} textAnchor="middle"
-            fontSize={PERSON_LABEL.fontSize} fontWeight={PERSON_LABEL.fontWeight} fill="#fff">
+            fontSize={PERSON_LABEL.fontSize} fontWeight={PERSON_LABEL.fontWeight} fill={/^#[0-9a-f]{6}$/i.test(hex) ? labelOn(hex) : '#fff'}>
             {initials}
           </text>
         )}

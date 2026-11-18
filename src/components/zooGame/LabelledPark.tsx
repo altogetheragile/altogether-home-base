@@ -32,7 +32,11 @@ const IsoZoo = lazy(() => import('./IsoZoo').then((m) => ({ default: m.IsoZoo })
  *
  *  It was white on the orange: 2.85:1, measured, in both themes. Below the 4.5 that small bold text
  *  needs and below even the 3 that large text does. Dark takes it to about 7. */
-const ON_THE_MARK = 'text-[#2a1405]';
+//
+// ...and then the primary became blue (10 Nov 2026) and the dark brown stayed: 2.8:1, "the blue dots
+// numbering the plan have black text which is very hard to read". On blue it is the primary's own
+// foreground, white, at 6.2:1. Named for what it stands on, so it follows the primary next time.
+const ON_THE_MARK = 'text-primary-foreground';
 
 /** How far in each picture is walked, beyond the shot the example framed for itself.
  *

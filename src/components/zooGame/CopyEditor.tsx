@@ -61,7 +61,7 @@ function EditRow({ entry, tone, showWhere, current, onSaved }: { entry: CopyEntr
           </button>
         )}
       </div>
-      {showWhere && <p className="mb-1 text-[11px] text-muted-foreground/80">{entry.where}</p>}
+      {showWhere && <p className="mb-1 text-[11px] text-zoo-quiet">{entry.where}</p>}
       {entry.long
         ? <textarea value={draft} onChange={(e) => setDraft(e.target.value)}
           rows={Math.min(16, Math.max(3, Math.ceil(draft.length / 80) + 1))}

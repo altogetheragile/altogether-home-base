@@ -33,6 +33,15 @@ const HEX: Record<ChatWho, string> = {
   // thread they are on, which is how every chat anybody has used says it.
   you: SEAT.developers.hex,
 };
+/** ...and each of them as words: the figure's colour is a fill, and as 11px text Priya's orange
+ *  measured 2.1:1. */
+const INK: Record<ChatWho, string> = {
+  product_owner: SEAT.productOwner.ink,
+  scrum_master: SEAT.scrumMaster.ink,
+  developer: SEAT.developers.ink,
+  stakeholder: SEAT.stakeholders.ink,
+  you: SEAT.developers.ink,
+};
 
 /** The figure's width, so a message that does not draw one still lines up under the one above. */
 const FIGURE = 18;
@@ -60,7 +69,7 @@ export function Bubble({ msg, opens = true, loud = false }: { msg: ChatMessage; 
       <div className={cn('min-w-0 max-w-[85%]', mine && 'text-right')}>
         {opens && (
           <span className={cn('block font-semibold uppercase tracking-wide', loud ? 'text-[11px]' : 'text-[10px] text-muted-foreground')}
-            style={loud ? { color: HEX[msg.who] } : undefined}>
+            style={loud ? { color: INK[msg.who] } : undefined}>
             {msg.from}
           </span>
         )}
@@ -71,7 +80,7 @@ export function Bubble({ msg, opens = true, loud = false }: { msg: ChatMessage; 
             have to read twice. You are a Developer, so you are teal like the rest of them. */}
         {/* `whitespace-pre-line`, because some messages are several lines of one thing said at
             once - a Developer's three lines at the Daily Scrum are one turn, not three. */}
-        <span style={mine ? { backgroundColor: SEAT.developers.hex } : undefined}
+        <span style={mine ? { backgroundColor: SEAT.developers.ink } : undefined}
           className={cn('mt-0.5 inline-block whitespace-pre-line rounded-2xl text-left',
             loud ? 'border-2 border-[hsl(var(--zoo-ink))] bg-white px-3.5 py-2 text-[15px] font-medium leading-snug shadow-[3px_3px_0_hsl(var(--zoo-ink))]'
               : 'px-2.5 py-1.5 text-[12px] leading-snug',

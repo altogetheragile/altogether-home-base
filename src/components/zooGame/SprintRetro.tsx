@@ -178,13 +178,13 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
                   </span>
                   <span className="min-w-0">
                     <span className="text-foreground">{d.what.replace(/^(The Developers|The Product Owner|The Scrum Master|You) /, '')}</span>
-                    {d.cost && <span className="block text-[11px] text-amber-700 dark:text-amber-300">{d.cost}</span>}
+                    {d.cost && <span className="block text-[11px] text-amber-800 dark:text-amber-300">{d.cost}</span>}
                   </span>
                 </li>
               ))}
             </ul>
             {habits.length > 0 && (
-              <p className="text-[11px] text-muted-foreground/80">{habits.join(' ')}</p>
+              <p className="text-[11px] text-zoo-quiet">{habits.join(' ')}</p>
             )}
           </section>
           ) : (
@@ -203,7 +203,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
               the conversation is about the Sprint rather than about where to find the figures. */}
           <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
             <div className="text-sm font-semibold">What it cost, and what it earned</div>
-            <p className={cn('text-sm font-semibold', state.sprintGoalMet ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
+            <p className={cn('text-sm font-semibold', state.sprintGoalMet ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-800 dark:text-amber-300')}>
               Delivered {delivered} of {forecast} points · goal {state.sprintGoalMet === null ? 'not called' : state.sprintGoalMet ? 'met' : 'not met'}
             </p>
             {prog.essentialsTotal > 0 && (
@@ -285,7 +285,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
 
           {teamHabits.length > 0 && (
             <section data-part="habits" className="rounded-lg border-2 border-amber-400/60 bg-amber-500/[0.05] px-3 py-2.5">
-              <div className={cn(EYEBROW, 'mb-1 text-amber-700 dark:text-amber-300')}>Habits this Sprint showed</div>
+              <div className={cn(EYEBROW, 'mb-1 text-amber-800 dark:text-amber-300')}>Habits this Sprint showed</div>
               <ul className="space-y-2">
                 {teamHabits.map((h) => (
                   <li key={h.id}>

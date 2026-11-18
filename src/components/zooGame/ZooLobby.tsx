@@ -50,7 +50,7 @@ export function SeatCard({ seat, holder, away, mine, canAct, canLeave, canCover,
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-semibold">{SEAT_LABEL[seat.seat]}</span>
         {seat.is_ai && <span className="flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground"><Bot className="h-3 w-3" /> AI</span>}
-        {away && <span data-part="seat-away" className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:text-amber-300">away</span>}
+        {away && <span data-part="seat-away" className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[11px] font-medium text-amber-800 dark:text-amber-300">away</span>}
         {mine && <span className="flex items-center gap-1 text-[11px] font-medium text-primary"><Check className="h-3 w-3" /> you</span>}
       </div>
       <p className="text-[11px] leading-snug text-muted-foreground">{SEAT_WHY[seat.seat]}</p>
@@ -163,7 +163,7 @@ export function ZooLobby({ sessionId, onEnter, onLeave }: {
           <p className="text-sm text-muted-foreground">
             {hereCount(s.participants, s.present)} here
             {s.participants.length > hereCount(s.participants, s.present)
-              && <span className="text-muted-foreground/70"> of {s.participants.length}</span>}
+              && <span className="text-zoo-quiet"> of {s.participants.length}</span>}
             {' '}&middot; {s.session.status}
           </p>
         </div>

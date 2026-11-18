@@ -46,7 +46,7 @@ function SurfacePicker({ current, onPick }: { current: PathStyle; onPick: (key: 
       <PopoverTrigger asChild>
         <button type="button" title="Path surface"
           className={cn(FOCUS, "flex items-center gap-1.5 rounded-md border border-border px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground hover:text-foreground")}>
-          <span className="text-muted-foreground/80">Surface</span>
+          <span className="text-zoo-quiet">Surface</span>
           <SurfaceSwatch style={current} />
           <span className="text-foreground">{current.label}</span>
           <ChevronDown className="h-3 w-3" />

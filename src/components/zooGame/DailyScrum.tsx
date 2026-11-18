@@ -228,7 +228,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
               Scrum Master causes their removal; the block-versus-impediment split is a lens
               some teach on top of that, and a game that flags every other extra-Guide practice
               should flag this one. */}
-          <div className="mt-1 text-[11px] italic text-muted-foreground/80">
+          <div className="mt-1 text-[11px] italic text-zoo-quiet">
             Telling a block from an impediment is a lens some coaches teach, not the Guide&rsquo;s.
             The Guide has impediments, and asks the Scrum Master to cause their removal.
           </div>

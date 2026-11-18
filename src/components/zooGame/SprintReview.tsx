@@ -206,7 +206,7 @@ function GoalHeadline({ state, onCall }: { state: ZooGameState; onCall?: (met: b
     <div data-part="review-goal" data-met={met ? 'yes' : 'no'} className="flex items-start gap-3">
       {met ? <CheckCircle2 className={cn(TONE.done.text, 'mt-1 h-7 w-7 shrink-0')} /> : <CircleDashed className={cn(TONE.attention.text, 'mt-1 h-7 w-7 shrink-0')} />}
       <div className="min-w-0">
-        <h2 className={cn('text-3xl font-bold leading-tight tracking-tight', met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+        <h2 className={cn('text-3xl font-bold leading-tight tracking-tight', met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-800 dark:text-amber-400')}>
           Sprint Goal {met ? 'met' : 'not met'}
         </h2>
         <p className="text-base font-medium">{goal}</p>
@@ -353,7 +353,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           The Review is where it becomes obvious, and it is the one screen that never said so. */}
       {finished.length > 0 && (
         <section className="rounded-lg border border-amber-400/60 bg-amber-500/[0.06] px-3 py-2.5">
-          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-amber-700 dark:text-amber-400')}>
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5 text-amber-800 dark:text-amber-400')}>
             Built, and nobody can see it
             <ExplainButton cards={['increment', 'sprint-review']} compact />
           </div>
@@ -414,7 +414,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
         <section className={cn('rounded-lg border px-3 py-2.5',
           verdict.met ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
           <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5',
-            verdict.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+            verdict.met ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-800 dark:text-amber-400')}>
             Your bet &middot; {verdict.met ? 'it came off' : 'it did not'}
             <ExplainButton cards={['empiricism', 'sprint-review']} compact />
           </div>
@@ -485,7 +485,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
                   </span>
                   <span className={cn('min-w-0 flex-1', m.met ? 'text-muted-foreground' : 'text-foreground')}>{m.label}</span>
                   <span className={cn('shrink-0 font-mono text-[11px]', m.met ? 'text-emerald-600 dark:text-emerald-400' : 'text-muted-foreground')}>
-                    {m.actual}{m.unit ?? ''} <span className="text-muted-foreground/70">/ {m.target}{m.unit ?? ''}</span>
+                    {m.actual}{m.unit ?? ''} <span className="text-zoo-quiet">/ {m.target}{m.unit ?? ''}</span>
                   </span>
                 </li>
               ))}
@@ -624,7 +624,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       {velocity > 0 && (openZones.length > 0 || startedNotOpen.length > 0) && (
         <div className={cn('rounded-lg border px-3 py-2.5 text-sm',
           openZones.length ? 'border-emerald-400/60 bg-emerald-500/[0.06]' : 'border-amber-400/60 bg-amber-500/[0.06]')}>
-          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5', openZones.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400')}>
+          <div className={cn(EYEBROW, 'mb-1 flex items-center gap-1.5', openZones.length ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-800 dark:text-amber-400')}>
             {openZones.length ? 'Open to visitors' : 'Nothing is open to visitors yet'}
             <ExplainButton cards={['slices', 'increment']} compact />
           </div>
@@ -790,7 +790,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
                   <p className="font-medium">{sig.suggestion}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     {times > 1 && (
-                      <span data-part="signal-age" className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-700 dark:text-amber-300">
+                      <span data-part="signal-age" className="rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold uppercase text-amber-800 dark:text-amber-300">
                         {times === 2 ? '2nd Review running' : `${times} Reviews running`}
                       </span>
                     )}
@@ -873,7 +873,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
             <Button size="sm" variant={progress >= 80 ? 'default' : 'outline'} onClick={onWrapUp}>
               {progress >= 80 ? 'The Product Goal is met - wrap up' : 'End it here anyway'}
             </Button>
-            {progress < 80 && <span className="text-[11px] text-muted-foreground/80">It is your call as PO - but the visitors are not there yet.</span>}
+            {progress < 80 && <span className="text-[11px] text-zoo-quiet">It is your call as PO - but the visitors are not there yet.</span>}
           </div>
         )}
       </section>
