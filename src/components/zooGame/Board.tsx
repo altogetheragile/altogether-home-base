@@ -52,6 +52,11 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
   // player the opposite of what the press does.
   const count = taken.reduce((n, m) => n + (m.kind === 'exhibit' ? 2 : 1), 0);
   const whole = taken.length === members.length;
+  // Why the count is bigger than the ticks: "All 4 come out as 7 items but I can only see 4 things
+  // listed" (scrum-master playtest). The reason was in the line above the list; it is said here too,
+  // where the number is.
+  const animals = taken.filter((m) => m.kind === 'exhibit').length;
+  const why = animals ? ` (${animals === 1 ? 'the animal brings its enclosure' : `each of the ${animals} animals brings its enclosure`})` : '';
   return (
     <div className="space-y-3">
       <p className="text-[11px] text-muted-foreground">
@@ -85,8 +90,8 @@ export function SplitEpicPanel({ epic, onSplit, costSeconds }: {
       {count > 0 && (
         <p data-part="split-leaves" className="rounded-md border border-border bg-muted/50 px-2.5 py-1.5 text-[11px] text-muted-foreground">
           {whole
-            ? <>All {members.length} come out as {count} {count === 1 ? 'item' : 'items'}, and {epic.name} is fully split, so it leaves the Product Backlog.</>
-            : <>{count} {count === 1 ? 'item comes' : 'items come'} out. The other {members.length - taken.length}{' '}
+            ? <>All {members.length} come out as {count} {count === 1 ? 'item' : 'items'}{why}, and {epic.name} is fully split, so it leaves the Product Backlog.</>
+            : <>{count} {count === 1 ? 'item comes' : 'items come'} out{why}. The other {members.length - taken.length}{' '}
                 {members.length - taken.length === 1 ? 'stays' : 'stay'} on {epic.name}, which is still on the
                 Product Backlog: {members.filter((m) => !picked.has(m.id)).map((m) => m.name).join(', ')}.</>}
         </p>

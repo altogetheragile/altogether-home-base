@@ -73,14 +73,14 @@ describe('the button', () => {
     expect(screen.getByRole('button', { name: /Word it for me/ }),
       'an empty box was offered a rewording of nothing').toBeTruthy();
     rerender(planningPanel(planning('Build the lion enclosure')));
-    expect(screen.getByRole('button', { name: /Reword mine/ }),
+    expect(screen.getByRole('button', { name: /Reword it for me/ }),
       'a learner who had a go was offered a goal written for them instead').toBeTruthy();
   });
 
   it('says what it changed, once it has changed it', () => {
     const said: string[] = [];
     const { container, rerender } = panel(planning('Build the lion enclosure'), (g) => said.push(g));
-    fireEvent.click(screen.getByRole('button', { name: /Reword mine/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Reword it for me/ }));
     expect(said[0], 'the Goal was not reworded at all').toMatch(/so that/i);
     rerender(planningPanel(planning(said[0])));
     expect(container.querySelector('[data-part="reworded"]'),

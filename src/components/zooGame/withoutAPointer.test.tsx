@@ -191,7 +191,9 @@ describe('what splitting an epic actually does', () => {
     const stillTicked = e.epicMembers!.slice(1);
     const items = stillTicked.reduce((n, m) => n + (m.kind === 'exhibit' ? 2 : 1), 0);
     expect(said, 'one member was unticked and the panel counted something else')
-      .toMatch(new RegExp(`^${items} items? comes? out\\. The other 1 stays on`));
+      .toMatch(new RegExp(`^${items} items? comes? out( \\([^)]*\\))?\\. The other 1 stays on`));
+    // ...and says why the number is bigger than the ticks, where an animal is among them.
+    if (stillTicked.some((m) => m.kind === 'exhibit')) expect(said).toMatch(/brings its enclosure/);
     expect(said, 'the panel claims the epic is gone with a member still on it').not.toMatch(/fully split/i);
   });
 });

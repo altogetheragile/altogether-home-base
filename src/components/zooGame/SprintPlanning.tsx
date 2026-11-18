@@ -408,7 +408,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 title={state.sprintGoal.trim()
                   ? 'Puts what you wrote into shape, and says what it changed. Your words, the Goal\u2019s shape.'
                   : "Writes a first draft from what is ready in the Product Backlog. Wording only - the Goal is the Scrum Team's to agree."}>
-                <Wand2 className="mr-1 h-3.5 w-3.5" /> {state.sprintGoal.trim() ? 'Reword mine' : 'Word it for me'}
+                <Wand2 className="mr-1 h-3.5 w-3.5" /> {state.sprintGoal.trim() ? 'Reword it for me' : 'Word it for me'}
               </Button>
             </div>
             {/* The example is under the box, not inside it. As a placeholder it was set in the same
