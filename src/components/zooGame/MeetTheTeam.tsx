@@ -82,8 +82,11 @@ function YourName({ id, name, onRename }: { id: string; name: string; onRename: 
   );
 }
 
-export function MeetTheTeam({ state, seat = null, onNext, onRename }: {
+export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
   state: ZooGameState;
+  /** Playing alone, Next is Priya handing over her starter Product Backlog rather than the three
+   *  questions, and once pressed it says she is doing it until she has. */
+  next?: { label: string; waiting: boolean };
   /** In a shared game, the seat this player holds. Playing alone you are one of the Developers. */
   seat?: SeatName | null;
   onNext: () => void;
@@ -191,7 +194,9 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename }: {
       </section>
 
       <div>
-        <Button onClick={onNext}>Next: who is the zoo for &rarr;</Button>
+        <Button onClick={onNext} disabled={next?.waiting}>
+          {next?.waiting ? 'Priya is handing over her Product Backlog…' : <>{next?.label ?? 'Next: who is the zoo for'} &rarr;</>}
+        </Button>
       </div>
     </div>
   );

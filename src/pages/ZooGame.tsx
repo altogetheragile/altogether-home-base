@@ -72,6 +72,9 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   //
   // Which seats, and why those, is in `SOLO_AI_SEATS` - the Developers and the Scrum Master are
   // both deliberately absent from it.
+  // Meet the Team, before the Product Backlog. Held here rather than in the game state: it is an
+  // introduction, not a decision, so there is nothing to save or replay.
+  const [metTeam, setMetTeam] = useState(false);
   const aiSeats = useMemo(() => ({
     state: game.state,
     drivesClock: true,
@@ -85,7 +88,12 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   // you are all three Developers - you choose who takes each card, and who gives it the second
   // pair of eyes - and every build on the park is yours. A shared session still plays the
   // Developers nobody is sitting in for; see `ZooTogether`.
-  useAiSeats(aiSeats, SOLO_AI_SEATS, { skip: leftToThePlayer });
+  //
+  // ...and Priya's starter Product Backlog waits until you have met the team. She used to hand it
+  // over the moment the Product Goal was set, so Meet the Team flashed past on the way to
+  // Refinement: "A screen flashes up ... of the team only momentarily." The skip is read afresh on
+  // every beat, so pressing Next is what lets her move.
+  useAiSeats(aiSeats, SOLO_AI_SEATS, { skip: (action: ZooAction) => leftToThePlayer(action) || (action.type === 'WRITE_BACKLOG' && !metTeam) });
 
   const { state, say, answerHuddle, lendAHand, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, agreeMove, declineMove, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, agreeForecast, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, callSprintGoal, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, askScrumMaster, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
@@ -105,7 +113,6 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   // Bumped on each delivery (Deploy Complete) to fire a confetti burst - a celebration of the
   // shippable increment reaching visitors.
   const [celebrate, setCelebrate] = useState(0);
-  const [metTeam, setMetTeam] = useState(false);
   // "Scrum on one page" is a page about Scrum, and it used to be the first thing anybody met. It is
   // the best page in the game to read SECOND: one screen and one button is what a first visit should
   // be, and a learner who has built something has a reason to read it. Opened from the front page's
@@ -415,10 +422,12 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
           onOrient={() => { setStartTab('zoo'); setBeforeStart(true); }}
           onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
       case 'brief':
-        // The Scrum Team, before the Backlog they will work on. Held here rather than in the game
-        // state: it is an introduction, not a decision, so there is nothing to save or replay.
-        if (!metTeam) {
-          return <ZooShell state={state} {...shellProps}><MeetTheTeam state={state} seat={seat} onNext={() => setMetTeam(true)} onRename={renameMember} /></ZooShell>;
+        // The Scrum Team, before the Backlog they will work on. Alone, Priya writes the starter
+        // Product Backlog once you press Next (docs/ZOO_GAME_FLOW.md, step 2), so the screen stays
+        // until she has, rather than flashing the three questions she is about to answer.
+        if (!metTeam || !seat) {
+          return <ZooShell state={state} {...shellProps}><MeetTheTeam state={state} seat={seat} onNext={() => setMetTeam(true)} onRename={renameMember}
+            next={seat ? undefined : { label: "Next: Priya's starter Product Backlog", waiting: metTeam }} /></ZooShell>;
         }
         // No shell: there is nothing to put in a header yet - no Sprint, no Backlog, no park.
         return <div className={cn('h-full overflow-y-auto px-4 py-5', DOCK_GUTTER)}><BacklogWizard productGoal={state.productGoal} onBuild={writeBacklog} seat={seat} emptySeats={covering} /></div>;
