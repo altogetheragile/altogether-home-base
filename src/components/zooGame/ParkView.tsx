@@ -315,7 +315,13 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
   // People come whatever is here. Whether there is anything worth their trip is a different
   // question, and the honest place to answer it is the badge beside the count.
   const gatesOpen = zooIsOpen(state);
-  const total = Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
+  // At the Review and the Retrospective, the Sprint just run: `attendance` has already moved on to
+  // what next Sprint expects, so the park said "337 visitors" while a stakeholder beside it said
+  // "480 people came this Sprint" (scrum-master playtest). Outside them, who is visiting now.
+  const lookingBack = (state.phase === 'review' || state.phase === 'retro') && !!state.lastReview;
+  const total = lookingBack
+    ? Math.round(state.lastReview!.totalAttendance)
+    : Math.round((Object.values(state.attendance) as number[]).reduce((a, b) => a + b, 0));
   const happiness = state.lastReview?.overallHappiness ?? null;
 
   // Little visitors stroll once there is an exhibit to see. How many of them is `crowdNow`, which
@@ -564,7 +570,7 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
               {focus && (
                 <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-md border border-border bg-background/90 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm">
                   Increment {open.length} <span className="font-normal text-muted-foreground">&middot;</span> Site{sites.length === 1 ? '' : 's'} {sites.length}
-                  <span className="font-normal text-muted-foreground"> &middot; {total ? total.toLocaleString() : 'no'} visitors</span>
+                  <span className="font-normal text-muted-foreground"> &middot; {total ? total.toLocaleString() : 'no'} visitors{lookingBack ? ' this Sprint' : ''}</span>
                 </div>
               )}
               {/* The walk round the Increment, on the picture it walks.

@@ -39,7 +39,7 @@ describe('a question with a clock on it', () => {
     expect(q, 'nobody ever asks the Product Owner anything').toBeTruthy();
     expect(q.of, 'the question was addressed to the wrong accountability').toBe('product_owner');
     expect(q.from).toBe(s.team.developers[0].name);
-    expect(q.text, 'the question is not about anything the game has').toMatch(/Rounded or square/);
+    expect(q.text, 'the question is not about anything the game has').toMatch(/Rounded or octagon/);
     expect(q.choices.map((c) => c.key)).toContain('theirs');
   });
 
@@ -103,7 +103,7 @@ describe('the rail carries it', () => {
       <MemoryRouter><ActionRail state={later} onAnswerQuestion={onAnswerQuestion} /></MemoryRouter>,
     );
     const rail = container.querySelector('[data-part="action-rail"]')!;
-    expect(rail.textContent).toMatch(/Rounded or square/);
+    expect(rail.textContent).toMatch(/Rounded or octagon/);
     expect(rail.textContent, 'the rail does not say how long they have been waiting').toMatch(/waiting 9s/);
     fireEvent.click(screen.getByRole('button', { name: 'Your call' }));
     expect(onAnswerQuestion).toHaveBeenCalledWith((asked.questions ?? [])[0].id, 'theirs');

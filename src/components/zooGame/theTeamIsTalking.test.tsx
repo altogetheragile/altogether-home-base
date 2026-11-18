@@ -107,7 +107,7 @@ describe('the question channel, out loud', () => {
   it('puts the question in the thread, by name', () => {
     const s = askIfDue(sprint());
     expect(texts(s), 'the question exists as a row on a rail and nowhere else')
-      .toContainEqual(expect.stringMatching(/Rounded or square/));
+      .toContainEqual(expect.stringMatching(/Rounded or octagon/));
     expect(last(s)!.from, 'nobody asked it - it just appeared')
       .toBe(s.team.developers[0].name);
   });
@@ -200,7 +200,16 @@ describe('the panel', () => {
     s = say({ ...s, dayNumber: 2 }, { who: 'developer', from: 'Ada', text: 'Tuesday.' });
     const days = [...chat(s).querySelectorAll('[data-part="chat-day"]')].map((n) => n.textContent);
     expect(days, 'two days of a Sprint run together with nothing between them')
-      .toEqual(['Day 1', 'Day 2']);
+      .toEqual(['Sprint 1 \u00b7 Day 1', 'Sprint 1 \u00b7 Day 2']);
+  });
+
+  it('heads what was said outside the Sprint by the event, not by the last Sprint\u2019s day', () => {
+    // "The chat shows 'DAY 3' for Priya's Sprint Goal message" - said at Sprint 2's Planning, and
+    // stamped with Sprint 1's last day (scrum-master playtest).
+    let s = say(sprint({ dayNumber: 3 }), { who: 'developer', from: 'Ada', text: 'Last day.' });
+    s = say({ ...s, phase: 'planning', sprintNumber: 2 }, { who: 'product_owner', from: 'Priya', text: 'Here is a Goal.' });
+    const days = [...chat(s).querySelectorAll('[data-part="chat-day"]')].map((n) => n.textContent);
+    expect(days).toEqual(['Sprint 1 \u00b7 Day 3', 'Sprint 2 \u00b7 Sprint Planning']);
   });
 
   it('keeps the rail under it, because a reply is a move in the game', () => {

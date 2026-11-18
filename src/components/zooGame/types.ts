@@ -459,6 +459,10 @@ export interface ChatMessage {
   member?: string;
   /** The day it was said on, so the thread can be broken up by day. */
   day: number;
+  /** When it was said, as the thread heads it: "Sprint 1 · Day 2", or the event it was said at
+   *  outside the Sprint's days ("Sprint 2 · Sprint Planning"). `day` alone stamped what Priya said
+   *  at Planning with the last Sprint's Day 3 (scrum-master playtest). Absent on older threads. */
+  when?: string;
   /** Which conversation it belongs to, where it belongs to a particular one.
    *
    *  The Daily Scrum's screen shows that event's own thread and nothing else, and sniffing the
