@@ -34,8 +34,11 @@ function Figure({ value, label, tone, icon: Icon, title }: { value: number | str
  *  steps these replaced were all on screen at once, open or shut, beside the "Your move" card and
  *  the ground panel - four things asking at once on the screen a newcomer meets first. Now the
  *  screen asks one thing, in the card, and what is settled steps back to a line. */
-function Settled({ part, children, open, onToggle, change = 'Change', body, pending }: {
+function Settled({ part, children, open, onToggle, change = 'Change', what, body, pending }: {
   part: string; children: ReactNode; open?: boolean; onToggle?: () => void; change?: string; body?: ReactNode;
+  /** What the button changes, for its name: two rows each with a bare "Change" button were "two
+   *  'Change' buttons with no labels distinguishing what each changes" (scrum-master playtest). */
+  what?: string;
   /** Not settled yet, and not the move either: there to be done early by whoever wants to. */
   pending?: boolean;
 }) {
@@ -47,9 +50,12 @@ function Settled({ part, children, open, onToggle, change = 'Change', body, pend
           : <Check className={cn(TONE.done.text, 'h-3.5 w-3.5 shrink-0')} />}
         <span className="min-w-0 flex-1">{children}</span>
         {onToggle && (
+          // "Close" rather than "Done" when open: beside the Definition of Done's own "We agree"
+          // button, a "Done" read as a second way of agreeing it.
           <button type="button" onClick={onToggle} aria-expanded={!!open}
+            aria-label={what ? `${open ? 'Close' : change}: ${what}` : undefined}
             className={cn(FOCUS, 'shrink-0 rounded px-1 text-[11px] font-medium text-muted-foreground underline-offset-2 hover:text-foreground hover:underline')}>
-            {open ? 'Done' : change}
+            {open ? 'Close' : change}
           </button>
         )}
       </div>
@@ -178,7 +184,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const settled = (
     <ul data-part="settled" className="space-y-1.5 rounded-lg border border-border bg-muted/20 px-3 py-2">
       {onSetSprintDays && (
-        <Settled part="settled-length" open={lengthOpen} onToggle={() => setLengthOpen((o) => !o)}
+        <Settled part="settled-length" what="the Sprint length" open={lengthOpen} onToggle={() => setLengthOpen((o) => !o)}
           body={<SprintLengthPicker days={state.sprintDays} options={SPRINT_LENGTH_OPTIONS} onSet={onSetSprintDays} at="setup" />}>
           Sprints are <strong className="text-foreground">{state.sprintDays} days</strong>
         </Settled>
@@ -193,12 +199,12 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           it sizes against it can agree it first: "when we estimate size then we need to understand
           what Done looks like." */}
       {!state.dodAgreed && step === 'refinement' && onSetDod && (
-        <Settled part="settled-dod" pending open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor} change="Agree it now">
+        <Settled part="settled-dod" what="the Definition of Done" pending open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor} change="Agree it now">
           Definition of Done: <strong className={TONE.attention.text}>nobody has agreed it yet</strong>
         </Settled>
       )}
       {state.dodAgreed && onSetDod && (
-        <Settled part="settled-dod" open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor}>
+        <Settled part="settled-dod" what="the Definition of Done" open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor}>
           {state.definitionOfDone.length
             ? <>Definition of Done agreed: <strong className="text-foreground">{state.definitionOfDone.length} item{state.definitionOfDone.length === 1 ? '' : 's'}</strong></>
             : <>Starting without a Definition of Done</>}

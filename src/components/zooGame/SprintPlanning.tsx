@@ -658,7 +658,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                     onClick={() => chosen.forEach((it) => {
                       if ((it.tasks ?? []).some((t) => t.label.trim())) onSetTasks(it.id, fillTheGaps(it));
                     })}>
-                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps {started}
+                    {/* Says how many plans, in words: "Fill in the gaps 1" beside the item's own
+                        "Fill in the gaps" was two buttons with one name (scrum-master playtest). */}
+                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps in {started === 1 ? 'the plan' : `all ${started} plans`} you started
                   </Button>
                 )}
               </div>

@@ -111,8 +111,15 @@ function BacklogGlance({ state }: { state: ZooGameState }) {
 }
 
 /** The Sprint Backlog when it is not the screen you are on - or before there is one at all. */
-function SprintBacklogGlance({ state, locked }: { state: ZooGameState; locked: boolean }) {
-  const inSprint = state.backlog.filter((it) => it.status === 'committed' || (it.status !== 'backlog' && it.sprintNumber === state.sprintNumber));
+export function SprintBacklogGlance({ state, locked }: { state: ZooGameState; locked: boolean }) {
+  // At Sprint Planning nothing is committed yet: what is being chosen is the forecast. Counting only
+  // the committed work, this said "0 items · Nothing forecast" beside the planning screen's own
+  // "1 item · 8 pts" - "those two counts contradict each other on the same screen" (scrum-master
+  // playtest, 17 Nov, six times over). So while Planning is on it lists the forecast so far.
+  const planning = state.phase === 'planning';
+  const inSprint = planning
+    ? state.forecast.map((id) => state.backlog.find((it) => it.id === id)).filter((it): it is NonNullable<typeof it> => !!it)
+    : state.backlog.filter((it) => it.status === 'committed' || (it.status !== 'backlog' && it.sprintNumber === state.sprintNumber));
   if (locked) {
     return (
       <section className="rounded-lg border border-dashed border-border p-4 text-sm text-muted-foreground">
@@ -126,17 +133,19 @@ function SprintBacklogGlance({ state, locked }: { state: ZooGameState; locked: b
     <section className="space-y-2">
       <div className="flex items-baseline gap-2">
         <h2 className="text-sm font-semibold">Sprint Backlog</h2>
-        <span className="text-xs text-muted-foreground">Sprint {state.sprintNumber} · {inSprint.length} items</span>
+        <span data-part="glance-count" className="text-xs text-muted-foreground">
+          Sprint {state.sprintNumber} · {planning ? 'forecast so far · ' : ''}{inSprint.length} {inSprint.length === 1 ? 'item' : 'items'}
+        </span>
       </div>
       {state.sprintGoal && <p className="text-sm"><span className="font-semibold">Sprint Goal:</span> {state.sprintGoal}</p>}
       <ul className="divide-y divide-border rounded-lg border border-border">
         {inSprint.map((it) => (
           <li key={it.id} className="flex items-center gap-2 px-2.5 py-1.5 text-sm">
             <span className="min-w-0 flex-1 truncate">{it.name}</span>
-            <span className="shrink-0 text-[11px] uppercase tracking-wide text-muted-foreground">{it.status}</span>
+            <span className="shrink-0 text-[11px] uppercase tracking-wide text-muted-foreground">{planning ? 'forecast' : it.status}</span>
           </li>
         ))}
-        {!inSprint.length && <li className="px-2.5 py-3 text-sm text-muted-foreground">Nothing forecast.</li>}
+        {!inSprint.length && <li className="px-2.5 py-3 text-sm text-muted-foreground">{planning ? 'Nothing forecast yet.' : 'Nothing forecast.'}</li>}
       </ul>
     </section>
   );
