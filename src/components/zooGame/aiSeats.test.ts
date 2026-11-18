@@ -3,7 +3,7 @@ import { initialZooState } from './config';
 import type { ZooGameState } from './types';
 import { reducer } from './useZooGame';
 import { splitEpic, pokerHand } from './engine';
-import { aiTurn, leftToThePlayer } from './aiSeats';
+import { aiTurn } from './aiSeats';
 
 // AI seats exist so one person can see a whole Scrum Team work. These check that each seat
 // only does its own job, that it says why, and - the one that would really bite - that a
@@ -88,8 +88,9 @@ describe('a seat nobody is sitting in', () => {
 });
 
 describe('the Sprint Goal at the Review', () => {
-  // The Product Owner calls it in this game. With a player at the table the call is theirs; with
-  // nobody in the chair the game calls it on what it can read, so a shared Review is not stuck.
+  // The Product Owner calls it in this game. A person in the Product Owner's seat calls it
+  // themselves; otherwise the game calls it on what it can read - alone as well, since 18 Nov 2026
+  // ("Let the game act as Priya on all PO decisions").
   const atReview = (reading: boolean): ZooGameState => ({
     ...initialZooState(3), phase: 'review', sprintGoal: 'Open Big Cats', sprintGoalMet: null, signals: [],
     sprintGoalFacts: { done: ['Lion'], unfinished: reading ? [] : ['Tiger'], essentials: [], reading },
@@ -100,7 +101,4 @@ describe('the Sprint Goal at the Review', () => {
     expect(aiTurn(atReview(false), 'product_owner')?.action).toEqual({ type: 'CALL_SPRINT_GOAL', met: false });
   });
 
-  it('is left to a player at the table', () => {
-    expect(leftToThePlayer({ type: 'CALL_SPRINT_GOAL', met: true })).toBe(true);
-  });
 });

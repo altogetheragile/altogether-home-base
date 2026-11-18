@@ -557,6 +557,9 @@ export interface ZooGameState {
    *  and not yet a Sprint Goal. Changing the wording clears this, because agreement was to
    *  the words that were there. */
   sprintGoalAgreed: string[];
+  /** The Sprint in which the Product Owner last offered a Sprint Goal of their own. Offered once a
+   *  Sprint, so a team that clears the box to write its own is not handed the same words again. */
+  sprintGoalSuggestedIn?: number;
   /** What the Scrum Team did, as it did it: who chose the Sprint Backlog, whether the Daily Scrum
    *  was held, whether anything was pulled in unready. Recorded rather than judged - the game has
    *  no opinion about any of it yet. It is here so the Retrospective can show a team what they
@@ -854,7 +857,7 @@ export type ZooAction =
   | { type: 'SET_CLOCK_PAUSED'; paused: boolean }
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string }
-  | { type: 'SET_SPRINT_GOAL'; goal: string }
+  | { type: 'SET_SPRINT_GOAL'; goal: string; suggested?: boolean }
   | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
   | { type: 'SET_SPRINT_BET'; bet: { who: SegmentId | 'all'; metric: 'happiness' | 'visitors'; by: number } | null }
   | { type: 'ASK_PLACEMENT'; id: string }

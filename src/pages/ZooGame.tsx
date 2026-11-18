@@ -43,7 +43,7 @@ import { RecordingChip } from '@/components/zooGame/RecordingChip';
 import { CARDS_BY_PHASE } from '@/components/zooGame/scrumContent';
 import { useZooCopy } from '@/components/zooGame/useZooCopy';
 import { useAiSeats } from '@/components/zooGame/useZooSession';
-import { SOLO_AI_SEATS, leftToThePlayer } from '@/components/zooGame/aiSeats';
+import { SOLO_AI_SEATS } from '@/components/zooGame/aiSeats';
 
 /** Build A Zoo: the Scrum loop skinned as building a zoo, with a real customer at
  *  the Review (the visitor simulation). intro -> planning -> sprint -> review ->
@@ -52,8 +52,12 @@ import { SOLO_AI_SEATS, leftToThePlayer } from '@/components/zooGame/aiSeats';
  *  same screens serve a game played alone and a game played by a team - the only difference
  *  being which carrier the actions were built around. `saves` is off in a shared session,
  *  where the session itself is the save and a private copy would be a fork of it. */
-function Screens({ game, saves = true, seat = null, observer, covering, away, mustAgree = [], said, onDismissSaid, refused, onDismissRefused, onReading }:
-  { game: ZooGameApi; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[];
+function Screens({ game, solo = false, saves = true, seat = null, observer, covering, away, mustAgree = [], said, onDismissSaid, refused, onDismissRefused, onReading }:
+  { game: ZooGameApi;
+    /** One person playing alone, where the game plays Priya. A shared game passes its own seats
+     *  and runs its own AI for the empty ones (ZooTogether), so these screens must not play her
+     *  a second time - least of all for a person sitting in her seat. */
+    solo?: boolean; saves?: boolean; seat?: SeatName | null; observer?: boolean; covering?: SeatName[];
     /** Seats held by somebody who is not connected right now. A subset of `covering`: their work
      *  falls to whoever is here, and the band says which of the two it is. */
     away?: string[]; mustAgree?: string[]; said?: { id: number; seat: string; says: string; also: number }[]; onDismissSaid?: (id: number) => void; refused?: string | null; onDismissRefused?: () => void;
@@ -80,8 +84,10 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
     drivesClock: true,
     sendAs: (_seat: SeatName, action: ZooAction) => game.send(action),
   }), [game]);
-  // ...and what it leaves alone. Accepting work is a decision, and the player is sitting here to
-  // make it: it comes to them in the rail rather than happening to them.
+  // ...and every Product Owner decision is hers (Al, 18 Nov 2026: "Let the game act as Priya on all
+  // PO decisions - it gets confusing"): accepting, signing off, opening Done work, calling the
+  // Sprint Goal. She suggests the Sprint Goal and the team agrees it. When she opens something, it
+  // gets the same celebration as when anybody else does.
   // ...and no Developers beside you. Ben and Cara used to pull their own cards and build them at
   // your pace, and it was not realistic and not fun: "I don't think the AI builds are very
   // realistic. Should we just simplify things and have single player play all the roles." So alone
@@ -93,7 +99,10 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   // over the moment the Product Goal was set, so Meet the Team flashed past on the way to
   // Refinement: "A screen flashes up ... of the team only momentarily." The skip is read afresh on
   // every beat, so pressing Next is what lets her move.
-  useAiSeats(aiSeats, SOLO_AI_SEATS, { skip: (action: ZooAction) => leftToThePlayer(action) || (action.type === 'WRITE_BACKLOG' && !metTeam) });
+  useAiSeats(aiSeats, solo ? SOLO_AI_SEATS : [], {
+    skip: (action: ZooAction) => action.type === 'WRITE_BACKLOG' && !metTeam,
+    onSay: (_seat: SeatName, _says: string, action: ZooAction) => { if (action.type === 'OPEN_ITEM') celebrateOpening(action.id); },
+  });
 
   const { state, say, answerHuddle, lendAHand, startFromTheBrief, setPhase, setGoal, openGround, adopt, addCopy, setCopyPiece, setSprintGoal, setPlanningTopic, answerPlacement, agreeMove, declineMove, setSprintBet, setDod, setDor, takeSignal, declineSignal, plan, setForecast, agreeSprintGoal, agreeForecast, holdRefinement, agreeDod, writeBacklog, setGoalShape, planShape, startHere, estimate, setTasks, toggleTask, confirmAc, saveDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTaught, setDailyScrumAt, setEnclosureSize, setServices, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addInside, removeInside, finishItem, moveInside, moveCopy, removePlant, nestItem, unnestItem, splitEpic, chooseSolution, createPbi, declineProposal, refinePbi, reorder, reorderSprint, reorderForecast, moveZoneOrder, moveBefore, setUserStories, pull, dropFromSprint, build, editBuild,  improve, open, sendBack, callSprintGoal, answerQuestion, askToCheck, deletePbi, duplicatePbi, assignDev, renameMember, closeDay, cancelSprint, holdDailyScrum, answerImpediment, askScrumMaster, setClockPaused, skipDailyScrum, beginDay, nextSprint, loadGame, poRefine, setPathStyle, addConnector, updateConnector, deleteConnector, reset } = game;
   const { user } = useAuth();
@@ -193,10 +202,15 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   const deployComplete = (id: string) => {
     const it = state.backlog.find((x) => x.id === id);
     const shownId = it?.enhancesId ?? id;
-    const name = state.backlog.find((x) => x.id === shownId)?.name ?? it?.name ?? 'It';
     open(id);
     clearDeploy();
     setParkTab('sprint');
+    celebrateOpening(id, shownId);
+  };
+  // The burst and the toast for something going live, whoever opened it: you, or Priya.
+  function celebrateOpening(id: string, shownId: string = state.backlog.find((x) => x.id === id)?.enhancesId ?? id) {
+    const it = state.backlog.find((x) => x.id === id);
+    const name = state.backlog.find((x) => x.id === shownId)?.name ?? it?.name ?? 'It';
     // Celebrate the delivery: this increment is now live to visitors. Burst the confetti from the
     // card once it has landed in the Done column (measured after the re-render).
     toast.success(`🎉 ${name} is live to visitors!`);
@@ -212,7 +226,7 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
       setCelebrateOrigin(onScreen ? { x: r.left + r.width / 2, y: r.top + r.height / 2 } : null);
       setCelebrate((c) => c + 1);
     }));
-  };
+  }
   // Raising an improvement adds a new PBI to the Product Backlog - take the player back to the work
   // view so they can refine, estimate and pull it like any other item. If one is already queued, say so.
   const raiseImprovement = (id: string) => {
@@ -381,7 +395,7 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
   // Area next.") holds the day clock until somebody answers, and on the board that question had no
   // way to be shown, so the clock stopped with nothing on the screen to say why (26 Oct 2026).
   const actionRail = (className: string) => (
-    <ActionRail onStartItem={startItem} onLendAHand={lendAHand} className={className} state={state} seat={seat}
+    <ActionRail onStartItem={startItem} onLendAHand={lendAHand} className={className} state={state} seat={seat} solo={solo}
       onAnswerPlacement={answerPlacement} onAnswerQuestion={answerQuestion} onOpen={deployComplete}
       onAddProposal={handleProposal} onSplitEpic={splitEpic} onDeclineProposal={declineProposal}
       onAgreeMove={agreeMove} onDeclineMove={declineMove} onAssignDev={assignDev} />
@@ -439,7 +453,12 @@ function Screens({ game, saves = true, seat = null, observer, covering, away, mu
         return <ZooShell state={state} {...shellProps} tools={<BoardTools state={state} teachCard={cardFor('sprint')} onMarkTaught={markTaught}
           onSetScrumAt={setDailyScrumAt} onSetLearnMode={setLearnMode} onSetWipLimit={setWipLimit} onCancelSprint={cancelSprint} />}><SprintBoard onAskToCheck={askToCheck} state={state} move={actionRail("shrink-0")} rail={<TeamChat state={state} className="mt-2 min-h-0 flex-1" rail={null} />} onEstimate={estimate} onToggleTask={toggleTask} onFinishItem={finishItem} onStartItem={startItem} onReorderSprint={reorderSprint} onPull={pull} onDropFromSprint={dropFromSprint} onAnswerPlacement={answerPlacement} onOpen={deployComplete} onEndDay={endDay} onHoldDailyScrum={holdDailyScrum} onAnswerImpediment={answerImpediment} onAskScrumMaster={askScrumMaster} onSkipDailyScrum={skipDailyScrum} onStartDay={beginDay} onHoldRefinement={holdRefinement} onSay={say} onAnswerHuddle={answerHuddle} onSplitEpic={splitEpic} building={buildingId} edit={edit} part={partFocus} drawing={drawing} onAddPbi={createPbi} onSetUserStories={setUserStories} onAssignDev={assignDev} onBuilding={selectOnPark} seat={seat} canBuild={!seat || seat === 'developer' || !!viewer || (covering ?? []).includes('developer')} /></ZooShell>;
       case 'review':
-        return <ZooShell state={state} {...shellProps}><SprintReview state={state} onSay={say} onTakeSignal={takeSignal} onDeclineSignal={declineSignal} onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} onOpen={open} onConfirmAc={confirmAc} onToggleTask={toggleTask} onSendBack={sendBack} onCallGoal={callSprintGoal} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
+        return <ZooShell state={state} {...shellProps}><SprintReview state={state} onSay={say}
+          // Alone, Priya's decisions at the Review are hers: what the visitors asked for, what is
+          // accepted or sent back, what opens, and whether the Sprint Goal was met. The Review shows
+          // them being made rather than offering them to you.
+          {...(solo ? {} : { onTakeSignal: takeSignal, onDeclineSignal: declineSignal, onOpen: open, onConfirmAc: confirmAc, onSendBack: sendBack, onCallGoal: callSprintGoal })}
+          onContinue={() => setPhase('retro')} onWrapUp={() => setPhase('final')} onToggleTask={toggleTask} teachCard={cardFor('review')} onMarkTaught={markTaught} /></ZooShell>;
       case 'retro':
         return <ZooShell state={state} {...shellProps}><SprintRetro state={state} onNextSprint={nextSprint} onSetDod={setDod} onAdopt={adopt} onSetSprintDays={setSprintDays} onSay={say} teachCard={cardFor('retro')} onMarkTaught={markTaught} /></ZooShell>;
       case 'final':
@@ -481,5 +500,5 @@ export default function ZooGame() {
   // one person's to pause.
   const [reading, setReading] = useState(false);
   const game = useZooGame(undefined, !reading);
-  return <ZooGameScreens game={game} onReading={setReading} />;
+  return <ZooGameScreens game={game} solo onReading={setReading} />;
 }

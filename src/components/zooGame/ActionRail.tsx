@@ -35,9 +35,11 @@ type RailAction = {
   note?: string;
 };
 
-export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, onAgreeMove, onDeclineMove, onAssignDev, className }: {
+export function ActionRail({ state, seat, solo = false, onAnswerPlacement, onStartItem, onLendAHand, onAnswerQuestion, onOpen, onAddProposal, onSplitEpic, onDeclineProposal, onAgreeMove, onDeclineMove, onAssignDev, className }: {
   state: ZooGameState;
   seat?: SeatName | null;
+  /** Playing alone: the game plays Priya, so what the Product Owner is asked is hers, not yours. */
+  solo?: boolean;
   onAnswerPlacement?: (id: string, choice: string) => void;
   /** Take a card into Doing. Only a Developer pulls - the Sprint Backlog is theirs - which is why
    *  this is the one action on the rail that is not somebody else waiting on an answer. */
@@ -243,7 +245,7 @@ export function ActionRail({ state, seat, onAnswerPlacement, onStartItem, onLend
 
   // Yours first. In a shared game a question for somebody else is still worth seeing - it is
   // why the Sprint is waiting - but it is not the thing you are being asked to do.
-  const mine = (a: RailAction) => isYours(a.actor, state, seat, viewer);
+  const mine = (a: RailAction) => isYours(a.actor, state, seat, viewer, solo);
   const ordered = [...actions.filter(mine), ...actions.filter((a) => !mine(a))];
   const total = ordered.length;
   const idx = total ? Math.min(at, total - 1) : 0;
@@ -368,12 +370,16 @@ const ACTOR = 'bg-muted text-foreground';
 
 /** Whether a thing on the rail is this player's to answer.
  *
- *  Alone, everything is: you are the Scrum Master and the Developers, and what the Product Owner is
- *  asked is left to you as well. In a shared game every player is a Developer, the Scrum Master's
- *  calls are whoever wears the hat, and the Product Owner's are the Product Owner seat's. */
-function isYours(actor: string, state: ZooGameState, seat: SeatName | null | undefined, viewer: string | null): boolean {
-  if (!seat) return true;
+ *  Alone, all but the Product Owner's: you are the Scrum Master and the Developers, and the game
+ *  plays Priya. Her cards used to come to you as "Your move - Product Owner", the one seat you are
+ *  not ("Let the game act as Priya on all PO decisions - it gets confusing"); they now show as
+ *  waiting on her, for the moment before she answers. In a shared game every player is a
+ *  Developer, the Scrum Master's calls are whoever wears the hat, and the Product Owner's are the
+ *  Product Owner seat's. */
+function isYours(actor: string, state: ZooGameState, seat: SeatName | null | undefined, viewer: string | null, solo = false): boolean {
   const who = actor.replace(/^The /, '').toLowerCase();
+  if (solo) return who !== 'product owner';
+  if (!seat) return true;
   if (who === 'product owner') return seat === 'product_owner';
   if (who === 'scrum master') return seat === 'scrum_master' || (!!viewer && hatHolder(state)?.id === viewer);
   return true;   // the Developers, or a Developer by name: every player is one
