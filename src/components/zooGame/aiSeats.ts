@@ -1,6 +1,7 @@
 import type { ZooGameState, ZooAction } from './types';
 import type { SeatName } from './useZooSessions';
-import { notReady, cannotOpenGround, PLACEMENT_CHOICES, acSettled } from './engine';
+import { notReady, cannotOpenGround, PLACEMENT_CHOICES, acSettled, readyToOpen, goalSource, suggestSprintGoal } from './engine';
+import { lookAhead } from './lookAhead';
 import { DEFAULT_BRIEF } from './config';
 import { isChecked } from './parkChecks';
 
@@ -62,13 +63,13 @@ export const SOLO_AI_SEATS: SeatName[] = ['product_owner'];
  *  chair is not the same as somebody choosing not to decide yet. */
 // ...and calling the Sprint Goal, for the same reason: "How is the Sprint Goal not met?" was a
 // verdict the game handed down. Alone, the player calls it in Priya's name, at the Review.
-const PLAYER_DECIDES: ReadonlySet<string> = new Set(['CONFIRM_AC', 'CALL_SPRINT_GOAL']);
-
-/** ...and the one that is an answer rather than an action: accepting at the Product Owner's own
- *  door. Matched on the choice rather than the type, because the same action refuses it too. */
-export const leftToThePlayer = (action: ZooAction): boolean =>
-  PLAYER_DECIDES.has(action.type)
-  || (action.type === 'ANSWER_QUESTION' && 'choice' in action && action.choice === 'accept');
+//
+// All of that was reversed on 18 Nov 2026: "Let the game act as Priya on all PO decisions - it gets
+// confusing." Alone, the player is the Scrum Master and the Developers, and a card marked "Your
+// move - Product Owner" asked them to be the one seat they are not. Priya now accepts, signs off,
+// calls the Sprint Goal and opens Done work herself, and says why in the thread. What stays with
+// the team is agreeing the Sprint Goal she suggests. Nothing is left to the player any more, so
+// `leftToThePlayer` is gone; ZooGame still holds her starter Backlog until the team has met.
 
 /** What this AI accountability would do now, or nothing if it is not their turn.
  *
@@ -144,7 +145,17 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
              says: `We have earned the ${growable}. Opening the ground for it out of what the zoo is worth - that is what being worth visiting buys us.` };
   }
 
-  // Product Owner. They proposed it, so they are in - but it is still the team's to agree.
+  // Product Owner. A Sprint Goal to start from, once a Sprint: the Guide has the Product Owner
+  // propose how the product could increase its value, and the whole Scrum Team define the Goal. So
+  // she offers words and the team agrees them, changes them or writes its own - and once offered
+  // she does not fill the box again if they clear it.
+  if (state.phase === 'planning' && (state.planningTopic ?? 'why') === 'why' && !state.sprintGoal.trim()
+      && state.sprintGoalSuggestedIn !== state.sprintNumber) {
+    const goal = suggestSprintGoal(goalSource(state));
+    return { action: { type: 'SET_SPRINT_GOAL', goal, suggested: true },
+             says: 'Here is the Sprint Goal I would propose. It is the whole team\u2019s to agree, so change it if it does not say why this Sprint is worth doing.' };
+  }
+  // They proposed it, so they are in - but it is still the team's to agree.
   if (state.phase === 'planning' && state.sprintGoal.trim()
       && !state.sprintGoalAgreed.includes('product_owner')) {
     return { action: { type: 'AGREE_SPRINT_GOAL', seat: 'product_owner' },
@@ -210,6 +221,32 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
       const i = (it.acceptance ?? []).findIndex((label, k) => !acSettled(it, k) && !isChecked(state, it, label));
       if (i >= 0) return { action: { type: 'CONFIRM_AC', id: it.id, index: i, value: true },
         says: `Looked at ${it.name}: yes, ${it.acceptance[i].replace(/\?$/, '').replace(/^Can I /, 'I can ')}.` };
+    }
+  }
+
+  // Done and shut: releasing is this seat's call, and she makes it at once. Value only counts once
+  // visitors can use it, and the Guide is clear that the Review is not a gate to releasing it.
+  const shut = state.backlog.find((it) => it.status === 'done' && readyToOpen(it));
+  if (shut && (state.phase === 'sprint' || state.phase === 'review')) {
+    return { action: { type: 'OPEN_ITEM', id: shut.id, by: 'product_owner' },
+             says: `${shut.name} is Done. I am opening it to visitors now: it is worth nothing to them shut.` };
+  }
+
+  // Her own look-ahead: a need the zoo will have before the visitors say so, or a facility buried
+  // in an epic where nobody can size it. She raised it, so she acts on it rather than putting it to
+  // the team as a question that was never theirs.
+  // During the Sprint only, where the rail used to put these to the player. Earlier, a facility
+  // split out of an epic lands at the top of the Product Backlog just as she is pointing the team
+  // at where the value is.
+  if (state.phase === 'sprint') {
+    const p = lookAhead(state)[0];
+    if (p?.kind === 'add' && p.draft) {
+      return { action: { type: 'ADD_PBI', draft: p.draft },
+               says: `${p.why} I am putting "${p.label}" on the Product Backlog.` };
+    }
+    if (p?.kind === 'split' && p.epicId && p.memberIds) {
+      return { action: { type: 'SPLIT_EPIC', id: p.epicId, memberIds: p.memberIds },
+               says: `${p.why} I am splitting it out so it can be sized.` };
     }
   }
 

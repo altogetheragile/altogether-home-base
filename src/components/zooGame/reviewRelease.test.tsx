@@ -34,7 +34,9 @@ function sprintWithNothingReleased(): ZooGameState {
       let moved = false;
       for (const seat of AI) {
         const m = seat === 'developer' ? developersTurn(s) : aiTurn(s, seat);
-        if (!m || !mayTake(m.action.type, { seat }).allowed) continue;
+        // Never opening is the point - and since 18 Nov the game's Priya opens Done work herself,
+        // so this stands in for a person in her seat who leaves it shut.
+        if (!m || !mayTake(m.action.type, { seat }).allowed || m.action.type === 'OPEN_ITEM') continue;
         s = reducer(s, m.action); moved = true; break;
       }
       if (!moved) return;

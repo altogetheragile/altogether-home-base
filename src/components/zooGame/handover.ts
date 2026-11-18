@@ -56,6 +56,15 @@ export function handover(state: ZooGameState): Handover | null {
     // Sprint Goal (Scrum Guide 2020, Topic One). Her line is the proposal, not the Goal.
     // Nothing Ready means nothing marked, and a line about "the marked items" points at nothing.
     const top = availableItems(state)[0];
+    // ...and once she has offered words of her own, she says so, rather than asking the team what
+    // the Sprint is for with her answer already in the box.
+    if (state.sprintGoalSuggestedIn === state.sprintNumber && state.sprintGoal.trim()) {
+      return {
+        key: 'goal',
+        says: 'I have put a Sprint Goal in the box to start from. It is the whole team\u2019s to agree, so change it if it does not say why this Sprint is worth doing.',
+        asks: 'Agree a Sprint Goal as a Scrum Team.',
+      };
+    }
     if (!goalCandidates(state).length && top) {
       return {
         key: 'goal',

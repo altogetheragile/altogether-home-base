@@ -105,8 +105,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
             : { ...state, phase: action.phase };
     case 'SET_PRODUCT_GOAL':
       return setProductGoal(state, action.goal);
-    case 'SET_SPRINT_GOAL':
-      return setSprintGoal(state, action.goal);
+    case 'SET_SPRINT_GOAL': {
+      const next = setSprintGoal(state, action.goal);
+      return action.suggested ? { ...next, sprintGoalSuggestedIn: state.sprintNumber } : next;
+    }
     case 'SET_DOR':
       return setDefinitionOfReady(state, action.dor);
     case 'SET_DOD':

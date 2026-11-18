@@ -35,7 +35,9 @@ const STEP_CARDS: Record<Step, string[]> = { done: ['sprint-review', 'increment'
 
 interface SprintReviewProps {
   state: ZooGameState;
-  onTakeSignal: (index: number) => void;
+  /** Taking what the visitors asked for onto the Product Backlog. Absent when the game plays the
+   *  Product Owner alone: the call is Priya's, and the row says so rather than offering a button. */
+  onTakeSignal?: (index: number) => void;
   /** ...and turning one down, which is the same decision with the other answer. */
   onDeclineSignal?: (index: number) => void;
   onContinue: () => void;
@@ -794,7 +796,9 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
                     )}
                     <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
                     <span className="ml-auto flex flex-wrap items-center gap-2">
-                      <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to the Product Backlog</Button>
+                      {onTakeSignal
+                        ? <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to the Product Backlog</Button>
+                        : <span data-part="signal-po" className="text-[11px] text-muted-foreground">{state.team.productOwner.name.replace(/\s*\(PO\)\s*$/, '')}&rsquo;s call</span>}
                       {onDeclineSignal && (
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground"
                           onClick={() => { onDeclineSignal(i); setDeclined((n) => n + 1); }}>Decline</Button>
