@@ -113,6 +113,12 @@ export async function readScreen(page) {
       // Where the focus is, on every control and not only on fields. A keyboard player has
       // nothing else to steer by.
       const one = { ref, role, name, focused: el === document.activeElement };
+      // ...and whether it is chosen, for the controls that say so in ARIA rather than in a real
+      // input's checked: a radio drawn as a button, a toggle, a tab. The scrum-master run clicked
+      // the Retrospective's first improvement five times because nothing told it the highlighted
+      // one was already chosen.
+      const state = el.getAttribute('aria-checked') ?? el.getAttribute('aria-pressed') ?? el.getAttribute('aria-selected');
+      if (state === 'true' || state === 'false') one.value = state === 'true' ? 'chosen' : 'not chosen';
       if (field) {
         // A tick box is ticked or it is not. Its `value` is the string "on" whatever its state,
         // which is a detail of HTML and not a thing anybody can see - so the newcomer was handed

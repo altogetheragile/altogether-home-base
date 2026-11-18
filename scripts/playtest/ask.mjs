@@ -83,7 +83,7 @@ export const systemFor = (persona) => [
 const describe = (c) => {
   const focus = c.focused ? ', has the focus' : '';
   if (c.role === 'tick box') return `- [${c.ref}] tick box: ${c.name} - ${c.value}${focus}`;
-  if (c.role !== 'field') return `- [${c.ref}] ${c.role}: ${c.name}${focus}`;
+  if (c.role !== 'field') return `- [${c.ref}] ${c.role}: ${c.name}${c.value ? ` - ${c.value}` : ''}${focus}`;
   const state = c.value
     ? `contains "${c.value}"`
     : c.hint ? `empty, showing the grey suggestion "${c.hint}"` : 'empty';
