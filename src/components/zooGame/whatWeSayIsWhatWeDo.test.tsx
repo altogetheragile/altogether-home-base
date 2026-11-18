@@ -3,7 +3,8 @@ import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { DailyScrum } from './DailyScrum';
 import { ORIENTATION, SCRUM_CARDS, CARDS_BY_PHASE, cardFor } from './scrumContent';
-import { initialZooState, DAILY_SCRUM_SECONDS } from './config';
+import { initialZooState, DAILY_SCRUM_SECONDS, DEFAULT_BRIEF } from './config';
+import { reducer } from './useZooGame';
 import { startOnTheBoard, runDailyScrum, dayTotalSeconds } from './engine';
 import type { ZooGameState } from './types';
 
@@ -20,6 +21,14 @@ import type { ZooGameState } from './types';
 // mechanic and the test fails, naming the sentence that now lies.
 
 const game = () => startOnTheBoard(initialZooState(1) as never) as ZooGameState;
+/** What a new player is actually given: since 1 Nov every game runs the whole flow, so the
+ *  Product Goal, then Priya's starter Product Backlog, then Refinement. `startOnTheBoard` is a
+ *  trainer's preset now, and reading the Definition of Done from it is how orientation went on
+ *  saying "you have no Definition of Done" to a team that was about to agree three lines. */
+const newGame = (): ZooGameState => {
+  const brief = reducer(initialZooState(1) as never, { type: 'START_FROM_THE_BRIEF' } as never);
+  return reducer(brief, { type: 'WRITE_BACKLOG', brief: DEFAULT_BRIEF } as never);
+};
 /** Every surprise orientation lists that mentions the Definition of Done, as one piece of text.
  *
  *  All of them, not the first match: two rows mention it - what Done means, and what you were
@@ -32,7 +41,9 @@ const aboutDone = (): string => {
 
 describe('what orientation says about the Definition of Done', () => {
   it('is what the game actually starts you with', () => {
-    const lines = game().definitionOfDone.length;
+    const start = newGame();
+    expect(start.phase, 'a new game no longer reaches Refinement this way, so this test is the stale one').toBe('refine');
+    const lines = start.definitionOfDone.length;
     const said = aboutDone();
     if (lines === 0) {
       expect(said, 'the game hands over no Definition of Done, and orientation says lines arrived')
@@ -41,13 +52,16 @@ describe('what orientation says about the Definition of Done', () => {
     } else {
       expect(said, `the game hands over ${lines} lines, and orientation says you have none`)
         .not.toMatch(/you have no definition of done/i);
+      // ...lines the team has not agreed yet, so orientation must not say they were decided for it.
+      expect(start.dodAgreed, 'the game agrees the Definition of Done for the team').toBeFalsy();
+      expect(said, 'orientation does not say the team agrees it').toMatch(/agree it as a Scrum Team/i);
     }
   });
 
-  it('still makes the point, which is that somebody else decided', () => {
-    // The lesson survived the correction: noticing what you were handed, or not handed, is the
-    // exercise. A row that only states a fact teaches nothing.
-    expect(aboutDone(), 'nobody is said to have asked you').toMatch(/asked you|nobody/i);
+  it('still makes the point, which is whose it is', () => {
+    // The lesson survived the correction. It used to be that somebody else decided ("nobody
+    // asked you"); in the whole flow it is that the whole Scrum Team does.
+    expect(aboutDone(), 'nothing says whose the Definition of Done is').toMatch(/Scrum Team/);
   });
 });
 

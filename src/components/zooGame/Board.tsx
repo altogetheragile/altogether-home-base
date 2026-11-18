@@ -258,7 +258,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
               ? 'Adds the steps your plan is missing. Your wording is left alone.'
               : 'Write a first step, then this will fill in the ones you have not thought of.'}
             onClick={() => set(fillTheGaps(item))}>
-            <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps
+            <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps in this plan
           </Button>
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}
           {onClose && (
@@ -272,7 +272,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
       <div className="mt-2 space-y-1">
         {tasks.length === 0 && (
           <div className="space-y-1">
-            <p className="text-[11px] text-muted-foreground/70">Write a first step. Then Fill in the gaps adds the ones you have not thought of, and leaves yours alone.</p>
+            <p className="text-[11px] text-muted-foreground/70">Write a first step. Then Fill in the gaps in this plan adds the ones you have not thought of, and leaves yours alone.</p>
             {/* What a step looks like: a piece of work a Developer can pick up and finish, in a day or
                 less. An example, not one of theirs - it is never added to the plan. */}
             <p data-part="step-example" className="flex items-center gap-1.5 rounded border border-dashed border-border px-2 py-1 text-[11px] italic text-muted-foreground">
@@ -916,10 +916,13 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
                     value. A labelled, bordered pill so it reads as a reorder control, distinct
                     from the collapse chevron on the left. */}
                 {onMoveZone && zoneOrder.length > 1 && (
-                  <div className={cn(SURFACE.inset, 'flex shrink-0 items-center gap-0.5 px-1 py-0.5 text-muted-foreground')} title={`Move the ${zone} theme up or down`}>
+                  <div className={cn(SURFACE.inset, 'flex shrink-0 items-center gap-0.5 px-1 py-0.5 text-muted-foreground')} title={`Move the whole ${zone} area up or down`}>
+                    {/* "The whole ... area", because an area and the epic in it share a name: "Move Big
+                        Cats down" beside "Move Big Cats down the Product Backlog" was two controls the
+                        scrum-master playtest could not tell apart. */}
                     <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground/70">Move</span>
-                    <button type="button" aria-label={`Move ${zone} up`} title={`Move ${zone} up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3.5 w-3.5" /></button>
-                    <button type="button" aria-label={`Move ${zone} down`} title={`Move ${zone} down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3.5 w-3.5" /></button>
+                    <button type="button" aria-label={`Move the whole ${zone} area up`} title={`Move the whole ${zone} area up`} disabled={zi === 0} onClick={() => onMoveZone(zone, 'up')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronUp className="h-3.5 w-3.5" /></button>
+                    <button type="button" aria-label={`Move the whole ${zone} area down`} title={`Move the whole ${zone} area down`} disabled={zi === zoneOrder.length - 1} onClick={() => onMoveZone(zone, 'down')} className={cn(FOCUS, "rounded disabled:opacity-30 hover:text-foreground")}><ChevronDown className="h-3.5 w-3.5" /></button>
                   </div>
                 )}
               </div>

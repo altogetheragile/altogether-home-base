@@ -30,9 +30,12 @@ export function ExplainButton({ cards, phase, teachCard, onMarkTaught, compact }
   return (
     <Popover>
       <PopoverTrigger asChild>
+        {/* Named what it says. Its name was "What is this for?" beside the words "What is this?",
+            which a screen reader user hears as a different button from the one a sighted user sees
+            (scrum-master playtest, 17 Nov; WCAG 2.5.3, label in name). */}
         {/* Unread teaching used to pulse a bare icon, which nobody noticed. It now says what it is
             and how many cards are waiting - a button you can read beats an animation you cannot. */}
-        <button type="button" title={teachCard ? 'New teaching about this screen' : 'What is this for?'} aria-label="What is this for?"
+        <button type="button" title={teachCard ? 'New teaching about this screen' : 'What is this screen for?'} aria-label="What is this?"
           className={cn(FOCUS, 'flex shrink-0 items-center gap-1.5 rounded-full border py-1.5 text-xs font-semibold transition-colors',
             compact ? 'px-1.5' : 'px-2.5',
             // Unread teaching is a dot, the way an app marks something new, not a pulsing orange pill:

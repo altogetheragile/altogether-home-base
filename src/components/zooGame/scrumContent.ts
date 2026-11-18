@@ -489,7 +489,14 @@ export const ORIENTATION = {
       // screen what Done means gets a rule written out of politeness rather than out of
       // experience, so the Sprint ships whatever it ships and the Retrospective hands over the
       // thing that would have caught it. See DodHandover.tsx.
-      { name: 'You have no Definition of Done', text: 'Nothing says what Done means and nobody asked you to write one. The Retrospective offers you one once the Review has shown what that cost.' },
+      //
+      // ...and then stopped being true again on 1 November, when every game began running the
+      // whole of Scrum: the team writes its Definition of Done in Refinement, before the first
+      // Sprint. Read beside the line above, which quotes this zoo's first line of one, it was a
+      // contradiction on the first screen: "the zoo apparently does have at least one line of a
+      // Definition of Done already, which contradicts saying there is none" (scrum-master playtest,
+      // 17 Nov). Going without one is a trainer's preset now, and says so.
+      { name: 'You write your Definition of Done', text: 'In Refinement, before the first Sprint. The game starts you with three lines: keep them, change them or add your own, and agree it as a Scrum Team. Or start without one, and the Retrospective offers it once the Review has shown what that cost.' },
     ],
   },
   onward: 'Write your Product Goal',
