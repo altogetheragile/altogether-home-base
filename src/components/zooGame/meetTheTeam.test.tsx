@@ -145,3 +145,30 @@ describe('the pull at topic two', () => {
     }
   });
 });
+
+// Played alone, Priya wrote the starter Product Backlog the moment the Product Goal was set, so
+// this screen flashed past on the way to Refinement: "A screen flashes up ... of the team only
+// momentarily." She waits for Next now, and the screen stays until she has handed it over.
+describe('meeting the team, played alone', () => {
+  it('says Next is Priya handing over her Backlog, and says so while she does', () => {
+    const onNext = vi.fn();
+    const { rerender } = render(
+      <MemoryRouter><MeetTheTeam state={state()} onNext={onNext} next={{ label: "Next: Priya's starter Product Backlog", waiting: false }} /></MemoryRouter>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Priya's starter Product Backlog/ }));
+    expect(onNext).toHaveBeenCalled();
+    rerender(<MemoryRouter><MeetTheTeam state={state()} onNext={onNext} next={{ label: "Next: Priya's starter Product Backlog", waiting: true }} /></MemoryRouter>);
+    const waiting = screen.getByRole('button', { name: /handing over her Product Backlog/ }) as HTMLButtonElement;
+    expect(waiting.disabled).toBe(true);
+  });
+
+  it('holds Priya back until Next is pressed, and keeps the screen up meanwhile', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { resolve } = await import('node:path');
+    const page = readFileSync(resolve(__dirname, '../../pages/ZooGame.tsx'), 'utf8');
+    expect(page, 'the Backlog is written before anybody has met the team')
+      .toMatch(/action\.type === 'WRITE_BACKLOG' && !metTeam/);
+    expect(page, 'alone, the three questions flash up between Next and the Backlog')
+      .toMatch(/if \(!metTeam \|\| !seat\)/);
+  });
+});
