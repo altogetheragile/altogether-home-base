@@ -71,9 +71,24 @@ export async function readScreen(page) {
     const act = document.querySelectorAll(
       'button, a[href], input, textarea, select, [role="button"], [role="tab"], '
       + '[role="application"], [tabindex]:not([tabindex="-1"])');
+    // Behind an open window, a control is not there to a person: they see the window. These were
+    // listed anyway, and the scrum-master run spent about thirty steps clicking the park's
+    // Perimeter button underneath an open card ("something on the page was covering it"), which
+    // is the harness being blind, not the game being broken. Hidden from assistive technology
+    // (what a modal does to everything else), or covered at its centre while on screen: left out.
+    const covered = (el) => {
+      if (el.closest('[aria-hidden="true"], [inert]')) return true;
+      const r = el.getBoundingClientRect();
+      const x = r.left + r.width / 2;
+      const y = r.top + r.height / 2;
+      if (x < 0 || y < 0 || x > innerWidth || y > innerHeight) return false;   // off screen: scrolling finds it
+      const top = document.elementFromPoint(x, y);
+      return !!top && top !== el && !el.contains(top) && !top.contains(el);
+    };
     act.forEach((el, i) => {
       if (!seen(el)) return;
       if (el.disabled) return;
+      if (covered(el)) return;
       const tag = el.tagName.toLowerCase();
       const field = tag === 'input' || tag === 'textarea' || tag === 'select';
       // A field is named by its LABEL, never by what is sitting in it.
@@ -98,6 +113,12 @@ export async function readScreen(page) {
       // Where the focus is, on every control and not only on fields. A keyboard player has
       // nothing else to steer by.
       const one = { ref, role, name, focused: el === document.activeElement };
+      // ...and whether it is chosen, for the controls that say so in ARIA rather than in a real
+      // input's checked: a radio drawn as a button, a toggle, a tab. The scrum-master run clicked
+      // the Retrospective's first improvement five times because nothing told it the highlighted
+      // one was already chosen.
+      const state = el.getAttribute('aria-checked') ?? el.getAttribute('aria-pressed') ?? el.getAttribute('aria-selected');
+      if (state === 'true' || state === 'false') one.value = state === 'true' ? 'chosen' : 'not chosen';
       if (field) {
         // A tick box is ticked or it is not. Its `value` is the string "on" whatever its state,
         // which is a detail of HTML and not a thing anybody can see - so the newcomer was handed
@@ -193,7 +214,11 @@ export async function doAction(page, action, { keyboardOnly = false } = {}) {
     // Something is sitting on top of it. A person would see that and work round it; the run
     // should not end because a sticky bar was in the way.
     await target.click({ timeout: 5000, force: true }).catch(() => {});
-    return 'something on the page was covering it, so the click may not have landed where you meant';
+    // ...and what it was, for whoever reads the report. Playwright names it ("<div ...> intercepts
+    // pointer events"); the line used to throw that away, so nobody could tell a sticky bar from a
+    // modal from a real bug.
+    const by = /(<[^>]{1,160}>)[^<]*intercepts pointer events/.exec(e.message)?.[1];
+    return `something on the page was covering it${by ? ` (${by})` : ''}, so the click may not have landed where you meant`;
   }
   if (!isField) return 'clicked it';
   const now = await target.evaluate((el) => (el.value ?? '')).catch(() => '');
