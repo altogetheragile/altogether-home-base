@@ -213,14 +213,26 @@ export const CHAT_KEPT = 80;
  *  the game work at about a move a second, and a team that says "Lay the ground - done, on the
  *  Lion Enclosure" four times is four messages where a reader wanted one - the same collapsing a
  *  shared session already did to the cards that used to carry these. */
-export function say(state: ZooGameState, raw: Omit<ChatMessage, 'id' | 'day'>): ZooGameState {
+/** When a line is said, as the thread heads it. A Sprint's days are days; everything else is the
+ *  event or step it was said at, in the Sprint it belongs to. */
+const SAID_AT: Partial<Record<ZooGameState['phase'], string>> = {
+  intro: 'Before the first Sprint', brief: 'Before the first Sprint', refine: 'Refinement',
+  planning: 'Sprint Planning', review: 'Sprint Review', retro: 'Sprint Retrospective', final: 'The end',
+};
+export function saidWhen(state: ZooGameState): string {
+  if (state.phase === 'sprint') return `Sprint ${state.sprintNumber} \u00b7 Day ${state.dayNumber}`;
+  const at = SAID_AT[state.phase] ?? 'Between Sprints';
+  return at.startsWith('Before') || at === 'The end' ? at : `Sprint ${state.sprintNumber} \u00b7 ${at}`;
+}
+
+export function say(state: ZooGameState, raw: Omit<ChatMessage, 'id' | 'day' | 'when'>): ZooGameState {
   // "You", said by somebody in particular. Written down as who they are, so it reads as "You" only
   // on their own screen; see `acting`.
   const me = raw.who === 'you' && acting ? state.team.developers.find((d) => d.id === acting) : undefined;
   const msg = me ? { ...raw, who: 'developer' as const, from: me.name, member: me.id } : raw;
   const thread = state.chat ?? [];
   const last = thread[thread.length - 1];
-  const line: ChatMessage = { ...msg, day: state.dayNumber, id: `m${thread.length}-${state.dayNumber}` };
+  const line: ChatMessage = { ...msg, day: state.dayNumber, when: saidWhen(state), id: `m${thread.length}-${state.dayNumber}` };
   // Said twice over, word for word, by the same person: nothing new was said.
   if (last && last.from === msg.from && last.text === msg.text) return state;
   const kept = last && last.from === msg.from && last.itemId && last.itemId === msg.itemId
@@ -808,7 +820,10 @@ export function askIfDue(state: ZooGameState): ZooGameState {
   // Once per item per Sprint: a question already asked and answered is not asked again.
   if ((state.decisions ?? []).some((d) => d.kind === 'question' && d.what.includes(item.name))) return state;
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
-  const text = `Rounded or square for ${item.name}?`;
+  // Two shapes the Shape tool really has. It asked "rounded or square?", and there is no square
+  // in the tool: "the options shown are Rounded, Pill, Round, Hexagon, Octagon - none of them is
+  // labelled square" (scrum-master playtest).
+  const text = `Rounded or octagon for ${item.name}?`;
   // Asked out loud, by name, in the thread. The question used to exist only as a row on the rail,
   // which is a form to fill in rather than somebody asking you something - and the whole lesson
   // here is that a person is standing there waiting.
@@ -822,7 +837,7 @@ export function askIfDue(state: ZooGameState): ZooGameState {
       text,
       choices: [
         { key: 'rounded', label: 'Rounded' },
-        { key: 'square', label: 'Square' },
+        { key: 'octagon', label: 'Octagon' },
         { key: 'theirs', label: 'Your call', note: 'How it gets built is the Developers\u2019.' },
       ],
       askedAt: state.daySecondsLeft, day: state.dayNumber,

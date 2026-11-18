@@ -92,11 +92,11 @@ export function Bubble({ msg, opens = true, loud = false }: { msg: ChatMessage; 
 
 /** The day a run of messages belongs to, written once across the thread rather than on every
  *  bubble. A Sprint's conversation is several days long and the Retrospective reads it back. */
-function DayLine({ day }: { day: number }) {
+function DayLine({ when }: { when: string }) {
   return (
     <li data-part="chat-day" className="flex items-center gap-2 py-0.5">
       <span className="h-px flex-1 bg-border" />
-      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Day {day}</span>
+      <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{when}</span>
       <span className="h-px flex-1 bg-border" />
     </li>
   );
@@ -132,13 +132,14 @@ export function TeamChat({ state, rail, className }: {
         ) : (
           <ul className="flex flex-col py-1">
             {thread.map((m, i) => {
-              const newDay = i === 0 || thread[i - 1].day !== m.day;
+              const heading = (x: typeof m) => x.when ?? `Day ${x.day}`;
+              const newDay = i === 0 || heading(thread[i - 1]) !== heading(m);
               // A run is the same person, still on the same day. Only the first of a run is
               // introduced; the rest sit under it, closer together, because they are one turn.
               const opens = newDay || thread[i - 1].from !== m.from;
               return (
                 <Fragment key={m.id}>
-                  {newDay && <DayLine day={m.day} />}
+                  {newDay && <DayLine when={heading(m)} />}
                   <li className={opens ? 'h-2' : 'h-0.5'} aria-hidden />
                   <Bubble msg={m} opens={opens} />
                 </Fragment>
