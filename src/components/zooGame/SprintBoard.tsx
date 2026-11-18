@@ -86,6 +86,9 @@ interface SprintBoardProps {
   canBuild?: boolean;
   /** Which accountability is looking, so what is asked of them comes first. */
   seat?: SeatName | null;
+  /** Playing alone: the Product Owner's questions and look-ahead are Priya's, so the dock does not
+   *  press you to answer them. */
+  solo?: boolean;
 }
 
 /** The start of a new day, after the Daily Scrum: the team gathers before the build.
@@ -194,7 +197,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories, solo = false,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -252,7 +255,9 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
       return { go: `Answer ${theirs.from}`, waiting: undefined,
         cost: `${theirs.from} asked about ${named(theirs)} and is waiting. End the day and the Developers decide it themselves.` };
     }
-    const mine = open.find((q) => !theirsToAnswer(q));
+    // Alone, what waits on the Product Owner is Priya's to answer, and she answers in a beat. The
+    // dock naming it was a second "Somewhere to go" beside the rail's (scrum-master playtest).
+    const mine = solo ? undefined : open.find((q) => !theirsToAnswer(q));
     if (mine) {
       const last = state.dayNumber >= state.sprintDays;
       return { go: `Check ${named(mine)}`,
@@ -279,7 +284,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
     }
     // The Product Owner looking ahead: an epic to split, or a gap to fill. Ending the day does not
     // lose it, but while it sits there unanswered End Day was the loudest button on the screen.
-    const ahead = lookAhead(state)[0];
+    const ahead = solo ? undefined : lookAhead(state)[0];
     if (ahead) {
       return { go: ahead.label, cost: undefined,
         waiting: `Ending the day does not settle it - it is still waiting on Day ${state.dayNumber + 1}.` };
