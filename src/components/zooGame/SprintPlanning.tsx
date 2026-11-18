@@ -569,7 +569,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
         const steps = (it: typeof chosen[number]) => (it.tasks ?? []).filter((t) => t.label.trim());
         return (
         // The bar between the list and the plan drags, so a long plan can have the width.
-        <SplitPanes id="planning-how" sizes={[30, 70]} min={[18, 40]} clip className="h-full"
+        <SplitPanes id="planning-how" between={['the forecast', 'the plan']} sizes={[30, 70]} min={[18, 40]} clip className="h-full"
           stackedClassName="grid h-full min-h-0 grid-rows-1 gap-3" firstClassName="flex min-h-0 min-w-0 flex-col" secondClassName="flex min-h-0 min-w-0 flex-col"
           first={<>
           <div className="min-h-0 space-y-2 overflow-y-auto pr-1">
@@ -652,7 +652,10 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 {/* The step editor carries its own "suggest" for the item in front of you. This one
                     is for the rest: five items with no steps is five presses otherwise, and topic
                     three is a conversation about all of them. */}
-                {started > 0 && onSetTasks && (
+                {/* Only for more than one: with a single plan started it did exactly what that plan's
+                    own "Fill in the gaps in this plan" does, and the two side by side read as one
+                    action with two names (scrum-master playtest, eight steps). */}
+                {started > 1 && onSetTasks && (
                   <Button size="sm" className={cn(WIZARD, 'h-7 shrink-0 px-2 text-xs')}
                     title="Fills the gaps in the plans you have started. Items you have not touched are left for you - breaking the work down is what this topic is for."
                     onClick={() => chosen.forEach((it) => {
@@ -660,7 +663,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                     })}>
                     {/* Says how many plans, in words: "Fill in the gaps 1" beside the item's own
                         "Fill in the gaps" was two buttons with one name (scrum-master playtest). */}
-                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps in {started === 1 ? 'the plan' : `all ${started} plans`} you started
+                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps in all {started} plans you started
                   </Button>
                 )}
               </div>

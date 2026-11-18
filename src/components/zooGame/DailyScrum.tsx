@@ -380,6 +380,8 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
       <p data-part="in-the-room" className="border-t border-border pt-3 text-[11px] text-muted-foreground">
         <span className="font-semibold uppercase tracking-wide text-foreground">In the room</span> &nbsp;the Developers: {devs}.
         The Product Owner and the Scrum Master join only if they are working on Sprint Backlog items.
+        A blocker the Developers hand to the Scrum Master is settled here too, rather than after the
+        event, so the game does not lose it: that is this game&rsquo;s shortcut, not the Guide&rsquo;s.
       </p>
     </div>
   );

@@ -293,7 +293,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       {/* The Review beside the room. Side by side where there is the width for it, with the bar
           between them yours to drag; below that the room follows the Review. The Review still
           scrolls as a page, and the room stays in view beside it while you read. */}
-      <SplitPanes id="review" from="xl" sizes={[72, 28]} min={[45, 18]} page
+      <SplitPanes id="review" between={['the Review', 'the conversation']} from="xl" sizes={[72, 28]} min={[45, 18]} page
         stackedClassName="flex flex-col gap-3"
         firstClassName="flex flex-col" secondClassName="flex flex-col"
         second={<TheRoom state={state} onSay={onSay} />}

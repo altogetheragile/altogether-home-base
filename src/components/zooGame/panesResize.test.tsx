@@ -17,8 +17,16 @@ describe('panes you can resize', () => {
     const c = render(<SplitPanes id="t" sizes={[60, 40]} first={<p>list</p>} second={<p>done</p>} />).container;
     const bar = c.querySelector('[data-part="split-bar"]');
     expect(bar).not.toBeNull();
-    expect(bar?.getAttribute('aria-label')).toBe('Drag to resize');
+    expect(bar?.getAttribute('aria-label')).toMatch(/^Drag to resize/);
     expect(c.textContent).toBe('listdone');
+  });
+
+  it('name what they resize, so two bars on one screen are not one name twice', () => {
+    // "There are two 'Drag to resize' separators which look identical - unclear what each one
+    // resizes" (scrum-master playtest, seven steps running).
+    wide(true);
+    const c = render(<SplitPanes id="t" between={['the board', 'the messages']} sizes={[60, 40]} first={<p>a</p>} second={<p>b</p>} />).container;
+    expect(c.querySelector('[data-part="split-bar"]')?.getAttribute('aria-label')).toBe('Drag to resize the board and the messages');
   });
 
   it('stack with no bar on a narrow screen, as the screen was before', () => {

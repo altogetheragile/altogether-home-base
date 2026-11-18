@@ -94,6 +94,6 @@ describe('the order the agreements are made in', () => {
     const line = container.querySelector('[data-part="settled-dod"]');
     expect(line, 'the screen no longer offers to agree what Done means').toBeTruthy();
     expect(line!.textContent).toMatch(/nobody has agreed it yet/);
-    expect(line!.querySelector('button')?.textContent).toMatch(/Agree it now/);
+    expect(line!.querySelector('button')?.textContent).toMatch(/Read it and agree/);
   });
 });

@@ -199,7 +199,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           it sizes against it can agree it first: "when we estimate size then we need to understand
           what Done looks like." */}
       {!state.dodAgreed && step === 'refinement' && onSetDod && (
-        <Settled part="settled-dod" what="the Definition of Done" pending open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor} change="Agree it now">
+        <Settled part="settled-dod" what="the Definition of Done" pending open={dodChanging} onToggle={() => setDodChanging((o) => !o)} body={dodEditor} change="Read it and agree">
           Definition of Done: <strong className={TONE.attention.text}>nobody has agreed it yet</strong>
         </Settled>
       )}
@@ -247,7 +247,7 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
       {!wide && ask}
       {/* The bar between them drags, so whoever needs the room has it: the Product Backlog when
           splitting, the agreements when writing the Definition of Done. */}
-      <SplitPanes id="refine" sizes={[60, 40]} min={[35, 25]} stackedClassName="grid gap-3"
+      <SplitPanes id="refine" between={['the Product Backlog', 'the next move']} sizes={[60, 40]} min={[35, 25]} stackedClassName="grid gap-3"
         firstClassName="min-w-0" secondClassName="min-w-0 space-y-3"
         first={<>
         {/* One scrollbar for the screen, not one per column. The list used to scroll inside itself,
