@@ -142,3 +142,35 @@ describe('walking the pen', () => {
     expect(far(b), 'Shift walks no further than a bare arrow').toBeGreaterThan(far(a));
   });
 });
+
+// The second scrum-master playtest walked the pen eight paces, pressed Enter once - which only
+// starts a path - and finished three times with nothing laid: "I have no idea where the pen
+// currently is or where the Lion Enclosure is relative to the entrance."
+describe('the pen, said in words', () => {
+  const where = (c: HTMLElement) => c.querySelector('[data-part="pen-where"]')?.textContent ?? '';
+
+  it('says the order: where a path starts, each corner, and how to finish', () => {
+    const said = pen(() => {}).getAttribute('aria-label') ?? '';
+    expect(said).toMatch(/press Enter where the path starts/);
+    expect(said).toMatch(/Enter twice on the last one to finish/);
+  });
+
+  it('says where the pen is, from the way in and from the thing the path is for, and whether a path is started', () => {
+    const s = started();
+    const forItem = s.backlog.find((it) => it.status === 'committed')!;
+    const c = render(
+      <MemoryRouter>
+        <ParkPlan state={s} tool="path" runFor={forItem.id} onAddConnector={() => {}} onPlaceItem={() => {}} />
+      </MemoryRouter>,
+    ).container;
+    const park = c.querySelector('[data-part="park-plan"]') as SVGSVGElement;
+    fireEvent.focus(park);
+    expect(c.querySelector('[data-part="pen-where"]')?.getAttribute('aria-live')).toBe('polite');
+    expect(where(c)).toMatch(/No path started: Enter starts one here\. The way in is .*paces/);
+    fireEvent.keyDown(park, { key: 'Enter' });
+    expect(where(c)).toMatch(/^Laying a path/);
+    const before = where(c);
+    fireEvent.keyDown(park, { key: 'ArrowRight' });
+    expect(where(c), 'walking the pen did not change what is said about where it is').not.toBe(before);
+  });
+});

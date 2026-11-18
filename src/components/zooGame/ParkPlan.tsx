@@ -30,6 +30,26 @@ const MIN_RUN = 26;
  *  standing on - and a Shift stride of 160 is about one habitat, so crossing the park is eleven of
  *  them. At 8 it took 220 presses to cross, which is a keyboard path in name only. */
 const PACE = 16;
+
+/** Where the keyboard pen is, said as paces from the way in and from the thing the path is for. */
+function penWhere(
+  pen: { x: number; y: number },
+  from: { x: number; y: number } | null,
+  forBox?: { item: { name: string }; at: { x: number; y: number } },
+): string {
+  const paces = (d: number) => Math.round(Math.abs(d) / PACE);
+  const way = (dx: number, dy: number) => {
+    const parts = [
+      paces(dx) ? `${paces(dx)} ${paces(dx) === 1 ? 'pace' : 'paces'} ${dx > 0 ? 'right' : 'left'}` : '',
+      paces(dy) ? `${paces(dy)} ${paces(dy) === 1 ? 'pace' : 'paces'} ${dy > 0 ? 'down' : 'up'}` : '',
+    ].filter(Boolean);
+    return parts.length ? parts.join(' and ') : 'right here';
+  };
+  const toGate = way(ENTRANCE.x - pen.x, FRONT_Y - pen.y);
+  const toThing = forBox ? ` ${forBox.item.name} is ${way(forBox.at.x - pen.x, forBox.at.y - pen.y)}.` : '';
+  const laying = from ? 'Laying a path: Enter presses a corner here.' : 'No path started: Enter starts one here.';
+  return `${laying} The way in is ${toGate}.${toThing}`;
+}
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
  *  through the picture's box, so widening the box does not move anything standing on the park. */
@@ -788,6 +808,13 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
       {/* No selecting. Dragging across the park was painting the browser's own selection highlight
           over the labels and the boxes - pale blue rectangles that pile up as you drag and stay
           there. Reported from playing it: "blue squares appear as trails." */}
+      {/* Where the pen is, in words, for whoever cannot see it: relative to the way in and to the
+          thing the path is for, and whether a path is being laid. Nothing said any of it, so a
+          keyboard player walked the pen blind - "I have no idea where the pen currently is or where
+          the Lion Enclosure is relative to the entrance" (scrum-master playtest). */}
+      {tool === 'path' && !placing && penAt && (
+        <p data-part="pen-where" aria-live="polite" className="sr-only">{penWhere(penAt, runFrom, runFor ? boxes.find((b) => b.item.id === runFor) : undefined)}</p>
+      )}
       <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view}
         // Something waiting to be put down can be put down without a pointer: the park takes focus,
         // the arrows walk the ghost about, and Enter sets it there. The verdict is the same one a
@@ -801,7 +828,10 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
         aria-label={placing
           ? `Putting down ${state.backlog.find((it) => it.id === placing.id)?.name ?? 'it'}: arrow keys move it, Enter puts it down`
           : tool === 'path'
-            ? `Laying a path${runFrom ? ' from the last corner' : ''}: arrow keys walk the pen, Enter presses a corner, Escape puts the pen away`
+            // The order, not only the keys. "Enter presses a corner" did not say that the first
+            // press is where the path STARTS: the scrum-master playtest walked eight paces, pressed
+            // Enter once - which only starts a path - and finished three times with nothing laid.
+            ? `Laying a path${runFrom ? ' from the last corner' : ''}: press Enter where the path starts, walk with the arrow keys (Shift walks ten paces), press Enter at each corner, and Enter twice on the last one to finish. Escape puts the pen away`
             : `The zoo from above: ${boxes.length} thing${boxes.length === 1 ? '' : 's'} standing on it`}
         onKeyDown={tool === 'path' && !placing ? (e) => {
           // The pen starts where the path is FOR, if that thing is on the park - you are drawing a
