@@ -147,6 +147,9 @@ export async function readScreen(page) {
   });
 }
 
+/** The most presses of one key in one turn. */
+const KEY_CAP = 60;
+
 /** Does what the newcomer decided, and says plainly when it could not. */
 export async function doAction(page, action, { keyboardOnly = false } = {}) {
   const { kind, text } = action ?? {};
@@ -181,9 +184,16 @@ export async function doAction(page, action, { keyboardOnly = false } = {}) {
     // spend its whole budget shuffling an enclosure across the grass, which is not what any of
     // this is for. A person holds the key; this is the same thing, and the game's own ten-pace
     // Shift step still works.
-    const times = Math.max(1, Math.min(30, Number(action?.times) || 1));
+    //
+    // Capped, so one answer cannot hold a key down for ever, and the cap is SAID. It was 30 and
+    // silent: the pen line told the scrum-master run the way in was 40 paces right, it asked for
+    // 40, was told "pressed ArrowRight 30 times", and laid the path there, ten paces short. Six
+    // times, which was most of its second Sprint.
+    const asked = Math.max(1, Number(action?.times) || 1);
+    const times = Math.min(KEY_CAP, asked);
     if (ref) await page.locator(`[data-playtest-ref="${ref}"]`).focus().catch(() => {});
     for (let i = 0; i < times; i += 1) await page.keyboard.press(name);
+    if (asked > times) return `pressed ${said} ${times} times, not the ${asked} you asked for: ${KEY_CAP} is the most one turn can press, so press it again for the rest`;
     return times > 1 ? `pressed ${said} ${times} times` : `pressed ${said}`;
   }
   if (kind === 'scroll') {
@@ -221,6 +231,11 @@ export async function doAction(page, action, { keyboardOnly = false } = {}) {
     return `something on the page was covering it${by ? ` (${by})` : ''}, so the click may not have landed where you meant`;
   }
   if (!isField) return 'clicked it';
+  // A tick box is not somewhere a cursor goes. Clicking one ticks or unticks it, and its value is
+  // "on" either way, so the line told the scrum-master run the water box "already contains 'on'"
+  // and it read that as a glitch.
+  const tick = await target.evaluate((el) => (el.type === 'checkbox' || el.type === 'radio') ? (el.checked ? 'ticked' : 'not ticked') : '').catch(() => '');
+  if (tick) return `clicked it: it is now ${tick}`;
   const now = await target.evaluate((el) => (el.value ?? '')).catch(() => '');
   return now.trim()
     ? `the cursor is now in that box, which already contains "${now.slice(0, 80)}"`
