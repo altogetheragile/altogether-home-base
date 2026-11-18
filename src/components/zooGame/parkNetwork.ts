@@ -3,7 +3,7 @@ import { zonePlots } from './parkZones';
 import { waterRects, spansTheWater } from './parkWater';
 import { standingOnPark, parkPositions, restingPlace, apronRing, groundSize, quarterOf, parkType, runPoints } from './parkModel';
 import { currentDesign, isLandscapeType } from './design';
-import { buildNav, navRoute, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
+import { buildNav, navRoute, pathGap, reachable, routeAcross, wet, type NavInput, type Pt, type Rect } from './parkNav';
 import { CANVAS_W, FRONT_Y } from './parkLayout';
 
 // ============= Where a visitor can go =============
@@ -110,6 +110,28 @@ export function pathTo(state: ZooGameState, item: BacklogItem): Pt[] | null {
   const nav = buildNav(parkNetwork(state));
   const to: Pt = { x: stand.at.x, y: stand.at.y + stand.size.h / 2 + 26 };
   return navRoute(nav, ENTRANCE, to);
+}
+
+/** Where something with no path to it stands: how many design px of grass are left between the
+ *  paths joined to it and the paths joined to the way in, and whether the runs the Developers laid
+ *  closed any of that gap. A run that made no difference is not "a path that stops short": it is
+ *  somewhere else, and the honest thing to say is still that nothing reaches it. */
+export function pathShortfall(state: ZooGameState, item: BacklogItem): { gap: number; laidTowards: boolean } | null {
+  const boxes = boxOf(state);
+  const stand = boxes.find((b) => b.item.id === item.id)
+    ?? boxes.find((b) => b.item.id === item.enclosureId);
+  if (!stand) return null;
+  const to: Pt = { x: stand.at.x, y: stand.at.y + stand.size.h / 2 + 26 };
+  const gap = pathGap(buildNav(parkNetwork(state)), ENTRANCE, to);
+  if (gap === 0 || !Number.isFinite(gap)) return null;
+  const without = pathGap(buildNav(parkNetwork({ ...state, connectors: [] })), ENTRANCE, to);
+  return { gap, laidTowards: gap < without - 8 };
+}
+
+/** The paths a visitor can walk from the way in, as points: what a keyboard pen steers towards. */
+export function pathsFromTheWayIn(state: ZooGameState): Pt[] {
+  const nav = buildNav(parkNetwork(state));
+  return [...reachable(nav, ENTRANCE)].map((id) => nav.nodes[id]);
 }
 
 /** Which areas of the zoo the made paths reach.
