@@ -3,7 +3,8 @@ import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, PATH_WIDTHS
 import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled, acTally } from './engine';
 import { whereItStands, groundSize } from './parkModel';
 import { spansTheWater, inWater } from './parkWater';
-import { areasOnAPath, pathTo, whatVisitorsCanReach } from './parkNetwork';
+import { PACE } from './parkLayout';
+import { areasOnAPath, pathShortfall, pathTo, whatVisitorsCanReach } from './parkNetwork';
 
 // ============= The criteria the park can answer for itself =============
 //
@@ -337,9 +338,16 @@ export const CRITERIA: CriterionDef[] = [
       if (route) return { met: true, evidence: 'a path from the way in' };
       const wet = whatVisitorsCanReach(state).stranded.find((x) => x.item.id === item.id);
       // It names the CONTROL, because "no path reaches it" is a fact and not an instruction.
-      return { met: false, evidence: wet?.why === 'water'
-        ? 'the water is in the way, and nothing crosses it - the Bridge would'
-        : 'nothing reaches it yet - draw a path to it from the way in' };
+      if (wet?.why === 'water') return { met: false, evidence: 'the water is in the way, and nothing crosses it - the Bridge would' };
+      // ...and, when a path was laid towards it and stops short, by how much. "Nothing reaches it
+      // yet" was true and no help: the gap is plain to see on the park and not at all to a keyboard
+      // player, who laid the same path six times, ten paces short each time.
+      const short = pathShortfall(state, item);
+      if (short?.laidTowards) {
+        const paces = Math.max(1, Math.round(short.gap / PACE));
+        return { met: false, evidence: `the path from it stops about ${paces} ${paces === 1 ? 'pace' : 'paces'} short of the promenade or any path from the way in - carry it on` };
+      }
+      return { met: false, evidence: 'nothing reaches it yet - draw a path to it from the way in' };
     },
   },
   {

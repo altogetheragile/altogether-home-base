@@ -179,6 +179,32 @@ export function navRoute(nav: Nav, from: Pt, to: Pt): Pt[] | null {
   return [...back.reverse(), to];
 }
 
+/** Every network node a guest can walk to, on the paths, from where they join them at `p`. */
+export function reachable(nav: Nav, p: Pt): Set<number> {
+  const seen = new Set<number>();
+  const queue = hops(nav, p).map((h) => h.id);
+  for (const id of queue) seen.add(id);
+  while (queue.length) {
+    const id = queue.pop()!;
+    for (const e of nav.adj[id]) if (!seen.has(e.to)) { seen.add(e.to); queue.push(e.to); }
+  }
+  return seen;
+}
+
+/** How far apart the paths you can walk to from `from` are from the paths you can walk to from
+ *  `to`, in design px: 0 when one route joins them, otherwise the shortest stretch of grass that
+ *  would. What a criterion can SAY when there is no route. "Nothing reaches it yet" was all it had,
+ *  and a keyboard player laid the same path six times, ten paces short, with nothing to tell them
+ *  how short. */
+export function pathGap(nav: Nav, from: Pt, to: Pt): number {
+  const a = reachable(nav, from), b = reachable(nav, to);
+  if (!a.size || !b.size) return Infinity;
+  for (const id of b) if (a.has(id)) return 0;
+  let best = Infinity;
+  for (const i of a) for (const j of b) best = Math.min(best, dist(nav.nodes[i], nav.nodes[j]));
+  return best;
+}
+
 /** How a guest gets from `from` to `to`: the made route where that makes sense, straight across the
  *  grass where it does not, and null when water is in the way with no bridge over it. */
 export function routeAcross(nav: Nav | null, from: Pt, to: Pt): Pt[] | null {

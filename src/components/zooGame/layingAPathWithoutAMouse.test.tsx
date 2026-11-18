@@ -6,6 +6,7 @@ import { initialZooState } from './config';
 import { startOnTheBoard } from './engine';
 import { reducer } from './useZooGame';
 import type { ZooGameState, ZooConnector } from './types';
+import { checkCriterion } from './parkChecks';
 
 // Laying a path with the keyboard.
 //
@@ -37,6 +38,10 @@ const pen = (onAddConnector: (c: ZooConnector) => void) => {
   return c.querySelector('[data-part="park-plan"]') as SVGSVGElement;
 };
 
+const walk = (park: SVGSVGElement, key: string, times = 1) => {
+  for (let i = 0; i < times; i += 1) fireEvent.keyDown(park, { key });
+};
+
 describe('the park, while the pen is out', () => {
   it('can be reached at all', () => {
     const park = pen(() => {});
@@ -56,9 +61,6 @@ describe('the park, while the pen is out', () => {
 });
 
 describe('walking the pen', () => {
-  const walk = (park: SVGSVGElement, key: string, times = 1) => {
-    for (let i = 0; i < times; i += 1) fireEvent.keyDown(park, { key });
-  };
 
   it('shows where it is standing before anything is pressed', () => {
     // A pointer shows itself. The arrows do not, and without this the first thing a keyboard player
@@ -166,11 +168,54 @@ describe('the pen, said in words', () => {
     const park = c.querySelector('[data-part="park-plan"]') as SVGSVGElement;
     fireEvent.focus(park);
     expect(c.querySelector('[data-part="pen-where"]')?.getAttribute('aria-live')).toBe('polite');
-    expect(where(c)).toMatch(/No path started: Enter starts one here\. The way in is .*paces/);
+    // It steers for the nearest path a visitor can already walk from the way in, which is what a
+    // new path has to reach, and the pen starts at the thing's door, and says so.
+    expect(where(c)).toMatch(/No path started: Enter starts one here\. The nearest path from the way in is .*paces/);
+    expect(where(c)).toContain(`You are at the ${forItem.name}.`);
     fireEvent.keyDown(park, { key: 'Enter' });
     expect(where(c)).toMatch(/^Laying a path/);
     const before = where(c);
-    fireEvent.keyDown(park, { key: 'ArrowRight' });
+    fireEvent.keyDown(park, { key: 'ArrowDown' });
     expect(where(c), 'walking the pen did not change what is said about where it is').not.toBe(before);
+    fireEvent.keyDown(park, { key: 'ArrowRight', shiftKey: true });
+    expect(where(c), 'walked away from it, the pen says which way back to the door').toMatch(new RegExp(`The ${forItem.name} is \\d+ paces left`));
+  });
+});
+
+describe('a path that stops short', () => {
+  // The scrum-master playtest laid the same path six times, ten paces short of the way in each time,
+  // and the criterion only ever said "nothing reaches it yet". On the park the gap is plain to see;
+  // to a keyboard player it was not there at all.
+  const WALK = 'Can I walk to it from the way in?';
+  const laid = (presses: [string, number][]) => {
+    const onAdd = vi.fn();
+    const s = started();
+    const forItem = s.backlog.find((it) => it.status === 'committed')!;
+    const c = render(
+      <MemoryRouter>
+        <ParkPlan state={s} tool="path" runFor={forItem.id} onAddConnector={onAdd} onPlaceItem={() => {}} />
+      </MemoryRouter>,
+    ).container;
+    const park = c.querySelector('[data-part="park-plan"]') as SVGSVGElement;
+    fireEvent.focus(park);
+    fireEvent.keyDown(park, { key: 'Enter' });
+    for (const [key, n] of presses) walk(park, key, n);
+    fireEvent.keyDown(park, { key: 'Enter' });
+    const runs = onAdd.mock.calls.map((call) => call[0] as ZooConnector);
+    return { s: { ...s, connectors: [...(s.connectors ?? []), ...runs] }, forItem };
+  };
+
+  it('says how far short, in the paces the pen walks', () => {
+    const { s, forItem } = laid([['ArrowRight', 12]]);
+    const before = checkCriterion(started(), forItem, WALK);
+    expect(before?.met, 'the park already reached it, so this proves nothing').toBe(false);
+    const v = checkCriterion(s, forItem, WALK);
+    expect(v?.met).toBe(false);
+    expect(v?.evidence).toMatch(/stops about \d+ paces? short/);
+  });
+
+  it('is met once it is carried on to the promenade', () => {
+    const { s, forItem } = laid([['ArrowDown', 6]]);
+    expect(checkCriterion(s, forItem, WALK)?.met).toBe(true);
   });
 });

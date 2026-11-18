@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
 import type { ZooGameState, ZooConnector, BacklogItem } from './types';
 import { standingOnPark, parkPositions, restingPlace, apronRing, APRON_WIDTH, quarterOf, runPoints, runPath, pathTarget } from './parkModel';
 import { zonePlots, plotOrder, plotFor, insidePlot, plotSize } from './parkZones';
 import { outlineOf, freeSlots } from './parkOutline';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
-import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
-import { ENTRANCE } from './parkNetwork';
+import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, PACE, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
+import { ENTRANCE, pathsFromTheWayIn } from './parkNetwork';
 
 import { hasGround, groundPrice, whyNotHere } from './engine';
 import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
@@ -28,14 +28,15 @@ const MIN_RUN = 26;
  *  Sized against the things being moved rather than picked: a medium habitat is 132 across and the
  *  park is 1760, so 16 is an eighth of a habitat - fine enough to slide one off the thing it is
  *  standing on - and a Shift stride of 160 is about one habitat, so crossing the park is eleven of
- *  them. At 8 it took 220 presses to cross, which is a keyboard path in name only. */
-const PACE = 16;
+ *  them. At 8 it took 220 presses to cross, which is a keyboard path in name only. Lives in
+ *  parkLayout, because the park's criteria count in the same paces. */
 
 /** Where the keyboard pen is, said as paces from the way in and from the thing the path is for. */
 function penWhere(
   pen: { x: number; y: number },
   from: { x: number; y: number } | null,
-  forBox?: { item: { name: string }; at: { x: number; y: number } },
+  forBox?: { item: { name: string }; at: { x: number; y: number }; size: { w: number; h: number } },
+  walkable: { x: number; y: number }[] = [],
 ): string {
   const paces = (d: number) => Math.round(Math.abs(d) / PACE);
   const way = (dx: number, dy: number) => {
@@ -45,10 +46,25 @@ function penWhere(
     ].filter(Boolean);
     return parts.length ? parts.join(' and ') : 'right here';
   };
-  const toGate = way(ENTRANCE.x - pen.x, FRONT_Y - pen.y);
-  const toThing = forBox ? ` ${forBox.item.name} is ${way(forBox.at.x - pen.x, forBox.at.y - pen.y)}.` : '';
+  // Close enough to step across: the same 48 px the park's routing lets a visitor cross the grass.
+  const JOINS = 3 * PACE;
+  const near = (p: { x: number; y: number }) => Math.hypot(p.x - pen.x, p.y - pen.y) <= JOINS;
+  // The nearest bit of path a visitor can already walk from the way in, because that, not the gate
+  // itself, is what a new path has to reach. The scrum-master run steered for the gate, stopped
+  // short of it, and never knew the promenade was six paces away the whole time.
+  const nearest = walkable.reduce<{ x: number; y: number } | null>((best, p) =>
+    !best || Math.hypot(p.x - pen.x, p.y - pen.y) < Math.hypot(best.x - pen.x, best.y - pen.y) ? p : best, null);
+  const toWalk = !nearest ? ` The way in is ${way(ENTRANCE.x - pen.x, FRONT_Y - pen.y)}.`
+    : near(nearest) ? ' You are on a path from the way in.'
+      : ` The nearest path from the way in is ${way(nearest.x - pen.x, nearest.y - pen.y)}.`;
+  // ...and its door, where the park asks a visitor to arrive, rather than the middle of it. Measured
+  // to the middle, "5 paces up" was the pen already standing at the door, and nobody could tell.
+  const door = forBox && { x: forBox.at.x, y: forBox.at.y + forBox.size.h / 2 + 26 };
+  const toThing = !forBox || !door ? ''
+    : near(door) ? ` You are at the ${forBox.item.name}.`
+      : ` The ${forBox.item.name} is ${way(door.x - pen.x, door.y - pen.y)}.`;
   const laying = from ? 'Laying a path: Enter presses a corner here.' : 'No path started: Enter starts one here.';
-  return `${laying} The way in is ${toGate}.${toThing}`;
+  return `${laying}${toWalk}${toThing}`;
 }
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
@@ -304,6 +320,8 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
    *  a pointer. A pointer press is always somewhere the player aimed at; a keyboard has to be given
    *  a spot and then shown it. */
   const [penAt, setPenAt] = useState<{ x: number; y: number } | null>(null);
+  // What the pen line steers by, worked out once per park rather than once per key press.
+  const walkable = useMemo(() => (tool === 'path' ? pathsFromTheWayIn(state) : []), [tool, state]);
   // The run being laid right now, if the last press carried on from where the one before it
   // stopped. A path round a habitat and up to the kiosk is ONE path with corners in it, not four
   // paths that happen to touch: "can the paths have joints like they used to?"
@@ -813,7 +831,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           keyboard player walked the pen blind - "I have no idea where the pen currently is or where
           the Lion Enclosure is relative to the entrance" (scrum-master playtest). */}
       {tool === 'path' && !placing && penAt && (
-        <p data-part="pen-where" aria-live="polite" className="sr-only">{penWhere(penAt, runFrom, runFor ? boxes.find((b) => b.item.id === runFor) : undefined)}</p>
+        <p data-part="pen-where" aria-live="polite" className="sr-only">{penWhere(penAt, runFrom, runFor ? boxes.find((b) => b.item.id === runFor) : undefined, walkable)}</p>
       )}
       <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view}
         // Something waiting to be put down can be put down without a pointer: the park takes focus,

@@ -393,3 +393,7 @@ export function nearestFreeSpot(taken: (LayoutBox & { x: number; y: number })[],
   }
   return best ?? first;   // a full park. Where they asked for, and they can see the problem.
 }
+
+/** One keyboard step on the park, in design px: an eighth of a medium habitat. Shift walks ten.
+ *  The pen and the park's criteria both count in it, so "10 paces short" is ten presses. */
+export const PACE = 16;
