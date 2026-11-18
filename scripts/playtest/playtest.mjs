@@ -162,13 +162,18 @@ const run = async () => {
 
   await browser.close();
 
+  // Confusion is the trouble. A surprise on its own is listed but not counted: the model used to
+  // fill it in on every step ("which is what I expected"), and a scrum-master run reported 25 of
+  // 25 steps as trouble with not one Scrum note among them. Scrum notes are counted on their own.
   const trouble = log.filter((l) => l.confused_by || l.surprised_by);
+  const confused = log.filter((l) => l.confused_by).length;
+  const scrumNotes = log.filter((l) => /(^|\n|\.\s)Scrum:/.test(l.confused_by ?? '')).length;
   const report = [
     `# ${PERSONA.title} plays ${URL}`,
     '',
     `Persona: \`${PERSONA.name}\` (${PERSONA.hands === 'keyboard' ? 'keyboard only' : 'mouse and keyboard'}).`,
     '',
-    `${log.length} steps. ${trouble.length} of them produced confusion or surprise.`,
+    `${log.length} steps. ${confused} confused the player; ${trouble.length - confused} more only surprised them.${PERSONA.name === 'scrum-master' ? ` ${scrumNotes} Scrum ${scrumNotes === 1 ? 'note' : 'notes'}.` : ''}`,
     '',
     '## Where it went wrong',
     '',
@@ -196,7 +201,7 @@ const run = async () => {
   ].join('\n');
 
   writeFileSync(resolve(OUT, 'report.md'), `${report}\n`);
-  console.log(`\n${trouble.length} of ${log.length} steps gave trouble. Report: ${resolve(OUT, 'report.md')}`);
+  console.log(`\n${confused} of ${log.length} steps confused the player (${trouble.length - confused} more only surprised them). Report: ${resolve(OUT, 'report.md')}`);
 };
 
 run().catch((e) => { console.error(e); process.exit(1); });

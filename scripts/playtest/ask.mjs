@@ -22,7 +22,10 @@ Rules:
 - You are playing this game, not inspecting it. Keep going: finish what you started, and when a
   screen offers a way forward, take it. Say what confused you on the way past, do not stop on it.
 - Only use "stop" when the game itself has ended, or when you have genuinely tried everything on
-  screen and none of it moves you on. Running out of patience is not a reason to stop.`;
+  screen and none of it moves you on. Running out of patience is not a reason to stop.
+- Leave surprised_by and confused_by null when there is nothing to say. A step that did what you
+  expected is not a surprise, so do not write "which is what I expected" in it: a note on every
+  step buries the ones that matter.`;
 
 const MOUSE = `- Some things are moved with the keyboard. If a control tells you which keys to press, press them:
   use "key" with the key's name in "text" ("ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown",
@@ -36,7 +39,7 @@ const MOUSE = `- Some things are moved with the keyboard. If a control tells you
 Answer with JSON only:
 
 {
-  "surprised_by": "what the last step did that you did not expect, or null on the first step",
+  "surprised_by": "what the last step did that you did NOT expect; null if it did what you expected, and null on the first step",
   "confused_by": "anything on this screen you cannot make sense of, or null",
   "thinking": "one or two sentences of what you make of this screen",
   "expect": "what you think your action will do",
@@ -59,7 +62,7 @@ const KEYBOARD = `- You have no mouse. You cannot click, and you cannot point at
 Answer with JSON only:
 
 {
-  "surprised_by": "what the last step did that you did not expect, or null on the first step",
+  "surprised_by": "what the last step did that you did NOT expect; null if it did what you expected, and null on the first step",
   "confused_by": "anything on this screen you cannot make sense of, or null",
   "thinking": "one or two sentences of what you make of this screen",
   "expect": "what you think your action will do",
