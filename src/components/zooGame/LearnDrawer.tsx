@@ -40,7 +40,7 @@ function MeasureCard({ m }: { m: ReturnType<typeof valueMeasures>[number] }) {
       <p className="text-xs">{m.what}</p>
       <p className="mt-1 text-[11px] text-muted-foreground"><span className="font-semibold">How:</span> {m.how}</p>
       <p className="text-[11px] text-muted-foreground"><span className="font-semibold">Moves:</span> {m.moves}</p>
-      {m.value === null && <p className="mt-1 text-[11px] italic text-muted-foreground/80">{m.detail}</p>}
+      {m.value === null && <p className="mt-1 text-[11px] italic text-zoo-quiet">{m.detail}</p>}
     </section>
   );
 }
@@ -153,7 +153,7 @@ export function LearnDrawer({ state, notes, onSetProductGoal, onSetDod, onSetDor
                             </span>
                             <span className="min-w-0">
                               <span>{d.what.replace(/^(The Developers|The Product Owner|The Scrum Master|You) /, '')}</span>
-                              {d.cost && <span className="block text-[11px] text-amber-700 dark:text-amber-300">{d.cost}</span>}
+                              {d.cost && <span className="block text-[11px] text-amber-800 dark:text-amber-300">{d.cost}</span>}
                             </span>
                           </li>
                         ))}

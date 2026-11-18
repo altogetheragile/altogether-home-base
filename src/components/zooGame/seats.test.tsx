@@ -177,10 +177,12 @@ describe('the Product Owner\'s colour', () => {
   it('is her own, not the game\'s "your move"', () => {
     // "PO is orange. Your Move can change." Inside the game `primary` is the next thing to do, so a
     // Product Owner drawn in `primary` is drawn as a move.
+    // Her orange, or the darker shade of it that words are written in: the orange itself is 2.1:1 as
+    // text on the paper.
     for (const [k, v] of Object.entries(SEAT.productOwner)) {
-      if (k === 'hex') continue;
+      if (k === 'hex' || k === 'ink') continue;
       expect(v, `SEAT.productOwner.${k} is the move colour`).not.toMatch(/primary/);
-      expect(v, `SEAT.productOwner.${k} is not her orange`).toMatch(/--zoo-po/);
+      expect(v.includes('--zoo-po') || v.includes(SEAT.productOwner.ink), `SEAT.productOwner.${k} is not her orange`).toBe(true);
     }
   });
 

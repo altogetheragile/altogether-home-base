@@ -38,30 +38,41 @@ export const SEAT = {
     /** For an SVG fill, a canvas, an avatar - somewhere that needs a value rather than a class. */
     hex: colors.orange,
     // Her orange, said as hers: inside the game `primary` is blue, the next thing to do.
-    chip: 'bg-[hsl(var(--zoo-po))] text-white',
-    soft: 'bg-[hsl(var(--zoo-po)/0.15)] text-[hsl(var(--zoo-po))]',
-    text: 'text-[hsl(var(--zoo-po))]',
+    // The chip's letters in ink and her words in a darker orange (18 Nov 2026): white on her orange
+    // was 2.2:1 and the orange as text on the paper 2.1:1, the lowest text in the game. The figure,
+    // the chip and the fill keep the brand orange; only words drawn IN her colour take the shade.
+    chip: 'bg-[hsl(var(--zoo-po))] text-[hsl(var(--zoo-ink))]',
+    soft: 'bg-[hsl(var(--zoo-po)/0.15)] text-[#A84500]',
+    text: 'text-[#A84500]',
+    /** Her colour as words: 5.7:1 on the paper. */
+    ink: '#A84500',
   },
   scrumMaster: {
     hex: '#7B2D7B',
     chip: 'bg-[#7B2D7B] text-white',
     soft: 'bg-[#7B2D7B]/15 text-[#7B2D7B] dark:text-[#C79BC7]',
     text: 'text-[#7B2D7B] dark:text-[#C79BC7]',
+    ink: '#7B2D7B',
   },
   developers: {
     /** Every Developer, as a person and as a role. There was a time when a person took their own
      *  shade of the stack and this was only for the role; the shades said nothing beside a name,
      *  so they went, and the two are one colour again. */
     hex: DEV_STACK[0],
-    groupChip: 'bg-[#0E8C8C] text-white',
-    soft: 'bg-[#0E8C8C]/15 text-[#0E8C8C] dark:text-[#5CC8C8]',
-    text: 'text-[#0E8C8C] dark:text-[#5CC8C8]',
+    // A deeper teal under white text and as text (18 Nov 2026): the figure's teal measured 4.1:1
+    // with white and 3.9 on the paper, just short at the sizes these are.
+    groupChip: 'bg-[#0A6E6E] text-white',
+    soft: 'bg-[#0E8C8C]/15 text-[#0A6E6E] dark:text-[#5CC8C8]',
+    text: 'text-[#0A6E6E] dark:text-[#5CC8C8]',
+    /** The Developers' colour as words, or under white words: 5.8:1 on the paper, 6.1 with white. */
+    ink: '#0A6E6E',
   },
   stakeholders: {
     hex: '#F07A2E',
-    chip: 'bg-[#F07A2E] text-white',
-    soft: 'bg-[#F07A2E]/15 text-[#F07A2E]',
-    text: 'text-[#F07A2E]',
+    chip: 'bg-[#F07A2E] text-[hsl(var(--zoo-ink))]',
+    soft: 'bg-[#F07A2E]/15 text-[#B3460F]',
+    text: 'text-[#B3460F]',
+    ink: '#B3460F',
   },
 } as const;
 

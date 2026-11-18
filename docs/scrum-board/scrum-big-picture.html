@@ -151,7 +151,8 @@ svg a:hover .ul{text-decoration:underline}
 
 <script>
 /* ---------- board drawing (coordinates follow the source slide) ---------- */
-const C={teal:"#0E8C8C",orange:"#FF9715",orangeD:"#E8790A",plum:"#7B2D7B",sh:"#F07A2E"};
+/* tealD and the ink: the colours that carry WORDS (18 Nov 2026). White on the teal measured 4.1:1 and on the orange 2.2 to 2.9, so a box with words in it takes the deeper teal, and the oranges take ink. The figures keep the teal they share with the game. */
+const C={teal:"#0E8C8C",tealD:"#0A6E6E",orange:"#FF9715",orangeD:"#E8790A",plum:"#7B2D7B",sh:"#F07A2E",ink:"#2B1D14",orangeT:"#A84500"};
 const ROLE={po:["product-owner","PO",C.orange,"Product Owner"],d:["developers","D",C.teal,"Developers"],sm:["scrum-master","SM",C.plum,"Scrum Master"],sh:["stakeholders","SH",C.sh,"Stakeholders"]};
 const esc=s=>s.replace(/&/g,"&amp;");
 const link=(id,inner,label)=>`<a href="#${id}" data-id="${id}" aria-label="${label}">${inner}</a>`;
@@ -172,7 +173,7 @@ const FS=1.9;
 function roleGlyph(r,cx,cy,s){const [,lab,col]=ROLE[r];
   /* several people in one role: three identical figures stacked close, told apart by shade only */
   if(r==="d")return `<g transform="translate(${cx} ${cy}) scale(${(FS*s).toFixed(3)})">${manyOf(col)}<g transform="translate(-2.5 0)"><text x="0" y="12" text-anchor="middle" font-size="6" font-weight="800" fill="#fff">D</text></g></g>`;
-  return `<g transform="translate(${cx} ${cy}) scale(${(FS*s).toFixed(3)})"><g transform="translate(0 -2.25)">${fig(col)}<text x="0" y="12" text-anchor="middle" font-size="6" font-weight="800" fill="#fff">${lab}</text></g></g>`}
+  return `<g transform="translate(${cx} ${cy}) scale(${(FS*s).toFixed(3)})"><g transform="translate(0 -2.25)">${fig(col)}<text x="0" y="12" text-anchor="middle" font-size="6" font-weight="800" fill="${col===C.orange||col===C.sh?C.ink:"#fff"}">${lab}</text></g></g>`}
 function hex(cx,cy,r){const [id,,,name]=ROLE[r];return link(id,`<g class="hot">${roleGlyph(r,cx,cy,1)}</g>`,name)}
 const tri=(x,y,a,b,c)=>hex(x,y,a)+hex(x+45,y+26,b)+hex(x,y+52,c);
 
@@ -195,23 +196,23 @@ function chevron(x1,x2,y,h,label,id,first){const n=9,m=y+h/2;
 
 function callout(x,y,w,label,id,fill,border,circ){const h=36;
   const tail=`${x+w-34},${y+h} ${x+w-14},${y+h} ${x+w-6},${y+h+16}`;
-  return link(id,`<g class="hot"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${border?`stroke="${border}" stroke-width="3"`:""}/><polygon points="${tail}" fill="${fill}" ${border?`stroke="${border}" stroke-width="3" stroke-linejoin="round"`:""}/><rect x="${x+w-34}" y="${y+h-3}" width="20" height="5" fill="${fill}"/><text x="${x+w/2}" y="${y+24}" text-anchor="middle" font-size="16" fill="#fff" class="lbl">${label}</text>
-   <circle cx="${circ[0]}" cy="${circ[1]}" r="22" fill="${circ[2]}" stroke="${circ[3]}" stroke-width="4"/><text x="${circ[0]}" y="${circ[1]+8}" text-anchor="middle" font-size="22" font-weight="800" fill="#fff">${circ[4]}</text></g>`,label)}
+  return link(id,`<g class="hot"><rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill}" ${border?`stroke="${border}" stroke-width="3"`:""}/><polygon points="${tail}" fill="${fill}" ${border?`stroke="${border}" stroke-width="3" stroke-linejoin="round"`:""}/><rect x="${x+w-34}" y="${y+h-3}" width="20" height="5" fill="${fill}"/><text x="${x+w/2}" y="${y+24}" text-anchor="middle" font-size="16" fill="${fill===C.orangeD?C.ink:"#fff"}" class="lbl">${label}</text>
+   <circle cx="${circ[0]}" cy="${circ[1]}" r="22" fill="${circ[2]}" stroke="${circ[3]}" stroke-width="4"/><text x="${circ[0]}" y="${circ[1]+8}" text-anchor="middle" font-size="22" font-weight="800" fill="${circ[2]===C.orangeD?C.ink:"#fff"}">${circ[4]}</text></g>`,label)}
 
 function rail(x,y1,y2,label,id,col){const mid=(y1+y2)/2;
   return link(id,`<g class="hot"><line x1="${x}" y1="${y1+10}" x2="${x}" y2="${y2-10}" stroke="${col}" stroke-width="3"/><polygon points="${x-8},${y1+12} ${x+8},${y1+12} ${x},${y1}" fill="${col}"/><polygon points="${x-8},${y2-12} ${x+8},${y2-12} ${x},${y2}" fill="${col}"/>
-   <text transform="translate(${x+18} ${mid}) rotate(90)" text-anchor="middle" font-size="12.5" fill="${col}" class="lbl">${label}</text></g>`,label)}
+   <text transform="translate(${x+18} ${mid}) rotate(90)" text-anchor="middle" font-size="12.5" fill="${col===C.orangeD?C.orangeT:col===C.teal?C.tealD:col}" class="lbl">${label}</text></g>`,label)}
 
-function wheel(cx,cy){const R=58,r=22,labels=["Commitment","Focus","Openness","Respect","Courage"],cols=[C.plum,"#E8664A","#F4B03C",C.teal,"#9BCB3B"];let s="";
+function wheel(cx,cy){const R=58,r=22,labels=["Commitment","Focus","Openness","Respect","Courage"],cols=[C.plum,"#E8664A","#F4B03C",C.tealD,"#9BCB3B"],words=["#fff",C.ink,C.ink,"#fff",C.ink];let s="";
   for(let i=0;i<5;i++){const a0=(-90+i*72)*Math.PI/180,a1=(-90+(i+1)*72)*Math.PI/180;
     const p=(a,rad)=>[cx+rad*Math.cos(a),cy+rad*Math.sin(a)].map(v=>v.toFixed(1)).join(" ");
     s+=`<path d="M${p(a0,r)} L${p(a0,R)} A${R} ${R} 0 0 1 ${p(a1,R)} L${p(a1,r)} A${r} ${r} 0 0 0 ${p(a0,r)}Z" fill="${cols[i]}"/>`;
-    const am=(a0+a1)/2;s+=`<text x="${(cx+40*Math.cos(am)).toFixed(1)}" y="${(cy+40*Math.sin(am)+3).toFixed(1)}" text-anchor="middle" font-size="6.6" font-weight="700" fill="#fff">${labels[i]}</text>`}
+    const am=(a0+a1)/2;s+=`<text x="${(cx+40*Math.cos(am)).toFixed(1)}" y="${(cy+40*Math.sin(am)+3).toFixed(1)}" text-anchor="middle" font-size="6.6" font-weight="700" fill="${words[i]}">${labels[i]}</text>`}
   s+=`<circle cx="${cx}" cy="${cy}" r="${r}" fill="#111"/><text x="${cx}" y="${cy+4}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff">Scrum</text>`;
   return link("scrum-values",`<g class="hot">${s}</g>`,"Scrum Values")}
 
 let s=`<defs><marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="${C.plum}"/></marker>
-<linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="${C.teal}"/><stop offset="1" stop-color="${C.teal}" stop-opacity="0"/></linearGradient></defs>`;
+<linearGradient id="fade" x1="0" x2="1"><stop offset="0" stop-color="${C.tealD}"/><stop offset="1" stop-color="${C.tealD}" stop-opacity="0"/></linearGradient></defs>`;
 /* artifact and commitment icons, drawn around (0,0); hexes have radius 46 */
 const HEX46="0,-46 39.8,-23 39.8,23 0,46 -39.8,23 -39.8,-23";
 const GEM=`<polygon points="-17,-5 -9,-13 9,-13 17,-5 0,15" fill="#FFFFFF"/><polygon points="-15,-5 -8,-11.5 8,-11.5 15,-5" fill="#5CC8C8"/><polygon points="-15,-5 15,-5 0,12.5" fill="#0E8C8C"/><path d="M-6 -3 l4 4 l8 -9" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>`;
@@ -288,12 +289,12 @@ s+=wheel(1128,60);
 const yIn=24;const ins=INPUTS.map((list,i)=>flow(list,...COLS[i],yIn));const hIn=Math.max(...ins.map(x=>x[1]));
 ins.forEach(x=>s+=x[0]);
 const rowLabel=(y,h,title,sub,fill,txt)=>link("inspect-adapt",`<g class="rowlab"><rect x="40" y="${y}" width="120" height="${h}" rx="8" fill="${fill}"/><text x="100" y="${y+h/2-2}" text-anchor="middle" font-size="12" class="lbl" fill="${txt}">${title}</text><text x="100" y="${y+h/2+14}" text-anchor="middle" font-size="10.5" font-weight="500" fill="${txt}">${sub}</text></g>`,title.toLowerCase());
-s+=rowLabel(yIn,hIn,"INPUTS","inspected",C.teal,"#fff");
+s+=rowLabel(yIn,hIn,"INPUTS","inspected",C.tealD,"#fff");
 const yArr1=yIn+hIn+4;COLS.forEach(([a,b])=>s+=downArrow((a+b)/2,yArr1,C.orange));
 
 /* board frame */
 const yBar=yArr1+28;
-s+=`<g transform="translate(0 ${yBar-76})">`+link("sprint",`<polygon class="bar" points="170,76 1022,76 1034,88 1022,100 170,100" fill="${C.teal}"/><polygon points="1036,76 1080,76 1080,100 1036,100 1048,88" fill="url(#fade)"/><text x="600" y="93" text-anchor="middle" font-size="15" fill="#fff" class="lbl">SPRINT</text>`,"Sprint")+chevron(170,318,106,24,"SPRINT PLANNING","sprint-planning",true)+chevron(320,688,106,24,"DAILY SCRUMS","daily-scrum")+chevron(690,880,106,24,"SPRINT REVIEW","sprint-review")+chevron(882,1028,106,24,"RETROSPECTIVE","sprint-retrospective")+"</g>";
+s+=`<g transform="translate(0 ${yBar-76})">`+link("sprint",`<polygon class="bar" points="170,76 1022,76 1034,88 1022,100 170,100" fill="${C.tealD}"/><polygon points="1036,76 1080,76 1080,100 1036,100 1048,88" fill="url(#fade)"/><text x="600" y="93" text-anchor="middle" font-size="15" fill="#fff" class="lbl">SPRINT</text>`,"Sprint")+chevron(170,318,106,24,"SPRINT PLANNING","sprint-planning",true)+chevron(320,688,106,24,"DAILY SCRUMS","daily-scrum")+chevron(690,880,106,24,"SPRINT REVIEW","sprint-review")+chevron(882,1028,106,24,"RETROSPECTIVE","sprint-retrospective")+"</g>";
 const yB=yBar+66,yI=yB+34,yD=yB+66,hD=66,yC=yD+hD+10,Z=128,yE=yC+3*Z+2;
 s+=`<rect x="170" y="${yB}" width="858" height="${yE-yB}" class="paper boardline" stroke-width="3"/>`;
 [320,688,882].forEach(x=>s+=`<line x1="${x}" y1="${yB}" x2="${x}" y2="${yE}" class="boardline" stroke-width="3"/>`);
@@ -316,8 +317,8 @@ DESC.forEach((pair,i)=>{const [a,b]=COLS[i];let lines=[];pair.forEach((t,j)=>wra
 /* Sprint Planning topics */
 const zc=k=>yC+k*Z;
 s+=callout(32,zc(0)+8,104,"1. WHY?","topic-why",C.orangeD,null,[162,zc(0)+64,C.orangeD,"#fff","1"]);
-s+=callout(40,zc(1)+8,106,"2. WHAT?","topic-what",C.teal,C.orange,[168,zc(1)+64,C.teal,C.orange,"2"]);
-s+=callout(40,zc(2)+8,100,"3. HOW?","topic-how",C.teal,C.orange,[168,zc(2)+64,C.teal,C.orange,"3"]);
+s+=callout(40,zc(1)+8,106,"2. WHAT?","topic-what",C.tealD,C.orange,[168,zc(1)+64,C.tealD,C.orange,"2"]);
+s+=callout(40,zc(2)+8,100,"3. HOW?","topic-how",C.tealD,C.orange,[168,zc(2)+64,C.tealD,C.orange,"3"]);
 s+=flow([{t:"Sprint Goal",k:"sg",id:"sprint-goal"}],170,320,zc(0)+8)[0]+teamHex(245,zc(0)+82,33);
 s+=flow([{t:"Product Backlog|items selected",k:"pb",id:"product-backlog"}],170,320,zc(1)+4)[0]+hex(214,zc(1)+90,"po")+devStack(272,zc(1)+90);
 s+=flow([{t:"Sprint Backlog|actionable plan",k:"sb",id:"sprint-backlog"}],170,320,zc(2)+8)[0]+devStack(240,zc(2)+84);
@@ -339,7 +340,7 @@ s+=teamHex(955,yC+150,36);
 const yArr2=yE+4;COLS.forEach(([a,b])=>s+=downArrow((a+b)/2,yArr2,C.orange));
 const yOut=yE+30;const outs=OUTPUTS.map((list,i)=>flow(list,...COLS[i],yOut));const hOut=Math.max(...outs.map(x=>x[1]));
 outs.forEach(x=>s+=x[0]);
-s+=rowLabel(yOut,hOut,"OUTPUTS","adapted or created",C.orange,"#004D4D");
+s+=rowLabel(yOut,hOut,"OUTPUTS","adapted or created",C.orange,C.ink);
 
 /* rails */
 s+=rail(1054,yB,yOut+hOut,"SCRUM THEORY: EMPIRICISM · LEAN THINKING","scrum-theory",C.teal);

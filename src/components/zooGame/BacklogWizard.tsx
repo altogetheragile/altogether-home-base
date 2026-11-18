@@ -138,7 +138,7 @@ export function BacklogWizard({ productGoal, onBuild, seat = null, emptySeats }:
           ))}
         </div>
         {!zones.length && (
-          <p className="text-[11px] text-amber-700 dark:text-amber-300">Pick at least one - a zoo with no areas has nothing to build.</p>
+          <p className="text-[11px] text-amber-800 dark:text-amber-300">Pick at least one - a zoo with no areas has nothing to build.</p>
         )}
       </Ask>
 

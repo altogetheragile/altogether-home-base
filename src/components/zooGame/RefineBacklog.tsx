@@ -162,13 +162,13 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
         <p className="text-[12px] leading-snug text-muted-foreground">
           Split and size, in any order. {topZone ? <>Priya has <strong className="text-foreground">{topZone}</strong> on top; reorder first if you like.</> : null}
         </p>
-        <p className="mt-1 text-[11px] text-muted-foreground/80">costs nothing from the Sprint</p>
+        <p className="mt-1 text-[11px] text-zoo-quiet">costs nothing from the Sprint</p>
       </div>
       <button type="button" data-choice="planning" onClick={onPlan}
         className={cn(FOCUS, 'rounded-lg border-2 border-[hsl(var(--zoo-ink))] bg-card px-3 py-2 text-left transition-colors hover:bg-primary/[0.06]')}>
         <span className="block text-sm font-semibold">Refine in Sprint Planning &rarr;</span>
         <span className="block text-[12px] leading-snug text-muted-foreground">Go now, and refine there what the Sprint takes.</span>
-        <span className="mt-1 block text-[11px] text-muted-foreground/80">comes out of Planning&rsquo;s time</span>
+        <span className="mt-1 block text-[11px] text-zoo-quiet">comes out of Planning&rsquo;s time</span>
       </button>
     </div>
   );

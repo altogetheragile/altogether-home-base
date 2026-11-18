@@ -24,7 +24,7 @@ const ICON: Record<ArtifactId, (p: { className?: string }) => JSX.Element | null
 };
 const ROLE = {
   inspects: { label: 'Inspecting', cls: 'bg-sky-500/15 text-sky-700 dark:text-sky-300' },
-  adapts: { label: 'Adapting', cls: 'bg-amber-500/15 text-amber-700 dark:text-amber-400' },
+  adapts: { label: 'Adapting', cls: 'bg-amber-500/15 text-amber-800 dark:text-amber-400' },
   creates: { label: 'Creating', cls: 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300' },
 };
 
@@ -42,7 +42,7 @@ function ListAgreement({ title, items, note, onSet }: { title?: string; items: s
           </button>
         )}
       </div>
-      {note && <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/80">{note}</p>}
+      {note && <p className="mt-0.5 text-[11px] leading-snug text-zoo-quiet">{note}</p>}
       {editing && onSet
         ? <div className="mt-1"><DodEditor dod={items} onSave={onSet} /></div>
         : <div className="mt-1 flex flex-wrap gap-1">
@@ -105,7 +105,7 @@ export function ArtifactsBody({ state, onSetProductGoal, onSetDod, onSetDor }: {
             return (
               <section key={a.id} className={cn('rounded-lg border px-2.5 py-2', a.exists ? 'border-border bg-card' : 'border-dashed border-border/70')}>
                 <div className="flex flex-wrap items-center gap-1.5">
-                  <Icon className={cn('h-4 w-4 shrink-0', a.exists ? 'text-foreground' : 'text-muted-foreground/60')} />
+                  <Icon className={cn('h-4 w-4 shrink-0', a.exists ? 'text-foreground' : 'text-zoo-quiet')} />
                   <span className={cn('text-sm font-semibold', !a.exists && 'text-muted-foreground')}>{ARTIFACT_NAME[a.id]}</span>
                   {rs && (
                     <span className={cn('rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide', rs.cls)}>

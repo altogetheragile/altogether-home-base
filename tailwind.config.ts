@@ -74,6 +74,10 @@ export default {
 					DEFAULT: 'hsl(var(--muted))',
 					foreground: 'hsl(var(--muted-foreground))'
 				},
+				// The zoo's quiet text: the second voice on a card, an empty column, a hint. One solid
+				// colour that still reads, where the game had faded the muted one to 40-80% and most of
+				// those measured under 3:1 on the cream paper. Outside the zoo it is the muted colour.
+				'zoo-quiet': 'hsl(var(--zoo-quiet, var(--muted-foreground)))',
 				accent: {
 					DEFAULT: 'hsl(var(--accent))',
 					foreground: 'hsl(var(--accent-foreground))'

@@ -170,7 +170,7 @@ export function Tab({ active, onClick, icon: Icon, label, badge, locked, ...rest
       // three words with an underline, which reads as a menu rather than as three artifacts you are
       // standing in front of.
       className={cn(FOCUS, 'relative -mb-[3px] flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-t-lg border-[3px] px-3 py-1.5 text-sm font-semibold transition-colors',
-        locked ? 'cursor-not-allowed border-transparent text-muted-foreground/45'
+        locked ? 'cursor-not-allowed border-transparent text-zoo-quiet'
           // The active one is drawn in the row's own line and then breaks it along the bottom, so
           // it reads as a piece of the panel standing up rather than as a box near a rule.
           : active ? cn(TAB_EDGE, 'border-b-background bg-background text-foreground')

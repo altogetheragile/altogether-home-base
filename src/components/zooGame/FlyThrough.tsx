@@ -65,7 +65,7 @@ export function FlyThrough({ state, className, children, of: what }: {
               : 'border-amber-500/50 bg-amber-50/95 dark:bg-amber-950/90')}>
             <p className="truncate text-sm font-semibold">{walk.showing.caption}</p>
             <p className={cn('text-[11px]',
-              walk.showing.visitable ? 'text-muted-foreground' : 'text-amber-700 dark:text-amber-300')}>
+              walk.showing.visitable ? 'text-muted-foreground' : 'text-amber-800 dark:text-amber-300')}>
               {walk.showing.why}
             </p>
             {/* Where you are in the walk, so it is a tour with an end rather than a screensaver. */}

@@ -514,7 +514,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               if (!design.group || hasRoomToRoam(design.group, home, species)) return null;
               const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k, species));
               return (
-                <p data-part="crowded" className="px-1 pt-1 text-[11px] leading-snug text-amber-700 dark:text-amber-300">
+                <p data-part="crowded" className="px-1 pt-1 text-[11px] leading-snug text-amber-800 dark:text-amber-300">
                   {groupSize(design.group)} in a {home ?? 'medium'} habitat &middot;{' '}
                   {roomy ? `they need a ${roomy} one` : 'too many for any habitat'}
                 </p>

@@ -712,7 +712,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                           meant opposite things: this one takes an item OUT of the Sprint, and the
                           Product Owner's takes built work back to Doing, inside it. One word, two
                           destinations, and only the sub-line to tell them apart. */}
-                      <span className="font-semibold text-amber-700 dark:text-amber-300">Hand it back to the Product Backlog</span>
+                      <span className="font-semibold text-amber-800 dark:text-amber-300">Hand it back to the Product Backlog</span>
                       <span className="block text-muted-foreground">
                         Drop something here to return it to the Product Backlog. The Product Owner is told, and the points
                         come back out of the forecast.

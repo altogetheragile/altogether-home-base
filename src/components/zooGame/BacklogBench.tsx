@@ -100,7 +100,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
           Pick an item and it opens here: what it is for, what the Developers say it would
           take, and the three things refinement does - size it, split it, and agree what Done looks like.
         </p>
-        <p className="text-[11px] text-muted-foreground/80">
+        <p className="text-[11px] text-zoo-quiet">
           Refinement is ongoing work, not a phase before the Sprints. It happens while the Sprint runs, and
           what it prepares is the Sprints after this one.
         </p>
@@ -171,7 +171,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
         {item.acceptance.length ? (
           <ul className="mt-0.5 space-y-0.5">
             {item.acceptance.map((c, i) => (
-              <li key={i} className="flex gap-1.5 text-xs text-muted-foreground"><span className="text-muted-foreground/50">&bull;</span><span>{c}</span></li>
+              <li key={i} className="flex gap-1.5 text-xs text-muted-foreground"><span className="text-zoo-quiet">&bull;</span><span>{c}</span></li>
             ))}
           </ul>
         ) : (

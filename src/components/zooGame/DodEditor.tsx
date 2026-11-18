@@ -95,7 +95,7 @@ export function DodEditor({ dod, onSave, suggesting = false, brief = false }: Do
           <div className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Suggestions - click to add</div>
           {DOD_LIBRARY.map((cat) => (
             <div key={cat.group} className="space-y-1">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70">{cat.group}</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-zoo-quiet">{cat.group}</div>
               <div className="flex flex-wrap gap-1.5">
                 {cat.items.map((c) => {
                   const added = has(c);

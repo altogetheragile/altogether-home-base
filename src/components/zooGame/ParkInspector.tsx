@@ -119,7 +119,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
         !at && place, className)}>
       <h3 data-part="inspector-grip" onPointerDown={carry}
         className="flex cursor-grab select-none items-center gap-1.5 text-sm font-bold active:cursor-grabbing">
-        <GripVertical className="h-3.5 w-3.5 shrink-0 text-muted-foreground/70" aria-hidden />
+        <GripVertical className="h-3.5 w-3.5 shrink-0 text-zoo-quiet" aria-hidden />
         <AcceptanceCriteriaIcon className="h-4 w-4 shrink-0 text-muted-foreground" />
         <span className="flex-1">{ACCEPTANCE_CRITERIA} <span className="font-normal text-muted-foreground">&middot; {count}</span></span>
         <button type="button" data-part="hide-inspector" aria-label="Put the acceptance criteria away"
@@ -140,17 +140,17 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
             <li key={c} className="flex items-start gap-1.5">
               {waived ? <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
                 : ok ? <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                  : <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />}
+                  : <Circle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-zoo-quiet" />}
               <span className="min-w-0 flex-1">
                 <span className={cn('block text-[12px] leading-snug',
                   ok && !waived && 'text-muted-foreground line-through decoration-emerald-500/40')}>{c}</span>
-                <span className={cn('block text-[10px]', waived ? 'font-medium text-amber-700 dark:text-amber-300' : 'text-muted-foreground')}>
+                <span className={cn('block text-[10px]', waived ? 'font-medium text-amber-800 dark:text-amber-300' : 'text-muted-foreground')}>
                   {waived ? `not met \u00b7 ${po} shipped it anyway`
                     : verdict?.evidence ?? (ok ? 'met' : answerable(c) ? 'checked once it stands on the park' : `${po} judges this one`)}
                 </span>
               </span>
               <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-semibold',
-                where === 'park' ? 'bg-amber-500/15 text-amber-700 dark:text-amber-300' : 'bg-secondary text-secondary-foreground')}>
+                where === 'park' ? 'bg-amber-500/15 text-amber-800 dark:text-amber-300' : 'bg-secondary text-secondary-foreground')}>
                 {where === 'park' ? 'park' : 'here'}
               </span>
             </li>

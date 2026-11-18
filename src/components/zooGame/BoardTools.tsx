@@ -37,7 +37,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               {dailyScrumAt === 'start' ? 'Day start' : 'Day end'}
             </button>
           </div>
-          <div className="-mt-1 text-[11px] leading-snug text-muted-foreground/80">
+          <div className="-mt-1 text-[11px] leading-snug text-zoo-quiet">
             {dailyScrumAt === 'start'
               ? 'Held first thing, so the Developers plan the day ahead. Ending a day takes you into the next day\u2019s Scrum.'
               : 'Held as the day closes, looking back on it.'}
@@ -56,7 +56,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
               </div>
             ) : <span className="text-[11px] font-medium">{wipLimit || 'Off'}</span>}
           </div>
-          <div className="-mt-1 text-[11px] leading-snug text-muted-foreground/80">
+          <div className="-mt-1 text-[11px] leading-snug text-zoo-quiet">
             {wipLimit > 0
               ? `The Developers start no more than ${wipLimit} at once, and swarm to finish rather than starting more. Fewer things in flight means things actually finish.`
               : 'No limit: anything can be started at any time. Watch how much ends the Sprint unfinished.'}
@@ -79,7 +79,7 @@ function BoardSettings({ dailyScrumAt, learnMode, wipLimit, onSetScrumAt, onSetL
                 className={cn(FOCUS, "text-[11px] font-medium text-destructive/80 underline-offset-2 transition-colors hover:text-destructive hover:underline")}>
                 Cancel the Sprint
               </button>
-              <p className="mt-0.5 text-[11px] leading-snug text-muted-foreground/80">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
+              <p className="mt-0.5 text-[11px] leading-snug text-zoo-quiet">The Product Owner&rsquo;s call, and only when the Sprint Goal is obsolete.</p>
             </div>
           )}
         </div>

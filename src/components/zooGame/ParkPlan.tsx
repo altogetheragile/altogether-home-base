@@ -1074,10 +1074,13 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
                 fill={ours ? theme.plot : 'url(#rough-ground)'} opacity={ours ? (open ? 0.3 : 0.14) : 0.5}
                 stroke={ours ? theme.plotBorder : '#6f7d52'} strokeWidth={2}
                 strokeDasharray={open && ours ? undefined : '11 9'} />
-              <text x={p.x0 + 14} y={p.y0 + 24} fontSize={ch(15)} fontWeight={700} fill="#3f4a2f"
-                opacity={open ? 0.85 : 0.6}>{p.zone}</text>
+              {/* Solid, and a shade darker than the hedges: faded to 60-85% on the grass these
+                  measured 3.9 to 4.4:1, which is fine for a big label and not for the size they are
+                  once the park is zoomed out. What is ours and what is not is said by the words and
+                  the dashed edge, not by how faint the name is. */}
+              <text x={p.x0 + 14} y={p.y0 + 24} fontSize={ch(15)} fontWeight={700} fill="#2a3320">{p.zone}</text>
               {!ours && (
-                <text x={p.x0 + 14} y={p.y0 + 44} fontSize={ch(12)} fontWeight={600} fill="#4a5238" opacity={0.75}>
+                <text x={p.x0 + 14} y={p.y0 + 44} fontSize={ch(12)} fontWeight={600} fill="#2a3320">
                   not the zoo&rsquo;s ground &middot; {groundPrice().toLocaleString()}
                 </text>
               )}
