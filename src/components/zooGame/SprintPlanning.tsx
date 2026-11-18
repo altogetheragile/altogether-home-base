@@ -237,14 +237,17 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
         <span className="text-sm font-semibold">{count} item{count === 1 ? '' : 's'} in this Sprint</span>
-        <span className={cn('font-mono text-sm font-semibold', over ? 'text-destructive' : 'text-foreground')}>{committed}<span className="text-muted-foreground"> / {capacity} pts</span></span>
+        <span className={cn('font-mono text-sm font-semibold', over ? 'text-destructive' : 'text-foreground')}>{committed} pts<span className="text-muted-foreground"> of {capacity}</span></span>
       </div>
+      {/* The figure is named, beside what it measures. "8 / 0 pts" after a Sprint that finished
+          nothing was read as "I cannot parse" (scrum-master playtest): the 0 was the velocity, and
+          nothing said so. */}
       {/* Never call a guess "velocity". Velocity is measured, and until a Sprint of this length has
           run there is nothing measured to go on. */}
       <p className="text-[11px] text-muted-foreground">
         {basis.estimated
-          ? <><strong className="text-foreground">Expected velocity</strong> - nothing measured at this Sprint length yet{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
-          : <><strong className="text-foreground">Velocity</strong> - measured over your last {basis.measuredSprints} Sprint{basis.measuredSprints === 1 ? '' : 's'} of this length{basis.discarded > 0 ? `, ignoring ${basis.discarded} at a different length` : ''}.</>}
+          ? <><strong className="text-foreground">Expected velocity {capacity} pts</strong> - nothing measured at this Sprint length yet{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
+          : <><strong className="text-foreground">Velocity {capacity} pts</strong> - measured over your last {basis.measuredSprints} Sprint{basis.measuredSprints === 1 ? '' : 's'} of this length{basis.discarded > 0 ? `, ignoring ${basis.discarded} at a different length` : ''}{capacity === 0 ? ': nothing reached Done, so there is nothing yet to forecast from' : ''}.</>}
       </p>
       <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
         <div className={cn('h-full rounded-full transition-all', over ? 'bg-destructive' : pct > 80 ? 'bg-amber-500' : 'bg-emerald-500')} style={{ width: `${pct}%` }} />
@@ -600,13 +603,17 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                       <button type="button" data-part="goal-critical"
                         onClick={() => onToggleGoalCritical?.(it.id)}
                         aria-pressed={!!it.goalCritical}
-                        aria-label={`${it.name}: ${it.goalCritical ? 'essential to the Sprint Goal' : 'not essential to the Sprint Goal'}`}
+                        // Named for what pressing it does, with the state in aria-pressed. Named for
+                        // the state, it read "Lion Enclosure: not essential to the Sprint Goal - not
+                        // chosen" beside the item's own row, and looked like the item listed twice.
+                        aria-label={`Essential to the Sprint Goal: ${it.name}`}
                         title={it.goalCritical ? 'Essential to the Sprint Goal' : 'Mark essential to the Sprint Goal'}
                         className={cn(FOCUS, 'flex h-8 w-8 shrink-0 items-center justify-center rounded-md hover:bg-muted')}>
                         <Star className={cn('h-4 w-4', it.goalCritical ? 'fill-amber-400 text-amber-500' : 'text-muted-foreground/40')} />
                       </button>
                     )}
                     <button type="button" onClick={() => setOpenPlan(it.id)}
+                      aria-label={`Plan ${it.name}: ${mine.length ? `${mine.length} step${mine.length === 1 ? '' : 's'}` : 'no steps yet'}, ${it.estimate ?? '?'} points`}
                       className={cn(FOCUS, 'flex min-w-0 flex-1 items-center gap-2 rounded-md text-left')}>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-medium">{it.name}</span>

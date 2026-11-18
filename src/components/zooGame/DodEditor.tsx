@@ -51,6 +51,15 @@ export function DodEditor({ dod, onSave, suggesting = false, brief = false }: Do
         Some of these the park can see for itself and will answer on the card. The rest are yours to
         hold each other to, which is true of every real Definition of Done.
       </p>
+      {/* Whose rule it is, where a line makes the Product Owner part of Done. The scrum-master
+          playtest read "confirmed by the Product Owner" as the game claiming Scrum works that way:
+          "the Product Owner is not the one who confirms DoD criteria". */}
+      {items.some((x) => /product owner/i.test(x)) && (
+        <p data-part="dod-whose-rule" className="text-[11px] text-muted-foreground">
+          Having the Product Owner confirm the acceptance criteria is this zoo&rsquo;s rule, not the Scrum Guide&rsquo;s.
+          The Guide asks the Scrum Team to create a Definition of Done appropriate for the product, and the Developers to conform to it.
+        </p>
+      )}
       </>)}
 
       <div className="space-y-1.5">

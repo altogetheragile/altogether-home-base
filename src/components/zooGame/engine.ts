@@ -4001,8 +4001,16 @@ function answerCard(state: ZooGameState, card: PlayedCard, choice: CardChoice, b
 
 /** What surfaces at a Daily Scrum: the trainer's card when a trainer is running it, the day's roll
  *  when nobody is. */
-const whatSurfaces = (state: ZooGameState, day: number): Impediment | null =>
-  (state.trainerLed ? state.trainerCard ?? null : generateImpediment(state.gameSeed, state.sprintNumber, day));
+const whatSurfaces = (state: ZooGameState, day: number): Impediment | null => {
+  const rolled = state.trainerLed ? state.trainerCard ?? null : generateImpediment(state.gameSeed, state.sprintNumber, day);
+  // The daily roll is independent, so it can land on the very thing the team escalated yesterday
+  // and is still waiting on. Asked about it again, with the same four answers, the scrum-master
+  // playtest read it as the escalation not having worked: "I already chose 'Escalate it' ... It is
+  // not clear whether this is a new occurrence ... or the same one repeating." It is the same one,
+  // and it is already out of the team's hands.
+  const waiting = state.carriedImpediment?.waitDays ? state.carriedImpediment : null;
+  return rolled && waiting && rolled.title === waiting.title ? null : rolled;
+};
 
 /** Whether what has surfaced is in the way of the Sprint Goal.
  *

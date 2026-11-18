@@ -159,7 +159,10 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
                   <>
                     <span className={cn('mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-bold',
                       t.done ? 'bg-emerald-500 text-white' : 'bg-muted text-muted-foreground')}>
-                      {t.done ? <Check className="h-3 w-3" /> : i + 1}
+                      {/* A finished step trades its number for a tick, which left it with neither when
+                          read aloud: "1, 2, Set the footprint size, Fence it securely, 5" (scrum-master
+                          playtest). The number and the word stay, for whoever cannot see the tick. */}
+                      {t.done ? <><Check className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{i + 1}, done:</span></> : i + 1}
                     </span>
                     <span className={cn(t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
                   </>
