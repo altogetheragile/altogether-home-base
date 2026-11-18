@@ -437,7 +437,7 @@ export const ORIENTATION = {
   },
   seats: {
     title: 'Who is here',
-    lead: 'Five seats, three accountabilities. Playing alone you hold all three, and the game says which one you are in as you act.',
+    lead: 'Five seats, three accountabilities. Playing alone, the game plays Priya, the Product Owner, and you hold the other four seats: Sam and all three Developers.',
     rows: [
       { name: 'Priya', note: 'Product Owner', text: 'Orders the Product Backlog, says what each item needs to be, and decides when Done work opens.' },
       { name: 'Sam', note: 'Scrum Master', text: 'Keeps the events to their timebox and removes what is in the way.' },

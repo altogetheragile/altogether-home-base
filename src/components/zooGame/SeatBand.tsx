@@ -47,7 +47,10 @@ const isMine = (
   // Your seat, and in a shared game your own Developer too: every player is one. Only your own,
   // though: sitting in a Developer seat used to mark every Developer on the band as you.
   ? (s.role === 'developer' && you ? s.id === you.id : s.role === seat || (!!you && s.id === you.id))
-  : s.id === you?.id || s.role === 'scrum_master');
+  // Alone, every seat but Priya's: all three Developers as well as Sam. Marking only the first
+  // Developer said Ben and Cara were somebody else, and nobody has played them since 28 October
+  // ("Is it true that the other developers are played by the game?").
+  : s.role !== 'product_owner');
 
 /** Your own name, changed where it is written.
  *
@@ -208,8 +211,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                       in the Scrum Master's colour, beside the name of whoever has it. */}
                   {s.hat && <span data-part="seat-hat" title="Holds the Scrum Master hat this Sprint" className={cn(SEAT.scrumMaster.soft, 'ml-1 rounded-full px-1 text-[10px] font-semibold')}>SM</span>}
                   {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-foreground">you</span>}
-                  {/* One name is yours to change: alone, that is your Developer's, not Sam's as well. */}
-                  {yours && onRename && (mine || s.role === 'developer') && <RenameMe id={s.id} name={s.name} onRename={onRename} />}
+                  {/* One name is yours to change: alone, that is your own Developer's, not Sam's
+                      or the other two Developers' as well. */}
+                  {yours && onRename && (mine || s.id === you?.id) && <RenameMe id={s.id} name={s.name} onRename={onRename} />}
                   {/* One word, because the band is one line and this is the whole news. Said in
                       words as well as in colour: a faded chip is not a message, and dimming was all
                       this had. */}

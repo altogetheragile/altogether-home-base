@@ -43,23 +43,29 @@ describe('meeting the Scrum Team', () => {
     expect(cards.some((c) => c.querySelector('button')), 'a seat could be picked in solo play').toBe(false);
   });
 
-  it('marks ONE seat yours, and says who is playing the rest', () => {
+  it('marks every seat but Priya\u2019s yours, alone, and one in a shared game', () => {
     // This used to mark all five and say "playing alone you hold all three accountabilities".
     // That was true, and stopped being true when the Product Owner got a seat of her own and two
     // Developers started working beside you. "Three Devs are mentioned. Which is the human
     // player?" - the answer has to be on the screen where you meet them.
-    const solo = render(<MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} /></MemoryRouter>);
-    const mine = [...solo.container.querySelectorAll('[data-part="seat-card"].border-primary')];
-    expect(mine.length, 'more than one of the five is marked as you').toBe(1);
-    expect(mine[0].textContent, 'the one marked as you is not a Developer').toMatch(/Developer/);
-    expect(mine[0].textContent, 'it does not say it is you').toMatch(/You · Developer/);
-    expect(solo.container.textContent, 'nothing says who is playing the others')
-      .toMatch(/Played by the game/);
-    // ...and the Scrum Master is nobody's, which is why holding the Daily Scrum falls to you.
-    const sm = [...solo.container.querySelectorAll('[data-part="seat-card"]')]
-      .find((c) => /Scrum Master/.test(c.textContent ?? ''))!;
-    expect(sm.textContent, 'the Scrum Master is played by the game, which would take your event away')
-      .toMatch(/Nobody holds it/);
+    //
+    // ...and then it marked one, saying "Priya and the other two are played by the game", which
+    // stopped being true on 28 October: alone you are the Scrum Master and all three Developers
+    // ("Is it true that the other developers are played by the game?").
+    const solo = render(<MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} onRename={() => {}} /></MemoryRouter>);
+    const cards = [...solo.container.querySelectorAll('[data-part="seat-card"]')];
+    const mine = cards.filter((c) => c.classList.contains('border-primary'));
+    expect(mine.length, 'not every seat but the Product Owner\u2019s is marked as you').toBe(4);
+    expect(mine.map((c) => c.textContent).join(' ')).not.toMatch(/Product Owner/);
+    expect(mine.filter((c) => /You · Developer/.test(c.textContent ?? '')).length).toBe(3);
+    expect(mine.some((c) => /You · Scrum Master/.test(c.textContent ?? ''))).toBe(true);
+    const po = cards.find((c) => /Product Owner/.test(c.textContent ?? ''))!;
+    expect(po.textContent, 'nothing says the game plays Priya').toMatch(/Played by the game/);
+    expect(solo.container.textContent, 'it still says the other Developers are played').not.toMatch(/other two are played/);
+    // One name to change, your own; and no invented personality on a Developer you are playing.
+    expect(solo.container.querySelectorAll('input').length, 'more than your own name can be changed').toBe(1);
+    expect(solo.container.textContent).not.toMatch(/Will start a second item/);
+    expect(solo.container.textContent).not.toMatch(/Asks questions instead of answering/);
     solo.unmount();
 
     const seated = render(

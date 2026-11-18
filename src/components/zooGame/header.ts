@@ -104,11 +104,11 @@ export function whoDoesWhatNow(state: ZooGameState, seat?: string | null): strin
   switch (state.phase) {
     case 'intro':
     case 'brief':
-      // Playing alone there is no seat to pick: you hold all three, and the game names which one
-      // you are in at the moment you act.
+      // Playing alone there is no seat to pick: the game plays the Product Owner and you hold the
+      // rest. It said "you hold all three", which stopped being true when Priya got her seat.
       return seat
         ? 'Five seats, three accountabilities. Yours is outlined.'
-        : 'Five seats, three accountabilities. Playing alone you hold all three.';
+        : `Five seats, three accountabilities. Playing alone, the game plays ${po} and you hold the rest.`;
     case 'refine':
       return `${po} orders the Product Backlog. The Developers size it.`;
     case 'planning':

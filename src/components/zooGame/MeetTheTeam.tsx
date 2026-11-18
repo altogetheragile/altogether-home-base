@@ -110,7 +110,8 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
       character: CHARACTER.po, hex: SEAT.productOwner.hex },
     { ...ROLES.scrum_master, seat: 'scrum_master', id: state.team.scrumMaster.id,
       name: plain(scrumMasterOf(state).name), initials: 'SM',
-      character: CHARACTER.sm, hex: SEAT.scrumMaster.hex },
+      // Alone, Sam is you too, so no personality is invented for him either.
+      character: seat ? CHARACTER.sm : '', hex: SEAT.scrumMaster.hex },
     // No letter on a Developer's figure: the card has their name on it in bold, and their first
     // initial on their chest is that word said twice.
     ...state.team.developers.map((d, i) => ({
@@ -118,8 +119,9 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
       initials: undefined,
       // No line of character on your own card: the others have one so the anti-patterns have
       // somebody to belong to, and inventing a personality for the person playing is a different
-      // thing entirely.
-      character: d.id === you?.id ? '' : CHARACTER[`dev${i}`] ?? 'Gets on with it.',
+      // thing entirely. Alone, all three Developers are you, so none of them has one: "Fast. Will
+      // start a second item if nobody stops her" described a Developer the game no longer plays.
+      character: !seat || d.id === you?.id ? '' : CHARACTER[`dev${i}`] ?? 'Gets on with it.',
       hex: SEAT.developers.hex,
     })),
   ];
@@ -132,7 +134,7 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
         <p className="text-sm text-muted-foreground">
           {seat
             ? 'Five seats, three accountabilities, no manager. Yours is outlined.'
-            : 'Five seats, three accountabilities, no manager. You are one of the Developers. Priya and the other two are played by the game, and Sam\u2019s work falls to you until somebody takes that seat.'}
+            : 'Five seats, three accountabilities, no manager. The game plays Priya, the Product Owner. You hold the other four: all three Developers, and Sam\u2019s work as Scrum Master.'}
         </p>
       </header>
 
@@ -142,7 +144,11 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
           // is the point: the game gates each move by the accountability it belongs to, not by who
           // is holding a chair.
           // Yours is YOUR card, not every card. In a shared game it is the seat you took.
-          const yours = seat ? s.seat === seat : s.id === you?.id;
+          //
+          // Alone, every seat but Priya's (Al, 28 Oct 2026: "keep the PO as AI. Solo player is the
+          // SM and Devs"). Your own name is still the one Developer you can rename.
+          const yours = seat ? s.seat === seat : s.seat !== 'product_owner';
+          const renamable = seat ? yours : s.id === you?.id;
           return (
             <section key={s.name} data-part="seat-card"
               className={cn('flex flex-col rounded-xl border-2 bg-card p-3',
@@ -151,7 +157,7 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
                 <Person hex={s.hex} initials={s.initials} style={personSize(40)} className="shrink-0" />
                 <span className="min-w-0 flex-1">
                   {/* Your own name is a field. Everybody else's is a name. */}
-                  {yours && onRename
+                  {renamable && onRename
                     ? <YourName id={s.id} name={s.name} onRename={onRename} />
                     : <span className="block truncate text-lg font-bold leading-tight">{s.name}</span>}
                   <span className="block text-xs text-muted-foreground">{s.role}</span>
@@ -166,13 +172,7 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
                   seat of her own. */}
               <p data-part="seat-held" className={cn('mt-2 rounded-lg px-2 py-1.5 text-center text-xs font-semibold',
                 yours ? 'bg-primary/10 text-primary' : 'border border-border text-muted-foreground')}>
-                {yours ? `You \u00b7 ${s.role}`
-                  : seat ? 'Played by the game'
-                    // Nobody plays the Scrum Master in a solo game: holding the Daily Scrum is the
-                    // Developers' event and playing it would take the player's own event away from
-                    // them. So that seat is empty, and its work lands on you.
-                    : s.seat === 'scrum_master' ? 'Nobody holds it \u00b7 falls to you'
-                      : 'Played by the game'}
+                {yours ? `You \u00b7 ${s.role}` : 'Played by the game'}
               </p>
             </section>
           );
@@ -189,7 +189,7 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
         <p className="mt-1 text-[11px] text-muted-foreground">
           {seat
             ? 'The seats fill as people join, and the game plays the rest in character.'
-            : 'You are one of the Developers, and the game plays the rest in character. In a shared session the others are taken by people as they join.'}
+            : 'Alone, you are all three Developers and the Scrum Master, and the game plays Priya in character. In a shared session people take the seats as they join.'}
         </p>
       </section>
 
