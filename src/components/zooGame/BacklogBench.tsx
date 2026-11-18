@@ -232,7 +232,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
       )}
       {/* Adding is refinement too, and it is the one act that is not about the item in hand - so it
           is said here and done there, rather than being a fourth button that means something else. */}
-      <p className="text-[11px] text-muted-foreground">A whole new item is written from the list on the left.</p>
+      <p className="text-[11px] text-muted-foreground">A whole new item is written with New PBI, above the Product Backlog.</p>
     </section>
   );
 }

@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 // breakpoint they stack as before and there is nothing to drag. Where somebody leaves the bar is
 // remembered in this browser, per screen, so it stays where they put it.
 
-export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, min = [20, 20], first, second, clip, page, stackedClassName, className, firstClassName, secondClassName }: {
+export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, min = [20, 20], first, second, clip, page, stackedClassName, className, firstClassName, secondClassName, between }: {
   /** Names the screen, so each remembers its own split. */
   id: string;
   /** `horizontal`: side by side, with a vertical bar. `vertical`: one over the other. */
@@ -37,6 +37,9 @@ export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, m
   className?: string;
   firstClassName?: string;
   secondClassName?: string;
+  /** What the two panes are, for the bar's name. Two bars on one screen were both "Drag to resize",
+   *  "with no indication of what each one resizes" (scrum-master playtest, seven steps running). */
+  between?: [string, string];
 }) {
   const split = useMinWidth(WIDTH[from]);
   const two = second !== undefined && second !== null && second !== false;
@@ -57,7 +60,7 @@ export function SplitPanes({ id, direction = 'horizontal', from = 'lg', sizes, m
       <Panel id={`${id}-a`} order={1} defaultSize={sizes[0]} minSize={min[0]} style={{ overflow }} className={cn('min-w-0', firstClassName)}>
         {first}
       </Panel>
-      <PanelResizeHandle data-part="split-bar" aria-label="Drag to resize"
+      <PanelResizeHandle data-part="split-bar" aria-label={between ? `Drag to resize ${between[0]} and ${between[1]}` : 'Drag to resize'}
         className={cn('group relative flex shrink-0 items-center justify-center rounded-full outline-none transition-colors',
           'hover:bg-primary/15 focus-visible:bg-primary/20 data-[resize-handle-state=drag]:bg-primary/25',
           across ? 'mx-1 w-2.5 cursor-col-resize' : 'my-1 h-2.5 cursor-row-resize')}>

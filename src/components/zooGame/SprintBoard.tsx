@@ -514,7 +514,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
           same height, and whoever is busier with one can give it the room. */}
       {/* A new id, so a split saved at the old half-and-half does not hold the board down now
           that your move sits above it. */}
-      <SplitPanes id="sprint-board-v2" direction="vertical" from="xl" sizes={[68, 32]} min={[40, 15]} clip
+      <SplitPanes id="sprint-board-v2" between={['the board', 'the messages']} direction="vertical" from="xl" sizes={[68, 32]} min={[40, 15]} clip
         className="flex-1" stackedClassName="contents"
         // The board's pane is sized from nothing only where the panes are split. Stacked, below xl,
         // nothing above it has a height to share out, so a zero basis drew the board as an empty

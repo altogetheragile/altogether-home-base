@@ -87,8 +87,8 @@ export function Huddle({ state, onAnswer }: {
 
       {/* Said plainly, because it is the one thing a learner should take away from this screen. */}
       <p data-part="goal-not-on-the-table" className="text-[11px] text-muted-foreground">
-        The Sprint Goal is not on the table. It is the Sprint Backlog&rsquo;s commitment, and the
-        work is what moves around it.
+        The Sprint Goal stays as it is: it is the Sprint Backlog&rsquo;s commitment. What the
+        Developers can change is the work, and their plan for reaching it.
       </p>
     </div>
   );

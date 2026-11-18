@@ -4676,7 +4676,8 @@ export function improvementsFrom(state: ZooGameState): {
       when: skipped > 0,
       because: skipped > 0 ? `The Daily Scrum was skipped ${skipped} time${skipped === 1 ? '' : 's'}.` : undefined },
     { key: 'refine', text: 'Set aside time each Sprint to refine the Product Backlog together',
-      effect: 'Sprint Planning opens with a point of the forecast already set aside for it',
+      // "I am not sure what 'a point of the forecast' means here" (scrum-master playtest).
+      effect: 'Sprint Planning starts with 1 point already set aside for refining during the Sprint',
       when: noRefine > 0,
       because: noRefine > 0 ? `${noRefine} Sprint${noRefine === 1 ? ' has' : 's have'} set aside no time to refine.` : undefined },
     { key: 'ready', text: 'Forecast only what meets the Definition of Ready',

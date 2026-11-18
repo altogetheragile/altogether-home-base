@@ -572,7 +572,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               messages and the studio off the bottom of it. */}
           {/* The bar between the work and the park drags, so either can have the room. */}
           {onSprint ? (
-            <SplitPanes id="sprint" from="xl" sizes={[50, 50]} min={[30, 25]} className="w-full flex-1"
+            <SplitPanes id="sprint" between={['the work', 'the park']} from="xl" sizes={[50, 50]} min={[30, 25]} className="w-full flex-1"
               stackedClassName="flex min-h-0 w-full flex-1 flex-col gap-3"
               firstClassName="flex min-h-0 min-w-0 flex-col" secondClassName="flex min-h-0 min-w-0 flex-col"
               first={home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}

@@ -310,7 +310,7 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
           the Definition of Done that took the page and the question that went below the fold. */}
       {step === 'adapt' && (
       // The bar between them drags: the Definition of Done needs the width when it is being written.
-      <SplitPanes id="retro-adapt" sizes={[55, 45]} min={[30, 25]} stackedClassName="grid gap-3"
+      <SplitPanes id="retro-adapt" between={['the improvements', 'the agreements']} sizes={[55, 45]} min={[30, 25]} stackedClassName="grid gap-3"
         firstClassName="min-w-0 space-y-3" secondClassName="min-w-0 space-y-3"
       first={<>
       <div className="space-y-1">
