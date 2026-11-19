@@ -63,7 +63,11 @@ function penWhere(
   const toThing = !forBox || !door ? ''
     : near(door) ? ` You are at the ${forBox.item.name}.`
       : ` The ${forBox.item.name} is ${way(door.x - pen.x, door.y - pen.y)}.`;
-  const laying = from ? 'Laying a path: Enter presses a corner here.' : 'No path started: Enter starts one here.';
+  // Before anything is pressed, the instruction itself, in the words of the order the park's own
+  // label gives: the ninth playtest walked eighteen paces before asking "do I need to press Enter
+  // first to start the path before walking?"
+  const laying = from ? 'Laying a path: Enter presses a corner here.'
+    : 'No path started yet. Press Enter here to start the path, or walk to where it should start first.';
   // A path under way that has reached the other end says how to finish it. "You are on a path from
   // the way in" alone left the scrum-master playtest (sm11) standing on the join, asking whether it
   // was done or needed another Enter.

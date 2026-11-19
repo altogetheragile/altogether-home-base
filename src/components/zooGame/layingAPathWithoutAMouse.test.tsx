@@ -170,7 +170,7 @@ describe('the pen, said in words', () => {
     expect(c.querySelector('[data-part="pen-where"]')?.getAttribute('aria-live')).toBe('polite');
     // It steers for the nearest path a visitor can already walk from the way in, which is what a
     // new path has to reach, and the pen starts at the thing's door, and says so.
-    expect(where(c)).toMatch(/No path started: Enter starts one here\. The nearest path from the way in is .*paces/);
+    expect(where(c)).toMatch(/No path started yet\. Press Enter here to start the path, or walk to where it should start first\. The nearest path from the way in is .*paces/);
     expect(where(c)).toContain(`You are at the ${forItem.name}.`);
     fireEvent.keyDown(park, { key: 'Enter' });
     expect(where(c)).toMatch(/^Laying a path/);

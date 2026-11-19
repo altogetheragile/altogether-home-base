@@ -604,36 +604,35 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
               {/* One row, exactly as tall as the region: the columns scroll inside it. Without the
                   explicit row the cells took their content's height and the region clipped them,
                   so a card lower down the column could not be reached at all. */}
+              {/* Refinement planned in at topic three, as a note over the board rather than a card in
+                  To Do. A card beside the Lion read as a Sprint Backlog item, and refinement is not
+                  one: nothing about it reaches a visitor, and the Guide makes it an ongoing activity
+                  (sm9, and again in sm11 and sm12). The points are this game's way of making time. */}
+              {(refineTodo || refineDone) && (
+                <div data-part="refine-note" className="flex shrink-0 flex-wrap items-center gap-x-2 gap-y-1 rounded-lg border border-violet-400/60 bg-violet-500/[0.06] px-2.5 py-1.5 text-xs">
+                  {refineDone
+                    ? <Check className={cn(TONE.teach.text, 'h-3.5 w-3.5 shrink-0')} />
+                    : <ListChecks className={cn(TONE.teach.text, 'h-3.5 w-3.5 shrink-0')} />}
+                  <span className="font-medium">
+                    {refineDone ? 'Refined the Product Backlog this Sprint' : 'Refining the Product Backlog is planned this Sprint'}
+                  </span>
+                  <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
+                  {refineTodo && (
+                    <>
+                      <span className="text-[11px] text-muted-foreground">
+                        The whole Scrum Team, for later Sprints. Holding it costs the day&rsquo;s build time.
+                      </span>
+                      <Button size="sm" className={cn(TONE.teach.solid, 'ml-auto h-7 px-2 text-xs text-white hover:bg-violet-700')}
+                        onClick={() => { setShowBacklog(true); onHoldRefinement?.(); }}>
+                        Hold it now
+                      </Button>
+                    </>
+                  )}
+                </div>
+              )}
               <div className="grid min-h-0 flex-1 grid-cols-1 grid-rows-1 gap-2 overflow-hidden rounded-lg border-2 border-border p-2 md:grid-cols-3">
                 <div data-column="todo" {...dropProps('todo')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('todo'))}>
-                <BoardColumn title="To Do" count={todo.length + (refineTodo ? 1 : 0)} hint="Everything is under way or done">
-                  {refineTodo && (
-                    // Refinement the Scrum Team put in the plan, sitting on the board like the work
-                    // it is. It is not a Product Backlog item - nothing about it reaches a visitor -
-                    // so it does not wear a PBI's clothes.
-                    <div className="rounded-lg border-2 border-violet-400/70 bg-violet-500/[0.07] p-2">
-                      <div className="flex items-start justify-between gap-2">
-                        <div className="min-w-0">
-                          <div className="flex items-center gap-1.5 text-sm font-semibold">
-                            <ListChecks className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
-                            Refine the Product Backlog
-                          </div>
-                          <p className="text-[11px] text-muted-foreground">Planned into this Sprint &middot; the whole Scrum Team</p>
-                        </div>
-                        <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
-                      </div>
-                      <p className="mt-1 text-[11px] leading-snug text-muted-foreground">
-                        It costs the day you hold it, and what it prepares is later Sprints. Skip it and the next
-                        Planning has less to choose from.
-                      </p>
-                      <div className="mt-1.5 flex justify-end">
-                        <Button size="sm" className={cn(TONE.teach.solid, "h-7 px-2 text-xs text-white hover:bg-violet-700")}
-                          onClick={() => { setShowBacklog(true); onHoldRefinement?.(); }}>
-                          Hold it now
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                <BoardColumn title="To Do" count={todo.length} hint="Everything is under way or done">
                   {todo.map((it, i) => {
                     // You build the habitat before its animals: an animal can't start until
                     // its enclosure is built.
@@ -794,7 +793,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                 </BoardColumn>
                 </div>
                 <div data-column="done" {...dropProps('done')} className={cn('flex min-h-0 min-w-0 flex-col transition-shadow', dropClass('done'))}>
-                <BoardColumn title="Done ✓" count={deploy.length + done.length + (refineDone ? 1 : 0)} hint="Nothing Done yet - Done is built and accepted. Opening it to visitors is the decision after.">
+                <BoardColumn title="Done ✓" count={deploy.length + done.length} hint="Nothing Done yet - Done is built and accepted. Opening it to visitors is the decision after.">
                   {/* Done means it meets the Definition of Done. Whether it is OPEN to visitors is a
                       separate decision about the same card - you may release the moment it is Done,
                       or hold it. A whole column for "Done but not opened" said that badly: since the
@@ -814,13 +813,6 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
 
                     </div>
                   ))}
-                  {refineDone && (
-                    <div className="flex items-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-500/[0.06] px-2 py-1.5 text-xs">
-                      <Check className={cn(TONE.teach.text, "h-3.5 w-3.5 shrink-0")} />
-                      <span className="font-medium">Refined the Product Backlog</span>
-                      <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
-                    </div>
-                  )}
                   {done.map((it) => (
                     // data-done-card lets the delivery celebration burst confetti from this card.
                     <div key={it.id} data-done-card={it.id}>
