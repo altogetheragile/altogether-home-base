@@ -10,6 +10,7 @@ import type { ZooGameApi } from '@/components/zooGame/zooActions';
 import type { SeatName } from '@/components/zooGame/useZooSessions';
 import type { ZooAction } from '@/components/zooGame/types';
 import { inHandItem, copyOffset } from '@/components/zooGame/engine';
+import { usePen } from '@/components/zooGame/usePen';
 import { readyToAsk } from '@/components/zooGame/parkChecks';
 
 /** The Product Owner, as somebody says their name. */
@@ -345,7 +346,8 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
   const [partFocus, setPartFocus] = useState<{ id: string; key: string } | null>(null);
   // The pen, for laying a pathway's route. Up here because the button that picks it up is on the
   // design bench and the park is where it draws.
-  const [drawing, setDrawing] = useState(false);
+  // Put away when the work in hand changes, however it changed (see usePen).
+  const [drawing, setDrawing] = usePen(inHandItem(state, buildingId)?.id ?? null);
 
   const zooCopy = useZooCopy();
   // What has been edited in this session, laid over what was loaded - derived rather than mirrored

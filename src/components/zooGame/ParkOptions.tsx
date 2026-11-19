@@ -376,14 +376,18 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
         return (
           <Row label={L('Size')}>
             {(['small', 'medium', 'large'] as const).map((k) => (
-              <Chip key={k} on={(subject.enclosureSize ?? 'medium') === k} onClick={() => api.onSetEnclosure(subject.id, k)}>
+              // Chosen only when somebody chose it. Shown pressed on the default, M said "chosen" while
+              // the card said "no footprint chosen yet" (sm14, three times) - which is what the park
+              // checks, since a size nobody picked is not a decision.
+              <Chip key={k} on={subject.enclosureSize === k} onClick={() => api.onSetEnclosure(subject.id, k)}>
                 {k === 'small' ? 'S' : k === 'medium' ? 'M' : 'L'}
               </Chip>
             ))}
             {/* Said as the chosen size's, not as a figure beside three buttons that could be any of
                 theirs: "unclear whether '6 × 4 tiles' is the current size or a label for S". */}
             <span data-part="size-now" className="w-full pt-1 text-[11px] text-muted-foreground">
-              {{ small: 'S', medium: 'M', large: 'L' }[subject.enclosureSize ?? 'medium']} is{' '}
+              {subject.enclosureSize ? '' : 'No size chosen yet. '}
+              {{ small: 'S', medium: 'M', large: 'L' }[subject.enclosureSize ?? 'medium']} {subject.enclosureSize ? 'is' : 'would be'}{' '}
               {Math.round(ENCLOSURE_SIZE[subject.enclosureSize ?? 'medium'].w / 22)} &times;{' '}
               {Math.round(ENCLOSURE_SIZE[subject.enclosureSize ?? 'medium'].h / 22)} tiles
               {living.length ? '' : ' · nothing lives here yet'}
