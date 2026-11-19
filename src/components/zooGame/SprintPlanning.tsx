@@ -321,12 +321,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
   const stars = revealed(state, 'essentials');
   const horizon = readyHorizon(state);
-  // How the work gets done is topic three's whole job, so an item with no steps is topic three left
-  // undone. "Suggest steps for all" is one press away if you would rather not write them yourself.
-  const unplanned = chosen.filter((i) => !(i.tasks ?? []).some((t) => t.label.trim())).length;
-  // ...and the ones somebody has started, which are the only ones a wand may touch: it fills gaps in
-  // a plan, it does not write one. Breaking the work down is what this topic is for.
-  const started = chosen.length - unplanned;
+  // How the work gets done is topic three's whole job. "Suggest steps for all" is one press away for
+  // a team that would rather start from a breakdown, and it shows only while it would add something.
+  const wandWouldAdd = chosen.some((i) => fillTheGaps(i).length > (i.tasks ?? []).filter((t) => t.label.trim()).length);
   // Habitats an animal can be assigned to: anything in the Product Backlog that is an enclosure.
   const habitats = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
@@ -663,15 +660,15 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 {/* Only for more than one: with a single plan started it did exactly what that plan's
                     own "Fill in the gaps in this plan" does, and the two side by side read as one
                     action with two names (scrum-master playtest, eight steps). */}
-                {started > 1 && onSetTasks && (
-                  <Button size="sm" className={cn(WIZARD, 'h-7 shrink-0 px-2 text-xs')}
-                    title="Fills the gaps in the plans you have started. Items you have not touched are left for you - breaking the work down is what this topic is for."
-                    onClick={() => chosen.forEach((it) => {
-                      if ((it.tasks ?? []).some((t) => t.label.trim())) onSetTasks(it.id, fillTheGaps(it));
-                    })}>
+                {/* Every plan in the Sprint, blank ones included: a blank plan gets the suggested
+                    breakdown, a started one only what it is missing (19 Nov 2026). */}
+                {chosen.length > 1 && wandWouldAdd && onSetTasks && (
+                  <Button size="sm" data-part="plan-wand-all" className={cn(WIZARD, 'h-7 shrink-0 px-2 text-xs')}
+                    title="Suggests steps for every plan in the Sprint. Plans you have started keep your wording; only what is missing is added."
+                    onClick={() => chosen.forEach((it) => onSetTasks(it.id, fillTheGaps(it)))}>
                     {/* Says how many plans, in words: "Fill in the gaps 1" beside the item's own
                         "Fill in the gaps" was two buttons with one name (scrum-master playtest). */}
-                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps in all {started} plans you started
+                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all {chosen.length} plans
                   </Button>
                 )}
               </div>
