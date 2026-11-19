@@ -41,4 +41,14 @@ describe('the size of a habitat', () => {
     expect(pressed).toEqual(['M']);
     expect(panel.querySelector('[data-part="size-now"]')?.textContent).toMatch(/^M is \d+ × \d+ tiles/);
   });
+
+  // ...and nothing is pressed until somebody chooses. Showing the default as chosen said "M" while
+  // the card said "no footprint chosen yet" (sm14, three times).
+  it('shows nothing chosen when nobody has chosen', () => {
+    const s = game();
+    open(s, { ...pen(s), enclosureSize: undefined });
+    const panel = openGroup('footprint');
+    expect(panel.querySelectorAll('[data-part="panel-footprint"] button[aria-pressed="true"]').length).toBe(0);
+    expect(panel.querySelector('[data-part="size-now"]')?.textContent).toMatch(/^No size chosen yet\. M would be \d+ × \d+ tiles/);
+  });
 });
