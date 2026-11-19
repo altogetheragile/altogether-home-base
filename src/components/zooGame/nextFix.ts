@@ -42,8 +42,18 @@ export function whatToFix(state: ZooGameState, item: BacklogItem): Fix | null {
 /** The card's next step, naming what fails and where to fix it rather than "accept N more". */
 export function nextStep(state: ZooGameState, item: BacklogItem): string {
   const generic = whatIsLeft(state, item);
-  if (!/^Next: accept /.test(generic)) return generic;
+  // "Build it on the park" said the same thing to an enclosure already standing there with a high
+  // fence and the right size: the scrum-master playtest (sm11) read it, on the park, eleven times.
+  // While something the park can see still fails, name that instead.
+  // A started item stands on the park whether or not anybody chose its spot (the park packs it).
+  const building = generic === 'Next: build it on the park';
+  if (!building && !/^Next: accept /.test(generic)) return generic;
   const fix = whatToFix(state, item);
+  if (building) {
+    if (!fix) return generic;
+    const where = fix.where && !/\bunder\b/i.test(fix.evidence) ? `. Change it under ${fix.where}` : '';
+    return `Next: ${fix.evidence}${where}`;
+  }
   if (fix) {
     // Most findings already say where ("- say so under Offers"); the rest get the control named.
     const where = fix.where && !/\bunder\b/i.test(fix.evidence) ? `. Change it under ${fix.where}` : '';

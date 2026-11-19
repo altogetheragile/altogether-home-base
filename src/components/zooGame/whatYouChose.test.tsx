@@ -6,6 +6,7 @@ import { ParkPlan } from './ParkPlan';
 import { initialZooState } from './config';
 import { startOnTheBoard, whatIsLeft, readyToMove } from './engine';
 import type { ZooGameState, BacklogItem } from './types';
+import { nextStep } from './nextFix';
 
 // Three things a player said, playing it.
 //
@@ -68,7 +69,7 @@ describe('the card dialog, on work that is finished', () => {
     dialog(state, started, { onFinish: () => {} });
     const said = document.querySelector('[data-part="what-is-left"]');
     expect(said, 'the dialog says nothing about what stands between here and Done').toBeTruthy();
-    expect(said!.textContent, 'it does not agree with the card').toBe(whatIsLeft(state, started));
+    expect(said!.textContent, 'it does not agree with the card').toBe(nextStep(state, started));
   });
 
   it('reads one rule, so the card and the dialog cannot disagree', () => {

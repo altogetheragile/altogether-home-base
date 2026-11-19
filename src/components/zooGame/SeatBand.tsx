@@ -211,8 +211,12 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
                   {s.name}
                   {/* The Scrum Master hat, worn by a Developer: the SM the board writes on Sam,
                       in the Scrum Master's colour, beside the name of whoever has it. */}
-                  {s.hat && <span data-part="seat-hat" title="Holds the Scrum Master hat this Sprint" className={cn(SEAT.scrumMaster.soft, 'ml-1 rounded-full px-1 text-[10px] font-semibold')}>SM</span>}
-                  {yours && <span data-part="seat-you" className="ml-1 text-[10px] font-bold uppercase text-foreground">you</span>}
+                  {s.hat && ' '}
+                  {s.hat && <span data-part="seat-hat" title="Holds the Scrum Master hat this Sprint" className={cn(SEAT.scrumMaster.soft, 'rounded-full px-1 text-[10px] font-semibold')}>SM</span>}
+                  {/* A real space as well as the margin: read aloud, or by the playtest, the two ran
+                      together as "SamYOU" (sm11). */}
+                  {yours && ' '}
+                  {yours && <span data-part="seat-you" className="text-[10px] font-bold uppercase text-foreground">you</span>}
                   {/* One name is yours to change: alone, that is your own Developer's, not Sam's
                       or the other two Developers' as well. */}
                   {yours && onRename && (mine || s.id === you?.id) && <RenameMe id={s.id} name={s.name} onRename={onRename} />}

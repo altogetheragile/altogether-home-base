@@ -64,7 +64,15 @@ function penWhere(
     : near(door) ? ` You are at the ${forBox.item.name}.`
       : ` The ${forBox.item.name} is ${way(door.x - pen.x, door.y - pen.y)}.`;
   const laying = from ? 'Laying a path: Enter presses a corner here.' : 'No path started: Enter starts one here.';
-  return `${laying}${toWalk}${toThing}`;
+  // A path under way that has reached the other end says how to finish it. "You are on a path from
+  // the way in" alone left the scrum-master playtest (sm11) standing on the join, asking whether it
+  // was done or needed another Enter.
+  // Only at the end it did not start from: a path begun at the door has not reached anything by
+  // standing beside it. The last corner pressed stands in for where it began.
+  const away = (p: { x: number; y: number }) => !from || Math.hypot(p.x - from.x, p.y - from.y) > JOINS;
+  const finish = from && ((nearest && near(nearest) && away(nearest)) || (door && near(door) && away(door)))
+    ? ' Press Enter twice here to finish the path.' : '';
+  return `${laying}${toWalk}${toThing}${finish}`;
 }
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer
