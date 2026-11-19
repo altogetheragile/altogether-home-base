@@ -1799,9 +1799,15 @@ export function confirmAcceptance(state: ZooGameState, id: string, index: number
   };
 }
 
-/** Replace a PBI's task plan (used for add / edit / remove / suggest during Planning). */
+/** Replace a PBI's task plan (used for add / edit / remove / suggest during Planning).
+ *
+ *  The Definition of Done's sign-off step is kept on it. It was only added when the DoD was agreed,
+ *  to plans that already had steps, so a plan written afterwards had none - and an item whose plan
+ *  has no sign-off reaches Done without the Product Owner ever being asked, then can never open,
+ *  because opening waits for an acceptance nobody could ask for. The scrum-master playtest (sm7) had
+ *  its Lion sitting in Done, "not open to visitors yet", for the rest of the Sprint. */
 export function setItemTasks(state: ZooGameState, id: string, tasks: SprintTask[]): ZooGameState {
-  return { ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, tasks } : it)) };
+  return syncSignOffTasks({ ...state, backlog: state.backlog.map((it) => (it.id === id ? { ...it, tasks } : it)) });
 }
 
 /** Tick a plan task done / not-done as the Developers work through it. Ticking the last
@@ -3595,7 +3601,8 @@ export function fillTheGaps(item: BacklogItem): SprintTask[] {
   // ("a wand only helps after the learner has tried", #605), and the button sat greyed out with no
   // word on screen saying why. Asked for back on 19 Nov 2026: "There used to be a wizard button to
   // add tasks in step three of Sprint Planning. Can we add it back in?"
-  if (!mine.length) return suggestTasks(item);
+  // The Definition of Done's sign-off on its own is not a plan anybody started.
+  if (!mine.some((t) => !isSignOffTask(t.label))) return suggestTasks(item);
   // Matched loosely on purpose: "fence it" and "Fence it securely" are the same step said twice,
   // and a plan with both in it is a plan nobody trusts.
   const said = (label: string) => label.toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter((w) => w.length > 3);
@@ -4018,7 +4025,14 @@ const whatSurfaces = (state: ZooGameState, day: number): Impediment | null => {
   // not clear whether this is a new occurrence ... or the same one repeating." It is the same one,
   // and it is already out of the team's hands.
   const waiting = state.carriedImpediment?.waitDays ? state.carriedImpediment : null;
-  return rolled && waiting && rolled.title === waiting.title ? null : rolled;
+  if (rolled && waiting && rolled.title === waiting.title) return null;
+  // ...and the same goes for one already dealt with this Sprint. The scrum-master playtest (sm7)
+  // removed "the sign supplier" one morning and was handed it again the next, and read it as the
+  // removal not having worked. A trainer's card is the trainer's choice and is left alone; something
+  // still carried (worked around, or left to grow) is the carry's to bring back, not the roll's.
+  const dealtWith = !state.trainerLed && (state.impedimentLog ?? []).some((e) =>
+    e.sprint === state.sprintNumber && e.title === rolled?.title);
+  return dealtWith ? null : rolled;
 };
 
 /** Whether what has surfaced is in the way of the Sprint Goal.
@@ -4217,7 +4231,7 @@ export function answerImpediment(state: ZooGameState, how: ImpedimentAnswer, by?
     missedScrums: logged.missedScrums,
     // What the Sprint Goal had to do with it, kept for the Retrospective's mirror.
     impedimentLog: [...(logged.impedimentLog ?? []),
-      { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal }],
+      { id: imp.id, sprint: logged.sprintNumber, day: logged.dayNumber, kind: imp.kind ?? 'impediment', how, goal, title: imp.title }],
   };
   if (state.dailyScrumAt === 'start') return openHuddle({ ...base, dayStage: 'building', dayTimeMult: outcome.mult, pendingPlacement: null, daySecondsLeft: dayTotalSeconds(outcome.mult, spent) });
   return openHuddle(advanceDay(base, outcome.mult, spent));

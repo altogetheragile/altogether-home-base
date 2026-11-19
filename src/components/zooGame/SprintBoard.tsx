@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer, ChatKind } from './types';
 import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, asksNow, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, daysInProgress } from './engine';
 import { nextStep } from './nextFix';
+import { SamInline } from './SamSays';
 import { NewHere } from './NewHere';
 import { lookAhead } from './lookAhead';
 import { ActionBar } from './ActionBar';
@@ -929,6 +930,9 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
         <DialogContent data-part="daily-scrum" onOpenAutoFocus={(e) => { e.preventDefault(); (e.currentTarget as HTMLElement | null)?.focus(); }}
           className="zoo-theme max-h-[88vh] max-w-[min(96vw,1100px)] overflow-y-auto border-2 border-[hsl(var(--zoo-ink))] p-4 outline-none [&>button]:hidden">
           <DialogTitle className="sr-only">Daily Scrum</DialogTitle>
+          {/* Sam's word on the event, inside it: a second dialog over this one hid both from a
+              screen reader (sm7 playtest). Playing alone only, as everywhere Sam speaks. */}
+          {solo && <SamInline screen="daily-scrum" name={state.team.scrumMaster.name} />}
           <div>
             <DailyScrum state={state} onHold={onHoldDailyScrum} onSkip={onSkipDailyScrum} onDrop={onDropFromSprint} onAnswer={onAnswerImpediment} onAskScrumMaster={onAskScrumMaster} onSay={onSay} />
           </div>

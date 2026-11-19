@@ -217,7 +217,9 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
     const name = state.backlog.find((x) => x.id === shownId)?.name ?? it?.name ?? 'It';
     // Celebrate the delivery: this increment is now live to visitors. Burst the confetti from the
     // card once it has landed in the Done column (measured after the re-render).
-    toast.success(`🎉 ${name} is live to visitors!`);
+    // With a close button: a toast is a stop on the keyboard's way round the page, and one that did
+    // nothing when pressed was pressed seven times in the sm7 playtest.
+    toast.success(`🎉 ${name} is live to visitors!`, { closeButton: true });
     requestAnimationFrame(() => requestAnimationFrame(() => {
       const el = document.querySelector(`[data-done-card="${shownId}"]`);
       const r = el?.getBoundingClientRect();

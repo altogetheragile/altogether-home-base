@@ -234,12 +234,24 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
   const tasks = item.tasks ?? [];
   const uid = useRef(0);
   const set = (next: SprintTask[]) => onSetTasks(item.id, next);
-  const add = () => set([...tasks, { id: `${item.id}-u${uid.current++}`, label: '', done: false }]);
+  // The new step's box gets the cursor, so a plan can be typed straight through: a step, Enter, the
+  // next. Enter used to do nothing, and the scrum-master playtest (sm7) pressed it and waited.
+  const box = useRef<HTMLDivElement>(null);
+  const [focusId, setFocusId] = useState<string | null>(null);
+  useEffect(() => {
+    if (!focusId) return;
+    box.current?.querySelector<HTMLInputElement>(`[data-step="${focusId}"]`)?.focus();
+  }, [focusId, tasks.length]);
+  const add = () => {
+    const id = `${item.id}-u${uid.current++}`;
+    set([...tasks, { id, label: '', done: false }]);
+    setFocusId(id);
+  };
   const edit = (tid: string, label: string) => set(tasks.map((t) => (t.id === tid ? { ...t, label } : t)));
   const remove = (tid: string) => set(tasks.filter((t) => t.id !== tid));
 
   return (
-    <div className={cn('rounded-lg border bg-card p-3', item.goalCritical ? 'border-amber-400/70' : 'border-border')}>
+    <div ref={box} className={cn('rounded-lg border bg-card p-3', item.goalCritical ? 'border-amber-400/70' : 'border-border')}>
       <div className="flex items-center justify-between gap-2">
         {/* What the item is, its size and its area are on the card beside this. Said here again,
             they were the third time on one screen. */}
@@ -265,15 +277,16 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
               breakdown (asked for back, 19 Nov 2026), on a started one it adds what is missing and
               leaves their wording alone. */}
           {(() => {
+            // (The sign-off alone is not a started plan: see `fillTheGaps`.)
             const mine = (item.tasks ?? []).filter((t) => t.label.trim()).length;
             return fillTheGaps(item).length > mine;
           })() && <Button size="sm" data-part="plan-wand" className={cn(WIZARD, 'h-7 px-2 text-xs')}
-            title={(item.tasks ?? []).some((t) => t.label.trim())
+            title={(item.tasks ?? []).some((t) => t.label.trim() && !isSignOffTask(t.label))
               ? 'Adds the steps your plan is missing. Your wording is left alone.'
               : 'Suggests the steps to build it. They are yours to change.'}
             onClick={() => set(fillTheGaps(item))}>
             <Wand2 className="mr-1 h-3.5 w-3.5" />
-            {(item.tasks ?? []).some((t) => t.label.trim()) ? 'Fill in the gaps in this plan' : 'Suggest the steps'}
+            {(item.tasks ?? []).some((t) => t.label.trim() && !isSignOffTask(t.label)) ? 'Fill in the gaps in this plan' : 'Suggest the steps'}
           </Button>}
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}
           {onClose && (
@@ -298,7 +311,8 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
         {tasks.map((t) => (
           <div key={t.id} className="flex items-center gap-1.5">
             <ListChecks className="h-3.5 w-3.5 shrink-0 text-zoo-quiet" />
-            <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
+            <input data-step={t.id} value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (t.label.trim()) add(); } }}
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
             {/* Said as it is written: a step the park cannot see never ticks itself, and Done waits
                 for every step. */}
