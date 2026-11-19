@@ -4,6 +4,7 @@ import { notReady, cannotOpenGround, PLACEMENT_CHOICES, readyToOpen, goalSource,
 import { lookAhead } from './lookAhead';
 import { DEFAULT_BRIEF } from './config';
 import { poLooksAt } from './parkChecks';
+import { whatToFix } from './nextFix';
 
 import { plotOrder } from './parkZones';
 
@@ -197,6 +198,15 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   if (asked?.itemId) {
     const item = state.backlog.find((it) => it.id === asked.itemId);
     const name = item?.name ?? 'it';
+    // First what the park itself says. She used to answer "accept" whatever it said - not even one of
+    // the answers on offer when something fails - and in the sm6 playtest she signed off a lion
+    // enclosure behind a 2m fence the park had just said a lion would be over.
+    const fails = item ? whatToFix(state, item) : null;
+    if (fails) {
+      const where = fails.where && !/\bunder\b/i.test(fails.evidence) ? ` It is under ${fails.where}.` : '';
+      return { action: { type: 'ANSWER_QUESTION', id: asked.id, choice: 'back', by: 'product_owner' },
+               says: `Not yet. I went to look at the ${name}, and the park says ${fails.evidence}.${where} Fix that, then ask me again.` };
+    }
     const seen = item ? acToJudge(item).map((label) => ({ label, look: poLooksAt(state, item, label) })) : [];
     const no = seen.find((x) => x.look && !x.look.met);
     if (no && item && !acFailing(item).length) {

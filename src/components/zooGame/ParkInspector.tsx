@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { AlertTriangle, Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { acWaived, readyToMove, whatIsLeft } from './engine';
+import { acWaived, readyToMove } from './engine';
+import { nextStep } from './nextFix';
 
 // ============= The inspector =============
 //
@@ -166,7 +167,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
             {/* "Move it to Done" only when it can be: with a step of the plan still open it said so
                 anyway, and there was nothing to move. Then it says what is left instead. */}
             {item.status === 'committed'
-              ? <>{po} accepted it &middot; {readyToMove(item) ? 'move it to Done' : whatIsLeft(state, item).replace(/^Next: /, 'still to do: ')}</>
+              ? <>{po} accepted it &middot; {readyToMove(item) ? 'move it to Done' : nextStep(state, item).replace(/^Next: /, 'still to do: ')}</>
               : <>Done &middot; {item.status === 'open' ? 'open to visitors' : 'not open to visitors yet'}</>}
           </p>
         ) : asked ? (

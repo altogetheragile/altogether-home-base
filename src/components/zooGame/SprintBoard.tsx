@@ -3,7 +3,8 @@ import { useEffect, useRef, useState, type DragEvent, type ReactNode, type Point
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import type { ZooGameState, BacklogItem, PbiDraft, ImpedimentAnswer, HuddleAnswer, ChatKind } from './types';
-import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, asksNow, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, whatIsLeft, daysInProgress } from './engine';
+import { waitingForHabitat, enclosureReady, enclosureOf, availableItems, notReady, revealed, activeWipLimit, whyNothingMoves, openQuestions, theirsToAnswer, asksNow, PLACEMENT_CHOICES, isSignOffTask, waitingOn, whoIs, readyToMove, daysInProgress } from './engine';
+import { nextStep } from './nextFix';
 import { NewHere } from './NewHere';
 import { lookAhead } from './lookAhead';
 import { ActionBar } from './ActionBar';
@@ -349,7 +350,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
   // tooltip nobody sees on a tablet. In the engine, because the card dialog asks the same question
   // and two copies of this rule is how the card and the column came to disagree.
-  const whyNotDone = (it: BacklogItem) => whatIsLeft(state, it);
+  const whyNotDone = (it: BacklogItem) => nextStep(state, it);
   const willSucceed = (from: string, to: string, id: string) => {
     const o = dropOutcome(from, to);
     if (o === 'start') return canStart(id);
