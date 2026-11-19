@@ -54,6 +54,13 @@ function TheStandUp({ state, onSay }: { state: ZooGameState; onSay?: (text: stri
           {thread.map((m) => <Bubble key={m.id} msg={m} />)}
         </ul>
       )}
+      {/* Whose turn it is, said. With a Developer's lines above three buttons and "Pick what you
+          say", the scrum-master playtest asked four times whether it was picking for Ben. */}
+      {options.length > 0 && onSay && thread.length > 0 && (
+        <p data-part="your-turn-now" className="text-xs font-semibold text-foreground">
+          {[...new Set(thread.map((m) => m.from.replace(/\s*\([^)]*\)$/, '')))].join(' and ')} said theirs. Now it is your turn: what do you say?
+        </p>
+      )}
       {options.length > 0 && onSay && (
         <div data-part="your-turn" className="flex flex-wrap gap-2">
           {/* Choices, drawn as choices. They were small pills that read as tags. */}
@@ -281,7 +288,11 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
           </button>
         ))}
       </div>
-      {atRisk && <p className="text-xs text-muted-foreground">The Sprint Goal is at risk too. That is Priya&rsquo;s, and you take it to her straight after this.</p>}
+      {/* Whose the Goal is, as the Guide has it: "a commitment by the Developers", and when the work
+          will not fit "they collaborate with the Product Owner to negotiate the scope of the Sprint
+          Backlog within the Sprint without affecting the Sprint Goal". It said "That is Priya's",
+          and the scrum-master playtest caught it. */}
+      {atRisk && <p className="text-xs text-muted-foreground">The Sprint Goal is at risk too. It is the Developers&rsquo; commitment, so straight after this you take it to Priya and agree what is in the Sprint, keeping the Goal.</p>}
       {/* Every answer above holds the Daily Scrum: the event is where it surfaced and the answer
           is what the team does about it today. The one way out that is not an answer is not
           dealing with it at all, and its button says so. */}

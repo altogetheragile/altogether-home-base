@@ -621,7 +621,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                           {mine.length ? `${mine.length} step${mine.length === 1 ? '' : 's'} · planned` : 'no steps yet'}
                         </span>
                       </span>
-                      <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{it.estimate}</span>
+                      {/* "pts", because beside "5 steps · planned" a bare 2 read as "planned 2". */}
+                      <span className="shrink-0 text-sm font-semibold tabular-nums text-muted-foreground">{it.estimate ?? '?'} pts</span>
                     </button>
                   </div>
                 );

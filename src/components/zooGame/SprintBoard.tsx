@@ -740,6 +740,9 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                           const on = (pulled.assignedDevs ?? []).includes(d.id);
                           return (
                             <button key={d.id} type="button" onClick={() => onAssignDev(pulled.id, d.id)}
+                              // Named for what it decides: who BUILDS it. The rail asks who REVIEWS
+                              // it with the same names, and bare names read as one question twice.
+                              aria-pressed={on} aria-label={`${d.name} builds it`}
                               className={cn(FOCUS, 'rounded-full border px-2 py-0.5 text-[11px] font-semibold transition-colors',
                                 on ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:bg-muted/60')}>
                               {d.name}
@@ -752,7 +755,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                         </button>
                       </div>
                       <p className="mt-1 text-[10px] text-muted-foreground">
-                        pick who takes it &middot; more than one is swarming
+                        pick who builds it &middot; more than one is swarming
                       </p>
                       </div>
                     )}

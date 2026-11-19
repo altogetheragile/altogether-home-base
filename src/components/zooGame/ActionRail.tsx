@@ -147,7 +147,9 @@ export function ActionRail({ state, seat, solo = false, onAnswerPlacement, onSta
     actions.push({
       id: ask.id, actor: 'Developers',
       text: `${item.name} is built. Who gives it the second pair of eyes?`,
-      answers: free.map((d, i) => ({ label: d.name, primary: i === 0, act: () => assign?.(item.id, d.id) })),
+      // "Ben reviews it", not "Ben": the board's swarm chooser offers the same names for who BUILDS it,
+      // and two pairs of bare names read as one choice asked twice (scrum-master playtest, six times).
+      answers: free.map((d, i) => ({ label: `${d.name} reviews it`, primary: i === 0, act: () => assign?.(item.id, d.id) })),
       note: 'Your Definition of Done asks for a review by another Developer. You are playing all of them, so choose who.',
     });
   }

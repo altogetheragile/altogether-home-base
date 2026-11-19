@@ -38,8 +38,8 @@ describe('you are all the Developers', () => {
     const onAssignDev = vi.fn();
     const { container } = render(<MemoryRouter><ActionRail state={s} onAssignDev={onAssignDev} /></MemoryRouter>);
     expect(container.textContent, 'the rail does not ask for the review').toMatch(/Who gives it the second pair of eyes/);
-    expect(screen.queryByRole('button', { name: yourDev(s)!.name }), 'the author is offered as their own reviewer').toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: ben.name }));
+    expect(screen.queryByRole('button', { name: `${yourDev(s)!.name} reviews it` }), 'the author is offered as their own reviewer').toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: `${ben.name} reviews it` }));
     expect(onAssignDev).toHaveBeenCalledWith(card.id, ben.id);
   });
 

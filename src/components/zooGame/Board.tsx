@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, type ReactNode } from 'react';
 import type { ZooGameState, BacklogItem, PbiDraft, SprintTask, EpicMember } from './types';
+import { parkCanSeeStep } from './design';
 import { availableItems, adopted, fillTheGaps, isSignOffTask, notReady, readyHorizon, acSettled, START_READY } from './engine';
 import { REFINE_COSTS } from './config';
 import { checkCriterion } from './parkChecks';
@@ -257,14 +258,20 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
               somebody who has written nothing does the one piece of thinking topic three exists for,
               faster than they can read it - so what they learn is that the button knows how. Given a
               step to work from, it fills the gaps in THEIR plan and leaves their wording alone. */}
-          <Button size="sm" className={cn(WIZARD, 'h-7 px-2 text-xs')}
+          {/* ...and only while there is a gap. With every suggested step already in the plan it
+              stayed on screen and did nothing when pressed: "it is unclear what gaps remain" (the
+              scrum-master playtest, six times). */}
+          {(() => {
+            const mine = (item.tasks ?? []).filter((t) => t.label.trim()).length;
+            return !mine || fillTheGaps(item).length > mine;
+          })() && <Button size="sm" className={cn(WIZARD, 'h-7 px-2 text-xs')}
             disabled={!(item.tasks ?? []).some((t) => t.label.trim())}
             title={(item.tasks ?? []).some((t) => t.label.trim())
               ? 'Adds the steps your plan is missing. Your wording is left alone.'
               : 'Write a first step, then this will fill in the ones you have not thought of.'}
             onClick={() => set(fillTheGaps(item))}>
             <Wand2 className="mr-1 h-3.5 w-3.5" /> Fill in the gaps in this plan
-          </Button>
+          </Button>}
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}
           {onClose && (
             <button type="button" onClick={onClose} title="Close this plan" aria-label={`Close the plan for ${item.name}`}
@@ -290,6 +297,12 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
             <ListChecks className="h-3.5 w-3.5 shrink-0 text-zoo-quiet" />
             <input value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
+            {/* Said as it is written: a step the park cannot see never ticks itself, and Done waits
+                for every step. */}
+            {t.label.trim() && !isSignOffTask(t.label) && !parkCanSeeStep(item, t.label) && (
+              <span data-part="hand-tick" title="The park cannot see this step, so it will not tick itself. Tick it on the item's card when it is done."
+                className="shrink-0 rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">you tick this</span>
+            )}
             <button type="button" onClick={() => remove(t.id)} className={cn(FOCUS, "shrink-0 text-muted-foreground hover:text-foreground")} aria-label="Remove this step"><X className="h-3.5 w-3.5" /></button>
           </div>
         ))}

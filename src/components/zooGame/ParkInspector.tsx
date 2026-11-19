@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { AlertTriangle, Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { acWaived } from './engine';
+import { acWaived, readyToMove, whatIsLeft } from './engine';
 
 // ============= The inspector =============
 //
@@ -163,8 +163,10 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
           <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
             {/* ...and once it is in Done, it says that instead of asking for a move that has been
                 made. Every line here has to be true of the card as it is now. */}
+            {/* "Move it to Done" only when it can be: with a step of the plan still open it said so
+                anyway, and there was nothing to move. Then it says what is left instead. */}
             {item.status === 'committed'
-              ? <>{po} accepted it &middot; move it to Done</>
+              ? <>{po} accepted it &middot; {readyToMove(item) ? 'move it to Done' : whatIsLeft(state, item).replace(/^Next: /, 'still to do: ')}</>
               : <>Done &middot; {item.status === 'open' ? 'open to visitors' : 'not open to visitors yet'}</>}
           </p>
         ) : asked ? (

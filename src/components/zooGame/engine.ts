@@ -12,7 +12,7 @@ import { reserved, freeSlots, onReservedGround, whyReserved } from './parkOutlin
 // itself when it works out where something can go.
 import { standsOnPark as standsHere } from './onThePark';
 import { whereItStands, groundSize, everythingStanding } from './parkModel';
-import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, DEFAULT_GROUP, floraDefaultColors, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
+import { appealFromDesign, isDesignDone, barrierOf, barrierVerdict, hasRoomToRoam, DEFAULT_GROUP, floraDefaultColors, homeSizeOf, isTank, presetFor, amenityAcceptance, enclosureAcceptance, exhibitAcceptance, floraAcceptance, pathAcceptance, isLandscapeType, floraColors, floraFamily, footprintFor, ENCLOSURE_SIZE, designSatisfiesTask, parkCanSeeStep, addWaterTo, addFloraTo, currentDesign, enclosureWater, enclosureFlora, pieceByKey, applyPiece } from './design';
 import { DEFAULT_CONFIG, DEFAULT_SEGMENTS } from './simulation/config';
 import { simulateSprint } from './simulation/simulate';
 import { TOOLBOX, noOnePieceMeets, bestFor, structuresFor, picksAStructure } from './toolboxItems';
@@ -1710,6 +1710,11 @@ export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
   const left = (item.acceptance ?? []).filter((_, i) => !acSettled(item, i)).length;
   if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
   const task = (item.tasks ?? []).find((t) => t.label.trim() && !t.done);
+  // A step the park cannot see is the team's to tick, and the card says so - otherwise it reads as
+  // work still to do on the park, which is where the scrum-master playtest looked for four Sprints.
+  if (task && !isSignOffTask(task.label) && !parkCanSeeStep(item, task.label)) {
+    return `Next: tick \u201c${task.label.trim()}\u201d on its card - the park cannot see that step`;
+  }
   if (task) return `Next: ${task.label.toLowerCase()}`;
   // A plan with nothing left in it said "Next: finish the plan", which is a door with no handle -
   // and it was the only thing on screen while the real blocker was that nothing had been committed
