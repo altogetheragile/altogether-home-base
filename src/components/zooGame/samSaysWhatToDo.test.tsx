@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, fireEvent, screen } from '@testing-library/react';
 import { SamSays } from './SamSays';
 import { SAM_SAYS, samScreen, readQuiet, forgetQuiet, type SamScreen } from './samLines';
@@ -61,20 +61,24 @@ describe('the prompt', () => {
   it('goes on "Got it", and does not come back this visit', () => {
     // Once a visit, not once an arrival: the board is reached every day and the Daily Scrum every
     // morning, and saying the same thing each time is nagging.
-    const { rerender } = render(<SamSays screen="daily-scrum" />);
+    const { rerender } = render(<SamSays screen="building" />);
     fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
     expect(screen.queryByRole('dialog')).toBeNull();
     rerender(<SamSays screen="sprint" />);
     fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
-    rerender(<SamSays screen="daily-scrum" />);
-    expect(screen.queryByRole('dialog'), 'the next Daily Scrum said it all again').toBeNull();
+    rerender(<SamSays screen="building" />);
+    expect(screen.queryByRole('dialog'), 'the next day said it all again').toBeNull();
   });
 
-  it('comes back on the next visit, unless told not to', () => {
+  it('comes back on the next visit, unless told not to', async () => {
     const first = render(<SamSays screen="review" />);
     fireEvent.click(screen.getByRole('button', { name: 'Got it' }));
     first.unmount();
-    render(<SamSays screen="review" />);
+    // A visit is a page load: what was closed is remembered for the page, not for one component,
+    // because Sam speaks from two places (over the page, and inside the Daily Scrum).
+    vi.resetModules();
+    const { SamSays: NextVisit } = await import('./SamSays');
+    render(<NextVisit screen="review" />);
     expect(screen.getByRole('dialog')).toBeTruthy();
   });
 

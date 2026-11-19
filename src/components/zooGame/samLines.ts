@@ -123,8 +123,15 @@ export function writeQuiet(list: SamScreen[]): void {
   }
 }
 
+// The screens Sam has been closed on in this visit. Kept here rather than in one component because
+// Sam speaks from two places: over the page, and inside the Daily Scrum's own dialog.
+const closedThisVisit = new Set<SamScreen>();
+export const wasClosed = (screen: SamScreen): boolean => closedThisVisit.has(screen);
+export const markClosed = (screen: SamScreen): void => { closedThisVisit.add(screen); };
+
 /** Bring every prompt back, with the teaching, when a trainer asks for it from the start. */
 export function forgetQuiet(): void {
+  closedThisVisit.clear();
   try {
     if (typeof localStorage !== 'undefined') localStorage.removeItem(KEY);
   } catch {

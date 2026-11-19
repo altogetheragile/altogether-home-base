@@ -785,7 +785,7 @@ export interface ZooGameState {
   clockPaused?: boolean;
   /** What surfaced and what was done about it, Sprint by Sprint. The Retrospective's mirror reads
    *  this: six things removed and none left to the Developers is a pattern worth seeing. */
-  impedimentLog?: { id: string; sprint: number; day: number; kind: 'block' | 'impediment'; how: ImpedimentAnswer; goal: boolean }[];
+  impedimentLog?: { id: string; sprint: number; day: number; kind: 'block' | 'impediment'; how: ImpedimentAnswer; goal: boolean; title?: string }[];
   /** Improvements the Scrum Team has carried forward, as the game applies them: time set aside to
    *  refine, and forecasting only what is Ready. Both are habits made into defaults. */
   refineHabit?: boolean;

@@ -1036,8 +1036,10 @@ describe('zoo game: the plan (task decomposition) gates Done', () => {
     let s = setItemTasks(initialZooState(1), 'lion', [{ id: 'x', label: 'Only this step', done: false }]);
     s = planSprint(s, ['lion']);
     const t = lion(s).tasks!;
-    expect(t).toHaveLength(1);
     expect(t[0].label).toBe('Only this step');
+    // ...with the Definition of Done's sign-off kept on it, which is not the team's step to drop:
+    // without it the item reached Done unasked and could never open (sm7 playtest).
+    expect(t.map((x) => x.label)).toEqual(['Only this step', "Get the PO's sign-off"]);
   });
 
   it('a mid-Sprint pull also gets a default plan', () => {
