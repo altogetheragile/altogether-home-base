@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render, fireEvent, cleanup } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ParkOptions } from './ParkOptions';
 import { ParkPlan } from './ParkPlan';
@@ -81,9 +81,20 @@ describe('what you can change about each kind of thing', () => {
     expect(names, 'sizing is not called Size').toContain('Size');
     expect(names).toContain('Shape');
     expect(swatches(openGroup('ground')).some((l) => /^Surface /.test(l)), 'a habitat has no surface colour').toBe(true);
-    // The fence colour is in Perimeter, with what the fence is: one menu for the one edge.
-    expect(swatches(openGroup('barrier')).some((l) => /^Fence /.test(l)), 'a habitat has no fence colour').toBe(true);
     expect(openGroup('inside').body.textContent, 'there is no way in').toMatch(/Look inside/);
+  });
+
+  it('a habitat: its fence colour, in Perimeter, once there is a fence to colour', () => {
+    // One menu for the one edge: what holds them, then what it looks like. The colours wait for a
+    // choice of what they colour, and are named after it (sm11, sm12).
+    const s = game();
+    const pen = of(s, 'enclosure');
+    open(s, pen);
+    expect(swatches(openGroup('barrier')).filter((l) => /colour #/.test(l)), 'colours offered before anything holds them').toEqual([]);
+    cleanup();
+    open(s, { ...pen, draftDesign: { ...presetFor(pen as never), parts: { ...presetFor(pen as never).parts, barrier: 'high' } } });
+    const named = swatches(openGroup('barrier'));
+    expect(named.some((l) => /^High fence colour #/.test(l)), named.join(', ')).toBe(true);
   });
 
   it('inside a habitat: everything that goes in it, named for what it is', () => {

@@ -216,6 +216,13 @@ describe('your turn', () => {
       'you asked for a sign-off and the game let it pass').toMatch(/not an approval gate/);
   });
 
+  it('says one of the three is a mistake, so offering it does not read as a contradiction', () => {
+    // "Can you sign this off?" under "nothing here is a sign-off" read as the game contradicting
+    // itself in three playtests running (sm10 to sm12).
+    const c = screen(reviewed());
+    expect(c.querySelector('[data-part="review-turn-hint"]')?.textContent).toMatch(/One of these is a common mistake/);
+  });
+
   it('shows the room, and says who is in it', () => {
     const c = screen(reviewed());
     const r = c.querySelector('[data-part="review-room"]')!;
