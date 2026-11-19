@@ -490,8 +490,12 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
   // The item just pulled into Doing, waiting for the Developers to say who is on it - and only while
   // it is still in Doing. It used to be whatever was last pulled, so "who is taking this?" sat in an
   // empty column under the words "Nothing in progress", asking about work already Done.
+  // ...and only until building begins. Started from the card or the park, the build went ahead and
+  // the box stayed, still asking "pick who builds it" above a card somebody was plainly building:
+  // the scrum-master playtest (sm11) read it as a step not yet done for six steps of Sprint 1.
   const pulled = pulling
-    ? state.backlog.find((it) => it.id === pulling && it.status !== 'done' && it.status !== 'open') ?? null
+    ? state.backlog.find((it) => it.id === pulling && it.status !== 'done' && it.status !== 'open'
+      && !it.draftDesign && !it.design) ?? null
     : null;
 
   return (
@@ -757,8 +761,15 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                           start building
                         </button>
                       </div>
+                      {/* Whoever took it is already named: the box asks whether anybody else is
+                          on it, not who - "pick who builds it" read as unanswered with Ada lit. */}
                       <p className="mt-1 text-[10px] text-muted-foreground">
-                        pick who builds it &middot; more than one is swarming
+                        {(() => {
+                          const on = state.team.developers.filter((d) => (pulled.assignedDevs ?? []).includes(d.id)).map((d) => d.name);
+                          return on.length
+                            ? <>{on.join(' and ')} {on.length === 1 ? 'is' : 'are'} building it &middot; press another name to swarm</>
+                            : <>pick who builds it &middot; more than one is swarming</>;
+                        })()}
                       </p>
                       </div>
                     )}
@@ -1021,7 +1032,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
       <CardDialog state={state} item={cardId ? state.backlog.find((it) => it.id === cardId) ?? null : null}
         onClose={() => setCardId(null)}
         onStart={(id) => { onStartItem(id); setPulling(id); }}
-        onBuilding={(id) => setDesigning(id)}
+        onBuilding={(id) => { setPulling(null); setDesigning(id); }}
         onPutIn={onPutIn}
         onFinish={(id) => { setRefusedMove(null); onFinishItem(id); }}
         onAskToCheck={onAskToCheck}

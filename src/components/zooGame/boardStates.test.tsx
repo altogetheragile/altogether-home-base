@@ -125,3 +125,47 @@ describe('the two states of the tab', () => {
     expect(who!.textContent).toMatch(/swarming/);
   });
 });
+
+// The eleventh scrum-master playtest started the Lion Enclosure, chose its fence and its size, and
+// still had "pick who builds it" above the card with Ada lit - and read it, for six steps, as a step
+// it had not done yet.
+describe('the who-builds-it box, once it is answered', () => {
+  const dropped = () => {
+    const s = base();
+    const item = s.backlog.find((it) => it.status === 'committed' && it.category === 'enclosure')!;
+    const dev = s.team.developers[0];
+    const r = board(s);
+    const card = [...r.container.querySelectorAll('[data-part="board-card"]')]
+      .map((el) => el.closest('.cursor-grab'))
+      .find((el) => (el?.textContent ?? '').trim().startsWith(item.name))!;
+    carry(card, r.container.querySelector('[data-column="doing"]')!);
+    const doing = (over: Record<string, unknown>): ZooGameState => ({
+      ...s, backlog: s.backlog.map((it) => (it.id === item.id
+        ? { ...it, status: 'doing' as const, assignedDevs: [dev.id], ...over } : it)),
+    } as ZooGameState);
+    const again = (st: ZooGameState) => r.rerender(
+      <MemoryRouter>
+        <SprintBoard state={st}
+          onEstimate={noop} onToggleTask={noop} onFinishItem={noop} onStartItem={noop}
+          onPull={noop} onSplitEpic={noop} onAssignDev={noop}
+          onOpen={noop} onEndDay={noop} onHoldDailyScrum={noop} onSkipDailyScrum={noop}
+          onStartDay={noop} onBuilding={noop} />
+      </MemoryRouter>,
+    );
+    return { r, dev, doing, again };
+  };
+
+  it('says who is already on it, rather than asking', () => {
+    const { r, dev, doing, again } = dropped();
+    again(doing({}));
+    const who = r.container.querySelector('[data-part="who-takes-it"]');
+    expect(who?.textContent).toContain(`${dev.name} is building it`);
+    expect(who?.textContent).not.toMatch(/pick who builds it/);
+  });
+
+  it('goes once building has begun', () => {
+    const { r, doing, again } = dropped();
+    again(doing({ draftDesign: { parts: {}, colors: {} } }));
+    expect(r.container.querySelector('[data-part="who-takes-it"]'), 'it still asks, over work under way').toBeNull();
+  });
+});
