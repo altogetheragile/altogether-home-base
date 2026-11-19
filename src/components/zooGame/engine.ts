@@ -1703,6 +1703,15 @@ export const readyToMove = (item: BacklogItem): boolean =>
  *  whether a card could move at all, which is the bug this function was extracted to stop
  *  happening twice. */
 export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
+  // An animal in nobody's habitat first, before anything else: it stands loose on the park as a
+  // building site, and "build it on the park" sent the scrum-master playtest (sm8) nudging a lion
+  // round the grass with the arrow keys for forty-odd steps. What it needs is a habitat.
+  const loose = looseAnimal(state, item);
+  if (loose) {
+    return loose.home
+      ? `Next: put the ${item.name} in its habitat - drag it onto the ${loose.home.name}, or press "Put it in the ${loose.home.name}"`
+      : `Next: put the ${item.name} in a habitat - drag it onto one on the park`;
+  }
   // Nothing left: the card says so and waits to be moved. Done is the Developers' word, so the
   // card does not walk into the column by itself when the Product Owner accepts.
   if (readyToMove(item)) return 'Ready \u00b7 move it to Done';
@@ -1840,6 +1849,22 @@ export const enclosureOf = (state: ZooGameState, item: BacklogItem): BacklogItem
 /** Whether an animal's habitat is built yet: you build the enclosure BEFORE the animals.
  *  True when the item is not an exhibit, has no enclosure, or its enclosure is built
  *  (Done or Open). A referenced-but-unbuilt enclosure blocks the animal. */
+/** An animal being built that is in no standing habitat, and the one it most likely belongs in.
+ *
+ *  Null when it is housed, or is not an animal in Doing. `home` is its own habitat when that is
+ *  standing, else a standing habitat named after it ("Lion" -> "Lion Enclosure"), else the only
+ *  standing habitat there is; null when there is nothing to suggest. */
+export function looseAnimal(state: ZooGameState, item: BacklogItem): { home: BacklogItem | null } | null {
+  if (item.category !== 'exhibit' || item.status !== 'committed' || !item.started) return null;
+  const standing = state.backlog.filter((it) => it.category === 'enclosure' && (it.status === 'done' || it.status === 'open'));
+  if (item.enclosureId && standing.some((e) => e.id === item.enclosureId)) return null;
+  const word = item.name.toLowerCase().split(/\s+/)[0];
+  const home = standing.find((e) => e.id === item.enclosureId)
+    ?? standing.find((e) => e.name.toLowerCase().includes(word))
+    ?? (standing.length === 1 ? standing[0] : null);
+  return { home };
+}
+
 export function enclosureReady(state: ZooGameState, item: BacklogItem): boolean {
   if (item.category !== 'exhibit' || !item.enclosureId) return true;
   const home = enclosureOf(state, item);

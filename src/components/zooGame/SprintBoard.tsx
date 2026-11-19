@@ -61,6 +61,7 @@ interface SprintBoardProps {
   /** Ask the Product Owner to look at built work. Offered on the card as well as on the park:
    *  "how does Priya approve the last AC?" is not a question the pill was answering. */
   onAskToCheck?: (id: string) => void;
+  onPutIn?: (id: string, enclosureId: string) => void;
   onEndDay: () => void;
   onHoldDailyScrum: () => void;
   /** What the Scrum Master does about what surfaced at the Daily Scrum. */
@@ -199,7 +200,7 @@ function BoardCard({ item, state, tone, note, waiting, onOpen }: {
  *  Done, and open (release) it whenever you like; the day ends on the timer or when
  *  you call it, opening the Daily Scrum. After the last day's Daily Scrum the Review
  *  opens. The Product Backlog stays on the left to pull, add and refine items. */
-export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories, solo = false,     }: SprintBoardProps) {
+export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, onStartItem, onReorderSprint,   onPull, onDropFromSprint, onAnswerPlacement, onSplitEpic, onAssignDev, onOpen, onAskToCheck, onPutIn, onToggleTask,  onEndDay, onHoldDailyScrum, onAnswerImpediment, onAskScrumMaster, onSkipDailyScrum, onStartDay, onHoldRefinement, onBuilding, onSay, onAnswerHuddle,        onAddPbi, onSetUserStories, solo = false,     }: SprintBoardProps) {
   const setDesigning = onBuilding;
   // Which item's dialog is open. Detail lives there now: the board carries four things per card.
   const [cardId, setCardId] = useState<string | null>(null);
@@ -1021,6 +1022,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
         onClose={() => setCardId(null)}
         onStart={(id) => { onStartItem(id); setPulling(id); }}
         onBuilding={(id) => setDesigning(id)}
+        onPutIn={onPutIn}
         onFinish={(id) => { setRefusedMove(null); onFinishItem(id); }}
         onAskToCheck={onAskToCheck}
         onHandBack={onDropFromSprint}

@@ -314,6 +314,11 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
             <input data-step={t.id} value={t.label} onChange={(e) => edit(t.id, e.target.value)} placeholder="A step to build it"
               onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); if (t.label.trim()) add(); } }}
               className="min-w-0 flex-1 rounded border border-border bg-background px-2 py-1 text-sm outline-none focus:border-primary" />
+            {/* The Definition of Done's step, not one the Developers chose (sm8 playtest). */}
+            {isSignOffTask(t.label) && (
+              <span data-part="dod-step" title="This step is here because your Definition of Done asks for the Product Owner's sign-off. That is this game's rule, not the Scrum Guide's."
+                className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-zoo-quiet">from your Definition of Done</span>
+            )}
             {/* Said as it is written: a step the park cannot see never ticks itself, and Done waits
                 for every step. */}
             {t.label.trim() && !isSignOffTask(t.label) && !parkCanSeeStep(item, t.label) && (
