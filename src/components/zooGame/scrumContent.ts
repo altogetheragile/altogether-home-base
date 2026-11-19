@@ -266,6 +266,39 @@ export const SCRUM_CARDS: ScrumCard[] = [
 
 export const cardFor = (id: string): ScrumCard | undefined => SCRUM_CARDS.find((c) => c.id === id);
 
+// ============= The glossary's other words =============
+//
+// The glossary is the Teaching Cards first: every card is an entry, its title the term and its
+// summary the definition, so a definition is written once. These are the words the game uses that
+// have no card of their own. Checked against the 2020 Scrum Guide; where a word is not the Guide's,
+// `notScrum` says so, as the cards do.
+export interface GlossaryWord {
+  id: string;
+  term: string;
+  /** Other ways the game writes it, matched in running text. */
+  also?: string[];
+  definition: string;
+  notScrum?: string;
+}
+
+export const GLOSSARY_WORDS: GlossaryWord[] = [
+  { id: 'scrum-team', term: 'Scrum Team', definition: 'One Scrum Master, one Product Owner and Developers: a small, cross-functional, self-managing team with no sub-teams or hierarchy, focused on one objective at a time, the Product Goal.' },
+  { id: 'artifact', term: 'Artifact', also: ['artifacts'], definition: 'What Scrum uses to make work or value visible: the Product Backlog, the Sprint Backlog and the Increment. Each one carries a commitment.' },
+  { id: 'commitment', term: 'Commitment', also: ['commitments'], definition: 'What each artifact is measured against: the Product Goal for the Product Backlog, the Sprint Goal for the Sprint Backlog, and the Definition of Done for the Increment.' },
+  { id: 'event', term: 'Event', also: ['events'], definition: 'A formal opportunity to inspect and adapt. The Sprint holds the other four: Sprint Planning, the Daily Scrum, the Sprint Review and the Sprint Retrospective.' },
+  { id: 'accountability', term: 'Accountability', also: ['accountabilities'], definition: 'What someone in the Scrum Team answers for. Scrum has three: the Product Owner, the Scrum Master and the Developers.' },
+  { id: 'impediment', term: 'Impediment', also: ['impediments'], definition: 'Anything in the way of the Scrum Team\u2019s progress. The Daily Scrum is where they surface, and the Scrum Master causes their removal.' },
+  { id: 'timebox', term: 'Timebox', also: ['timeboxed', 'timeboxes'], definition: 'The longest an event may last. The Guide sets one for every event: for a one-month Sprint, Sprint Planning is at most eight hours and the Daily Scrum fifteen minutes.' },
+  { id: 'stakeholder', term: 'Stakeholder', also: ['stakeholders'], definition: 'Someone outside the Scrum Team with an interest in the product. They join the Sprint Review; in this zoo, they speak for the visitors.',
+    notScrum: 'The Scrum Guide uses the word without defining it.' },
+  { id: 'acceptance-criteria', term: 'Acceptance criteria', also: ['acceptance criterion'], definition: 'The checks a Product Backlog Item has to pass to be what was asked for. In this zoo the park checks some, and Priya judges the rest.',
+    notScrum: 'A common practice, not part of the Scrum Guide.' },
+  { id: 'story-points', term: 'Story points', also: ['story point', 'points'], definition: 'A relative size for a Product Backlog Item: bigger or smaller than another, not hours.',
+    notScrum: 'A common way to size work. The Guide asks only that the Developers who will do the work size it.' },
+  { id: 'epic', term: 'Epic', also: ['epics'], definition: 'A Product Backlog Item too big for one Sprint, split into smaller ones during refinement.',
+    notScrum: 'A common word, not the Guide\u2019s.' },
+];
+
 /** The cards worth showing when a player first reaches each phase of the game. */
 export const CARDS_BY_PHASE: Record<string, string[]> = {
   // The Product Goal is set on the opening screen, so it is explained there rather than later.

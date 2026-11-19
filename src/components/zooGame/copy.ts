@@ -1,4 +1,4 @@
-import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE, INTRO_COPY, ORIENTATION } from './scrumContent';
+import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY_PHASE, INTRO_COPY, ORIENTATION, GLOSSARY_WORDS } from './scrumContent';
 import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 import { BOARD_PAGES } from './board/boardPages';
 import { BOARD_INPUTS, BOARD_OUTPUTS, BOARD_DESC } from './board/boardLabels';
@@ -16,7 +16,7 @@ import { SAM_SAYS } from './samLines';
 // edit there breaks a screen rather than improving a sentence.
 
 /** Where a piece of copy appears, so the admin list can be grouped the way the game is played. */
-export type CopyGroup = 'How the zoo works' | 'Scrum on one page' | 'Your Product Goal' | 'Teaching cards' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions' | "Sam's prompts";
+export type CopyGroup = 'How the zoo works' | 'Scrum on one page' | 'Your Product Goal' | 'Teaching cards' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions' | "Sam's prompts" | 'Glossary';
 
 export interface CopyEntry {
   /** Stable id - the database key. Never renamed once shipped, or overrides orphan. */
@@ -334,6 +334,17 @@ export function copyEntries(): CopyEntry[] {
       key: `sam.${screen}`, group: "Sam's prompts", label: line.where,
       where: `Sam's prompt on ${line.where}`, value: line.text, long: true, phases: [line.phase],
       apply: (v) => { line.text = v; },
+    });
+  }
+
+  // The glossary's words that have no Teaching Card. A card's own entry is its summary, which is
+  // edited with the card; these are the rest.
+  for (const w of GLOSSARY_WORDS) {
+    out.push({
+      key: `glossary.${w.id}`, group: 'Glossary', label: w.term,
+      where: 'Learn, under Glossary, and when the word is pressed in one of Sam\u2019s prompts',
+      value: w.definition, long: true, phases: [],
+      apply: (v) => { w.definition = v; },
     });
   }
 

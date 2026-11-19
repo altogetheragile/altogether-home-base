@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
 import { SEAT } from './seats';
+import { TermText } from './GlossaryTerm';
 import { SAM_SAYS, readQuiet, writeQuiet, wasClosed, markClosed, type SamScreen } from './samLines';
 
 // Sam, saying what to do on the screen you have just reached.
@@ -49,18 +50,20 @@ function useSam(screen: SamScreen | null) {
 }
 
 /** The figure, the bubble, the tick box and "Got it": the same wherever Sam speaks. */
-function SamBubble({ screen, dontShow, setDontShow, close, big = true, Text = 'p' }: {
+function SamBubble({ screen, dontShow, setDontShow, close, big = true, textId }: {
   screen: SamScreen; dontShow: boolean; setDontShow: (v: boolean) => void; close: () => void;
-  big?: boolean; Text?: React.ElementType;
+  big?: boolean; textId?: string;
 }) {
   return (
     <div className="mt-1 flex items-end gap-3">
       <Person hex={SEAT.scrumMaster.hex} initials="SM" style={personSize(big ? 52 : 40)} className="mb-1 shrink-0" />
       <div className={cn('relative min-w-0 flex-1 rounded-3xl rounded-bl-md border-[3px] border-[hsl(var(--zoo-ink))] bg-white',
         big ? 'px-6 py-5 shadow-[5px_5px_0_hsl(var(--zoo-ink))]' : 'px-4 py-3 shadow-[3px_3px_0_hsl(var(--zoo-ink))]')}>
-        <Text className={cn('font-medium leading-snug text-[hsl(var(--zoo-ink))]', big ? 'text-lg sm:text-xl' : 'text-base')}>
-          {SAM_SAYS[screen].text}
-        </Text>
+        {/* A div, not a paragraph: a term's definition opens inside it. Its words that are in the
+            glossary can be pressed for what they mean. */}
+        <div id={textId} className={cn('font-medium leading-snug text-[hsl(var(--zoo-ink))]', big ? 'text-lg sm:text-xl' : 'text-base')}>
+          <TermText text={SAM_SAYS[screen].text} />
+        </div>
         <div className={cn('flex flex-wrap items-center justify-between gap-3 border-t border-border', big ? 'mt-4 pt-3' : 'mt-3 pt-2')}>
           <label className="flex cursor-pointer items-center gap-2 text-sm text-foreground">
             <input type="checkbox" data-part="sam-quiet" checked={dontShow} onChange={(e) => setDontShow(e.target.checked)}
@@ -97,7 +100,7 @@ export function SamSays({ screen, name = 'Sam', onReading }: {
     <DialogPrimitive.Root open={open} onOpenChange={(o) => { if (!o) close(); }}>
       <DialogPrimitive.Portal>
         <DialogPrimitive.Overlay className="fixed inset-0 z-[60] bg-[hsl(45_60%_97%/0.72)] backdrop-blur-[1px] data-[state=open]:animate-in data-[state=open]:fade-in-0" />
-        <DialogPrimitive.Content data-part="sam-says" data-screen={here}
+        <DialogPrimitive.Content data-part="sam-says" data-screen={here} aria-describedby="sam-says-text"
           className="zoo-theme fixed left-1/2 top-1/2 z-[61] w-[min(56rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 outline-none data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95"
           onOpenAutoFocus={(e) => {
             // To "Got it", not the tick box: the one thing nearly everybody does next.
@@ -108,7 +111,7 @@ export function SamSays({ screen, name = 'Sam', onReading }: {
             {/* The seat's name, without the "(SM)" some seats carry: the role is said in full here. */}
             {nameOf(name)} (Scrum Master)
           </DialogPrimitive.Title>
-          <SamBubble screen={here} dontShow={dontShow} setDontShow={setDontShow} close={close} Text={DialogPrimitive.Description} />
+          <SamBubble screen={here} dontShow={dontShow} setDontShow={setDontShow} close={close} textId="sam-says-text" />
         </DialogPrimitive.Content>
       </DialogPrimitive.Portal>
     </DialogPrimitive.Root>

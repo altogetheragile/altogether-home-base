@@ -21,6 +21,7 @@ const GROUP_TONE: Record<CopyGroup, Tone> = {
   'The coach': 'coach',
   'Retrospective questions': 'reflect',
   "Sam's prompts": 'teach',
+  Glossary: 'teach',
 };
 
 // ============= Editing the teaching copy from inside the game =============
