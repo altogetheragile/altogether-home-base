@@ -1,6 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { X, GraduationCap, Clock, Users, Boxes, Heart, Microscope, Recycle, Repeat, Target, Hammer, HeartHandshake, ClipboardList, ListTodo, Package, CalendarRange, ClipboardCheck, Sunrise, Presentation, MessageCircleQuestion } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { TermText } from './GlossaryTerm';
+import { markAll } from './glossary';
 import { SCRUM_CARDS, SCRUM_INTRO, cardFor, type ScrumCard, type CardKind } from './scrumContent';
 import { FOCUS, TONE } from './ui/tokens';
 
@@ -23,11 +25,20 @@ const REFERENCE_GROUPS: [string, CardKind[]][] = [
   ['The ideas underneath', ['concept']],
 ];
 
-function CardBody({ card }: { card: ScrumCard }) {
+/** A card's terms are marked once across the whole card - summary too, when it is shown - and the
+ *  card's own term not at all: the Product Goal's card does not need "Product Goal" explained. */
+const FIELDS = ['why', 'who', 'when', 'how'] as const;
+const LABEL = { why: 'Why', who: 'Who', when: 'When', how: 'How' } as const;
+
+function CardBody({ card, withSummary = false }: { card: ScrumCard; withSummary?: boolean }) {
+  const texts = [...(withSummary ? [card.summary] : []), ...FIELDS.map((f) => card[f])];
+  const marked = markAll(texts, [card.id]);
+  const fields = withSummary ? marked.slice(1) : marked;
   return (
     <div className="space-y-1.5 text-[11px] leading-snug">
-      {([['Why', card.why], ['Who', card.who], ['When', card.when], ['How', card.how]] as const).map(([label, text]) => (
-        <p key={label}><span className="font-semibold text-foreground">{label}: </span><span className="text-muted-foreground">{text}</span></p>
+      {withSummary && <p className="-mt-0.5 mb-1.5 text-xs text-muted-foreground"><TermText text={card.summary} pieces={marked[0]} /></p>}
+      {FIELDS.map((f, i) => (
+        <p key={f}><span className="font-semibold text-foreground">{LABEL[f]}: </span><span className="text-muted-foreground"><TermText text={card[f]} pieces={fields[i]} /></span></p>
       ))}
       {card.timebox && (
         <p className="flex items-start gap-1 text-muted-foreground"><Clock className="mt-0.5 h-3 w-3 shrink-0" /> <span>{card.timebox}</span></p>
@@ -48,8 +59,7 @@ export function ExplainCard({ id }: { id: string }) {
         <h4 className="text-sm font-semibold leading-tight">{card.title}</h4>
         <span className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">{kindLabel(card)}</span>
       </div>
-      <p className="mb-1.5 text-xs text-muted-foreground">{card.summary}</p>
-      <CardBody card={card} />
+      <CardBody card={card} withSummary />
     </div>
   );
 }

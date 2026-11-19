@@ -53,14 +53,17 @@ export type Piece = string | { id: string; text: string };
 
 /** Running text, with the first mention of each glossary term marked. Longest forms first, so
  *  "Sprint Goal" is one term rather than "Sprint" and then nothing. Whole words only; a term is
- *  marked once, which is enough to orientate and leaves the sentence readable. */
-export function markTerms(text: string, entries: GlossaryEntry[] = glossary()): Piece[] {
+ *  marked once, which is enough to orientate and leaves the sentence readable.
+ *
+ *  `seen` carries over between texts that are read as one - the fields of one Teaching Card - so a
+ *  term is marked once on the card, not once a field. Put a card's own id in it to leave the card's
+ *  own term plain: the Product Goal's card does not need "Product Goal" explained. */
+export function markTerms(text: string, entries: GlossaryEntry[] = glossary(), seen: Set<string> = new Set()): Piece[] {
   const forms = entries.flatMap((e) => e.forms.map((f) => ({ f, id: e.id })))
     // Two-letter forms ("PO") only in capitals, so "po" in a word never matches.
     .sort((a, b) => b.f.length - a.f.length);
   const esc = (s: string) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const re = new RegExp(`\\b(${forms.map((x) => esc(x.f)).join('|')})\\b`, 'gi');
-  const seen = new Set<string>();
   const out: Piece[] = [];
   let last = 0;
   for (const m of text.matchAll(re)) {
@@ -75,4 +78,12 @@ export function markTerms(text: string, entries: GlossaryEntry[] = glossary()): 
   }
   if (last < text.length) out.push(text.slice(last));
   return out;
+}
+
+/** Several texts read as one - the summary and fields of a Teaching Card - marked together, so a
+ *  term is marked once across them. `skip` leaves terms plain: a card's own term, for one. Pure, so
+ *  it can be worked out in one go during render. */
+export function markAll(texts: string[], skip: string[] = [], entries: GlossaryEntry[] = glossary()): Piece[][] {
+  const seen = new Set(skip);
+  return texts.map((t) => markTerms(t, entries, seen));
 }

@@ -89,3 +89,31 @@ describe('editing the glossary', () => {
     entry.apply(was);
   });
 });
+
+describe('in the Teaching Cards and "What is this?"', () => {
+  it('marks a card\'s terms once across the card, and never the card\'s own term', async () => {
+    const { ExplainCard } = await import('./ScrumTeaching');
+    const { container } = render(<ExplainCard id="sprint-goal" />);
+    const terms = [...container.querySelectorAll('[data-part="glossary-term"]')].map((b) => b.getAttribute('data-term'));
+    expect(terms.length, 'nothing on the card was pressable').toBeGreaterThan(0);
+    expect(terms, 'the Sprint Goal card explained "Sprint Goal"').not.toContain('sprint-goal');
+    expect(new Set(terms).size, 'a term marked twice on one card').toBe(terms.length);
+  });
+
+  it('keeps every word of the card', async () => {
+    const { ExplainCard } = await import('./ScrumTeaching');
+    const card = SCRUM_CARDS.find((c) => c.id === 'sprint-planning')!;
+    const { container } = render(<ExplainCard id={card.id} />);
+    for (const t of [card.summary, card.why, card.who, card.when, card.how]) expect(container.textContent).toContain(t);
+  });
+
+  it('opens a definition from inside the "What is this?" card', async () => {
+    const { ExplainButton } = await import('./Explain');
+    render(<ExplainButton cards={['sprint-goal']} />);
+    fireEvent.click(screen.getByRole('button', { name: /What is this/ }));
+    const term = document.querySelector('[data-part="glossary-term"]') as HTMLElement;
+    fireEvent.click(term);
+    const card = document.querySelector('[data-part="glossary-card"]')!;
+    expect(card.textContent).toContain(glossary().find((e) => e.id === term.getAttribute('data-term'))!.definition);
+  });
+});

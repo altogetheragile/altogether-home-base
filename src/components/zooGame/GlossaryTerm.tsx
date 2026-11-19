@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import * as PopoverPrimitive from '@radix-ui/react-popover';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
-import { glossary, markTerms, type GlossaryEntry } from './glossary';
+import { glossary, markTerms, type GlossaryEntry, type Piece } from './glossary';
 
 // A word with its definition a press away: dotted underline, and a small card on press.
 //
@@ -21,22 +21,27 @@ function Term({ entry, children }: { entry: GlossaryEntry; children: string }) {
           {children}
         </button>
       </PopoverPrimitive.Trigger>
-      <PopoverPrimitive.Content data-part="glossary-card" side="top" align="start" sideOffset={6} collisionPadding={12}
-        className="zoo-theme z-[70] w-72 rounded-xl border-2 border-[hsl(var(--zoo-ink))] bg-white p-3 text-left text-sm font-normal leading-snug text-foreground shadow-[3px_3px_0_hsl(var(--zoo-ink))] outline-none">
-        <p className="text-[11px] font-bold uppercase tracking-wide text-primary">{entry.term}</p>
-        <p className="mt-1">{entry.definition}</p>
-        {entry.notScrum && <p className="mt-1.5 text-xs italic text-zoo-quiet">{entry.notScrum}</p>}
-        <p className="mt-2 text-[11px] text-zoo-quiet">Every term is in Learn, under Glossary.</p>
-        <PopoverPrimitive.Arrow className="fill-[hsl(var(--zoo-ink))]" />
+      {/* Spans throughout, so a definition can open inside a paragraph: a Teaching Card's lines are
+          paragraphs, and a div inside one is not allowed. */}
+      <PopoverPrimitive.Content asChild side="top" align="start" sideOffset={6} collisionPadding={12}>
+        <span data-part="glossary-card"
+          className="zoo-theme z-[70] block w-72 rounded-xl border-2 border-[hsl(var(--zoo-ink))] bg-white p-3 text-left text-sm font-normal not-italic leading-snug text-foreground shadow-[3px_3px_0_hsl(var(--zoo-ink))] outline-none">
+          <span className="block text-[11px] font-bold uppercase tracking-wide text-primary">{entry.term}</span>
+          <span className="mt-1 block">{entry.definition}</span>
+          {entry.notScrum && <span className="mt-1.5 block text-xs italic text-zoo-quiet">{entry.notScrum}</span>}
+          <span className="mt-2 block text-[11px] text-zoo-quiet">Every term is in Learn, under Glossary.</span>
+          <PopoverPrimitive.Arrow className="fill-[hsl(var(--zoo-ink))]" />
+        </span>
       </PopoverPrimitive.Content>
     </PopoverPrimitive.Root>
   );
 }
 
-/** Text with each glossary term's first mention pressable. */
-export function TermText({ text }: { text: string }) {
+/** Text with each glossary term's first mention pressable. Given `pieces` (from `markAll`), it
+ *  draws those instead, for texts that are marked together. */
+export function TermText({ text, pieces: given }: { text: string; pieces?: Piece[] }) {
   const entries = useMemo(() => glossary(), []);
-  const pieces = useMemo(() => markTerms(text, entries), [text, entries]);
+  const pieces = useMemo(() => given ?? markTerms(text, entries), [given, text, entries]);
   return (
     <>
       {pieces.map((p, i) => {
