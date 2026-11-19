@@ -39,7 +39,10 @@ export function handover(state: ZooGameState): Handover | null {
         asks: 'Refine enough to start: now, or in Sprint Planning. The team decides.',
         // Says where the number comes from: "0 points Ready of about 11 points to start - I don't
         // know what 'about 11 points' means or where that figure comes from" (scrum-master playtest).
-        progress: `${ready} of ${pts(Math.round(cap * START_READY))} Ready to start (half a Sprint\u2019s work)`,
+        // ...and still it was read as a riddle, five times a run: what "ready" is, and what half of
+        // what. So it says both: ready means sized (with its criteria), and the half is of the
+        // team's Sprint (sm13).
+        progress: `${ready} of ${pts(Math.round(cap * START_READY))} sized and ready to start. The team can do about ${pts(cap)} a Sprint; half that is enough to begin`,
       };
     }
     if (!state.dodAgreed) {

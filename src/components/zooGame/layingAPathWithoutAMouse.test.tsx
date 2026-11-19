@@ -200,12 +200,14 @@ describe('the pen, at the far end of a path', () => {
     fireEvent.keyDown(park, { key: 'Enter' });
     expect(where(c), 'it has only just started').not.toMatch(/finish/);
     const KEYS: Record<string, string> = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
-    for (let i = 0; i < 200 && !/You are on a path/.test(where(c)); i += 1) {
+    for (let i = 0; i < 200 && !/You are on a path|joins the path/.test(where(c)); i += 1) {
       const m = where(c).match(/nearest path from the way in is (\d+) paces? (up|down|left|right)/);
       expect(m, where(c)).toBeTruthy();
       fireEvent.keyDown(park, { key: KEYS[m![2]] });
     }
-    expect(where(c)).toContain('Press Enter twice here to finish the path.');
+    expect(where(c)).toContain('This joins the path from the way in. Press Enter twice here to finish the path.');
+    // ...and nothing about which way the thing it left is: "6 paces up" read as the wrong way (sm13).
+    expect(where(c)).not.toMatch(/paces (up|down|left|right)/);
   });
 });
 

@@ -30,7 +30,8 @@ describe('Priya hands each step over', () => {
     expect(h.asks).toMatch(/enough to start/);
     // ...and it is the team's call when: up front, or in Sprint Planning.
     expect(h.asks).toMatch(/now, or in Sprint Planning/);
-    expect(h.progress).toMatch(/^0 of \d+ points Ready to start \(half a Sprint\u2019s work\)$/);
+    // What ready means, and half of what (sm13).
+    expect(h.progress).toMatch(/^0 of \d+ points sized and ready to start\. The team can do about \d+ points a Sprint; half that is enough to begin$/);
   });
 
   it('counts half a Sprint as enough to start, not a whole one', () => {
