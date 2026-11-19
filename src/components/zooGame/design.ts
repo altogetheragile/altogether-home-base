@@ -1382,6 +1382,30 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
   return false;
 }
 
+/** Whether the park can tell this step is done at all - whether `designSatisfiesTask` has a rule
+ *  for it - as opposed to whether it is done yet.
+ *
+ *  A step in the team's own words ("Construct the lion habitat enclosure") matches no rule, so it
+ *  never ticks itself, and Done waits for every step. Nothing said so: the scrum-master playtest
+ *  met all five criteria and Priya's acceptance four Sprints running, and the card stayed in Doing
+ *  saying "Next: construct the lion habitat enclosure" (19 Nov 2026). The game uses this to say the
+ *  step is the team's to tick.
+ *
+ *  KEEP IN STEP with `designSatisfiesTask` above: the same words, branch by branch.
+ *  `handTickedSteps.test.ts` holds every suggested plan to it. */
+export function parkCanSeeStep(item: BacklogItem, label: string): boolean {
+  const s = label.toLowerCase();
+  if (item.category === 'exhibit') return /how many|ages|stock|group|fit the habitat|room|coat|colour/.test(s);
+  if (item.category === 'path') return true;
+  if (item.category === 'enclosure') return /footprint|size|fence|ground|shelter|water|lay/.test(s);
+  if (item.category === 'flora') {
+    if (/size it|sizing|which planting|plant|type|foliage|colou?r/.test(s)) return true;
+    return floraColors(item.template).some((c) => s.includes(c.label.toLowerCase()));
+  }
+  if (item.category === 'amenity') return /sign|colou?r|design/.test(s);
+  return /marking|feature|sketch|shape|look|colou?r|paint|body|head/.test(s);
+}
+
 // ---- Enclosure shapes: a habitat can be more than a rectangle ----
 
 /** The habitat shapes an enclosure can take. Stored on the design (design.parts.shape). */

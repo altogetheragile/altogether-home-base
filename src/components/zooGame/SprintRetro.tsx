@@ -340,8 +340,12 @@ export function SprintRetro({ state, onNextSprint, onSetDod, onAdopt, onSetSprin
 
       {state.improvements.length > 0 && (
         <div className={cn(SURFACE.quiet, PADDING.default, 'text-xs text-muted-foreground')}>
-          <div className="font-semibold uppercase tracking-wide">Carried so far</div>
+          {/* Said as what it is: changes already made, still working, and not something to choose
+              again. "Carried so far" above an unpicked list read as "these still need picking"
+              (scrum-master playtest, four times). */}
+          <div className="font-semibold uppercase tracking-wide">Already in place from earlier Retrospectives</div>
           <ul className="mt-1 space-y-0.5">{state.improvements.map((imp, i) => <li key={i}>· {imp}</li>)}</ul>
+          <p className="mt-1">These keep working. The one you pick above is added to them.</p>
         </div>
       )}
 

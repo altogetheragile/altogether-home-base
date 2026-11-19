@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
 import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, activeWipLimit, acSettled, outgrown } from './engine';
+import { parkCanSeeStep } from './design';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 import { AlertCircle, Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
 
@@ -165,6 +166,13 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
                       {t.done ? <><Check className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{i + 1}, done:</span></> : i + 1}
                     </span>
                     <span className={cn(t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
+                    {/* A step in the team's own words: the park cannot see it, so it never ticks itself,
+                        and Done waits for it. Said beside it, where the tick is. */}
+                    {!t.done && t.label.trim() && !isSignOffTask(t.label) && !parkCanSeeStep(item, t.label) && (
+                      <span data-part="hand-tick" className="ml-auto shrink-0 self-center rounded-full bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-amber-800">
+                        {tick ? 'tick it when done' : 'you tick this'}
+                      </span>
+                    )}
                   </>
                 );
                 return (
