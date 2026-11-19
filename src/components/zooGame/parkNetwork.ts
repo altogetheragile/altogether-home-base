@@ -93,6 +93,38 @@ export function parkNetwork(state: ZooGameState): NavInput {
   return { paths, water, crossings, solid };
 }
 
+/** Whether a visitor can walk right round this thing: the ground just outside it, all the way
+ *  round, is clear of water (unless bridged) and of anything else standing there.
+ *
+ *  A judgement criterion, so the park does not tick it. This is what the Product Owner looks at
+ *  when the Developers ask her to check, so that her yes is something she saw rather than a stamp.
+ *  Every habitat has a walkway round it laid for it; what spoils it is something put in its way. */
+export function wayRound(state: ZooGameState, item: BacklogItem): { met: boolean; evidence: string } | null {
+  const boxes = boxOf(state);
+  const me = boxes.find((b) => b.item.id === item.id) ?? boxes.find((b) => b.item.id === item.enclosureId);
+  if (!me) return null;
+  const input = parkNetwork(state);
+  // Habitats and buildings are in the way; what lives inside this one, and the ground itself
+  // (planting, water, bridges, which the water check reads), are not.
+  const others = boxes.filter((b) => b !== me && b.item.enclosureId !== me.item.id
+    && (b.item.category === 'enclosure' || b.item.category === 'amenity'));
+  const ring = apronRing(me.at, me.size);
+  const inside = (p: Pt, r: Rect) => p.x >= r.x0 && p.x <= r.x1 && p.y >= r.y0 && p.y <= r.y1;
+  for (let i = 0; i < ring.length - 1; i += 1) {
+    const a = ring[i], b = ring[i + 1];
+    const n = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / 6));
+    for (let k = 0; k <= n; k += 1) {
+      const p = { x: a.x + (b.x - a.x) * (k / n), y: a.y + (b.y - a.y) * (k / n) };
+      if (input.water.some((r) => inside(p, r)) && !input.crossings.some((r) => inside(p, r))) {
+        return { met: false, evidence: 'the water cuts across the way round it. Move it back from the water, or bridge it' };
+      }
+      const hit = others.find((o) => inside(p, rectOf(o.at, o.size, o.item)));
+      if (hit) return { met: false, evidence: `it is blocked by the ${hit.item.name}. Move one of them apart` };
+    }
+  }
+  return { met: true, evidence: 'the walkway goes all the way round' };
+}
+
 /** Whether there is a made route from the way in to this thing - paths only, no walking over the
  *  grass to get there.
  *
