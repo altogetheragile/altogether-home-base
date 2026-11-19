@@ -636,6 +636,12 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                 somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
             <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.06]' : 'border-border')}>
               <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
+              {/* What the points ARE. "None / 1 pt / 2 pts / 3 pts" was a game mechanic nobody had
+                  met, read as unexplained in every scrum-master playtest (sm13: three times). The
+                  Guide makes refinement an ongoing activity; budgeting it in points is this game's. */}
+              <p data-part="refine-points-mean" className="mt-0.5 text-[11px] text-muted-foreground">
+                Points set aside from this Sprint&rsquo;s work for the whole Scrum Team to refine the Product Backlog, so later Sprints start with ready work. Setting it aside in points is this game&rsquo;s way of making time for it.
+              </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
                 {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
@@ -644,7 +650,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               </p>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 {REFINE_POINT_OPTIONS.map((v) => (
-                  <button key={v} type="button" onClick={() => setRefinePts(v)}
+                  <button key={v} type="button" onClick={() => setRefinePts(v)} aria-pressed={refinePts === v}
                     className={cn(FOCUS, 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
                       refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border hover:bg-muted')}>
                     {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}

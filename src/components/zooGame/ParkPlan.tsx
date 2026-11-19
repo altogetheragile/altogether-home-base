@@ -70,9 +70,13 @@ function penWhere(
   // Only at the end it did not start from: a path begun at the door has not reached anything by
   // standing beside it. The last corner pressed stands in for where it began.
   const away = (p: { x: number; y: number }) => !from || Math.hypot(p.x - from.x, p.y - from.y) > JOINS;
-  const finish = from && ((nearest && near(nearest) && away(nearest)) || (door && near(door) && away(door)))
-    ? ' Press Enter twice here to finish the path.' : '';
-  return `${laying}${toWalk}${toThing}${finish}`;
+  const atJoin = !!(from && nearest && near(nearest) && away(nearest));
+  const atDoor = !!(from && forBox && door && near(door) && away(door));
+  // At the finish, only where it is. "The Lion Enclosure is 6 paces up" beside "finish here" read,
+  // to somebody who had just walked down from it, as having walked the wrong way (sm13, twice).
+  if (atJoin) return `${laying} This joins the path from the way in. Press Enter twice here to finish the path.`;
+  if (atDoor) return `${laying} You are at the ${forBox!.item.name}. Press Enter twice here to finish the path.`;
+  return `${laying}${toWalk}${toThing}`;
 }
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary
  *  AGAINST. It is margin, not ground: nothing may be put there, and `worldAt` reads the pointer

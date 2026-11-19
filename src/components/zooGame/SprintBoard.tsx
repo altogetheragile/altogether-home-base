@@ -867,6 +867,13 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
             <div className="min-w-0">
               <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({available})</span></h3>
               <p className="text-[11px] text-muted-foreground">Pull one in by agreement, if it will not put the Sprint Goal at risk - or write something new.</p>
+              {/* With nothing here ready, the panel was a list of cards that would not come in, and
+                  "Pull more in" looked broken: three playtests in a row pressed it again (sm11-sm13). */}
+              {backlog.length > 0 && backlog.every((it) => notReady(it, state)) && (
+                <p data-part="nothing-ready" className="mt-1 text-[11px] font-medium text-foreground">
+                  Nothing here is ready to pull in yet. Open one and size it first: refining it now comes out of today&rsquo;s build time.
+                </p>
+              )}
             </div>
             {/* Refining is not only tidying what is there. Half of it is noticing what is missing and
                 writing it down, and there was nowhere to do that without leaving the Sprint. */}
@@ -979,7 +986,8 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
           // ...and when the forecast is finished with days still in the Sprint, the way on is not
           // the end of the day: it is a conversation with the Product Owner about what to take next.
           // So the answer is a button rather than a sentence somebody has to act on themselves.
-          left={whyNothingMoves(state) === 'empty' ? (
+          // Not while the Product Backlog is open: pressed again, it did nothing, and looked broken.
+          left={whyNothingMoves(state) === 'empty' && !showBacklog ? (
             <>
               <Button variant="outline" size="sm" onClick={() => setShowBacklog(true)}>Pull more in</Button>
             </>
