@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseAmazonUrl, isIsbn10, pickByTitle, titleFromSlug } from '../../../supabase/functions/_shared/bookLookup';
+import { parseAmazonUrl, isIsbn10, pickByTitle, titleFromSlug, titleToSearch, lookupNote } from '../../../supabase/functions/_shared/bookLookup';
 
 // What the "fill in from an Amazon link" lookup takes from a link, and what it will believe. It
 // never reads Amazon: the link itself carries the ASIN and, usually, the title.
@@ -70,5 +70,38 @@ describe('believing a search on the title words', () => {
 describe('a title made from the link when nothing is found', () => {
   it('is in Title Case with small words left small', () => {
     expect(titleFromSlug('the art of facilitation and the answer')).toBe('The Art of Facilitation and the Answer');
+  });
+});
+
+// A Kindle link is often just /dp/B0..., with no title in it and no ISBN. The admin can then type
+// the title and press Fill in again: that title is searched for instead.
+describe('a link with no title in it', () => {
+  const link = 'https://www.amazon.co.uk/dp/B0D46Q2G22/ref=tmm_kin_swatch_0?_encoding=UTF8&twDim=1&th=1';
+
+  it('has nothing to search for until a title is typed, and says so', () => {
+    const parts = parseAmazonUrl(link)!;
+    expect(parts).toEqual({ asin: 'B0D46Q2G22', slug: '' });
+    expect(isIsbn10(parts.asin)).toBe(false);
+    expect(titleToSearch(parts.slug, '')).toEqual({ words: '', typed: false });
+    expect(lookupNote(null, parts.slug, false)).toMatch(/no title in it.*Type the title and press Fill in again/);
+  });
+
+  it('searches for the typed title, and finds the book whose title it is', () => {
+    const wanted = titleToSearch('', 'Evolvability in Business: Enterprise Transformation in an Age of Complexity');
+    expect(wanted.typed).toBe(true);
+    const docs = [
+      { title: 'Data-Centric Business and Applications', author_name: ['Natalia Kryvinska'] },
+      { title: 'Evolvability in Business', author_name: ['Zhen Goh', 'Sunil Mundra'] },
+    ];
+    expect(pickByTitle(wanted.words, docs)?.author_name).toEqual(['Zhen Goh', 'Sunil Mundra']);
+    expect(lookupNote('title', '', true)).toBe('Found by the title you typed. Check it is the right book.');
+  });
+
+  it('prefers the title in the link over one typed', () => {
+    expect(titleToSearch('team topologies', 'Something Else')).toEqual({ words: 'team topologies', typed: false });
+  });
+
+  it('says plainly when the typed title is not found', () => {
+    expect(lookupNote(null, '', true)).toBe('Open Library has no book with that title. Fill in the author yourself.');
   });
 });

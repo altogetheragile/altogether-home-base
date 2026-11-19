@@ -79,6 +79,23 @@ export function pickByTitle(slug: string, docs: OpenLibraryDoc[]): OpenLibraryDo
   return ok[0] ?? null;
 }
 
+/** What to search Open Library for: the title words in the link, or, when the link has none (a
+ *  Kindle link is often just /dp/B0...), the title the admin typed. */
+export function titleToSearch(slug: string, typed: string | null | undefined): { words: string; typed: boolean } {
+  if (slug) return { words: slug, typed: false };
+  const words = stripFormat(norm(typed ?? ''));
+  return { words, typed: words !== '' };
+}
+
+/** What the lookup tells the admin. */
+export function lookupNote(matchedBy: 'isbn' | 'title' | null, slug: string, typed: boolean): string {
+  if (matchedBy === 'isbn') return 'Found by its ISBN.';
+  if (matchedBy === 'title') return typed ? 'Found by the title you typed. Check it is the right book.' : 'Found by the title in the link. Check it is the right book.';
+  if (slug) return 'Not found. The title is taken from the link; add the author yourself.';
+  if (typed) return 'Open Library has no book with that title. Fill in the author yourself.';
+  return 'This link has no title in it (Kindle links often have none). Type the title and press Fill in again to find the author, or use the paperback\'s link.';
+}
+
 /** "Title Case" for a title read from a link, used only when no record was found. Small words
  *  stay lower case except at the start. */
 const SMALL = /^(a|an|and|at|by|for|in|of|on|or|the|to|with)$/;

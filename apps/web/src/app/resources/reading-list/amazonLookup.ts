@@ -12,9 +12,10 @@ export interface LookupResult {
   note: string;
 }
 
-export async function lookUpAmazonLink(url: string): Promise<LookupResult> {
+/** `title`, when typed, is searched for if the link has no title in it. */
+export async function lookUpAmazonLink(url: string, title = ''): Promise<LookupResult> {
   const supabase = createClient();
-  const { data, error } = await supabase.functions.invoke('reading-book-lookup', { body: { url } });
+  const { data, error } = await supabase.functions.invoke('reading-book-lookup', { body: { url, title } });
   if (error) {
     // The function's own message, when it sent one, says more than "non-2xx status code".
     const said = await (error as { context?: Response }).context?.json?.().catch(() => null);

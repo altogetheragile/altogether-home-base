@@ -70,7 +70,7 @@ export function BookFormDialog({
     setLooking(true);
     setLookupNote(null);
     try {
-      const { data, error } = await supabase.functions.invoke('reading-book-lookup', { body: { url: link } });
+      const { data, error } = await supabase.functions.invoke('reading-book-lookup', { body: { url: link, title: form.title } });
       if (error) {
         const said = await (error as { context?: Response }).context?.json?.().catch(() => null);
         throw new Error(said?.error ?? error.message);
