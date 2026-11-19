@@ -4,7 +4,8 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
-import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, whatIsLeft, enclosureReady, activeWipLimit, acSettled, outgrown } from './engine';
+import { nextStep, whatToFix, openWhenShown } from './nextFix';
+import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, enclosureReady, activeWipLimit, acSettled, outgrown } from './engine';
 import { parkCanSeeStep } from './design';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 import { AlertCircle, Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
@@ -115,7 +116,11 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
   const canAsk = doing && wantsSignOff && !signedOff && !!item.design && criteria.length > 0;
   // Ready to be moved, and what is in the way when it is not. One rule, shared with the card.
   const done = doing && readyToMove(item);
-  const left = doing ? whatIsLeft(state, item) : '';
+  const left = doing ? nextStep(state, item) : '';
+  // Back to the build, on the control that fixes what the park found. "Pick it up" on work already
+  // in Doing read as a way to accept criteria and was pressed twenty times in one playtest.
+  const fix = doing ? whatToFix(state, item) : null;
+  const carryOn = () => { if (fix) openWhenShown(item.id, fix.group); onBuilding?.(item.id); onClose(); };
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
@@ -244,7 +249,9 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
                   <Button variant="outline" onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up again</Button>
                 </>
               ) : (
-                <Button variant={canAsk ? 'outline' : 'default'} onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up &rarr;</Button>
+                <Button data-part="carry-on" variant={canAsk && !fix ? 'outline' : 'default'} onClick={carryOn}>
+                  {doing ? (fix?.where ? `Fix it under ${fix.where}` : 'Carry on building') : 'Pick it up'} &rarr;
+                </Button>
               )}
               {canAsk && onAskToCheck && (asked
                 ? <span className="text-xs text-muted-foreground">Waiting on {po} to look at it.</span>

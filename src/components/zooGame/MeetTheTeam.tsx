@@ -33,7 +33,7 @@ type Seat = {
 const ROLES: Record<SeatName, { role: string; does: string }> = {
   product_owner: {
     role: 'Product Owner',
-    does: 'Orders the Product Backlog. Writes what each item needs to be, answers questions about it while you build, and decides when Done work opens to visitors.',
+    does: 'Orders the Product Backlog. Writes what each item needs to be, answers questions about it while you build, and, in this game, decides when Done work opens to visitors. The Scrum Guide does not say who releases.',
   },
   scrum_master: {
     role: 'Scrum Master',

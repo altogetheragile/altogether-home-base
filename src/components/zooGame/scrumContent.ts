@@ -439,7 +439,7 @@ export const ORIENTATION = {
     title: 'Who is here',
     lead: 'Five seats, three accountabilities. Playing alone, the game plays Priya, the Product Owner, and you hold the other four seats: Sam and all three Developers.',
     rows: [
-      { name: 'Priya', note: 'Product Owner', text: 'Orders the Product Backlog, says what each item needs to be, and decides when Done work opens.' },
+      { name: 'Priya', note: 'Product Owner', text: 'Orders the Product Backlog, says what each item needs to be, and, in this game, decides when Done work opens.' },
       { name: 'Sam', note: 'Scrum Master', text: 'Keeps the events to their timebox and removes what is in the way.' },
       { name: 'Ada, Ben and Cara', note: 'Developers', text: 'Pull work, build it, hold the Daily Scrum. The plan for the Sprint is theirs to change.' },
     ],

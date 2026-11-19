@@ -10,6 +10,7 @@ import {
 } from './design';
 import { groupsFor, openCriteria, wouldSettle, labelOf, iconOf, type GroupDef, type GroupId } from './buildGroups';
 import { inspect, ACCEPTANCE_CRITERIA } from './parkChecks';
+import { takeWanted } from './nextFix';
 import { structuresFor } from './toolboxItems';
 import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
@@ -298,6 +299,10 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
   // of them may be open at a time, so it shares the state.
   const [openMenu, setOpenMenu] = useState<GroupId | 'dod' | null>(null);
   const subject = inside ?? item;
+  // Sent here by "Fix it under Perimeter" on the card: open that control. Taken once, so the
+  // menu is the player's again from the next render.
+  const sentFor = takeWanted(subject?.id);
+  if (sentFor && openMenu !== sentFor) setOpenMenu(sentFor);
   if (!subject) {
     return (
       <div data-part="park-options" className={cn('flex min-h-[2.75rem] items-center gap-2 text-xs text-muted-foreground', className)}>
