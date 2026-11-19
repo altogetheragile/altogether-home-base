@@ -99,6 +99,12 @@ function TheRoom({ state, onSay }: { state: ZooGameState; onSay?: (text: string,
       {yours.length > 0 && onSay && (
         <div data-part="review-your-turn" className="space-y-1.5 rounded-lg border-2 border-primary bg-primary/[0.07] px-3 py-2">
           <div className="text-[10px] font-bold uppercase tracking-wide text-primary">Your turn</div>
+          {/* "Can you sign this off?" beside "nothing here is a sign-off" read as the game
+              contradicting itself, in each of the last three playtests. It is the trap on purpose;
+              saying there is one keeps the lesson and loses the contradiction. */}
+          <p data-part="review-turn-hint" className="text-[11px] text-muted-foreground">
+            Pick what you say. One of these is a common mistake at a Sprint Review, and the game says why if you pick it.
+          </p>
           <div className="flex flex-wrap gap-1.5">
             {yours.map((o) => (
               <button key={o.key} type="button" title={o.text}

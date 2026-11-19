@@ -186,7 +186,9 @@ function HowThePenWorks() {
 
 function Chip({ on, onClick, children, title }: { on?: boolean; onClick: () => void; children: React.ReactNode; title?: string }) {
   return (
-    <button type="button" onClick={onClick} title={title}
+    // aria-pressed, so which one is chosen is said as well as shaded: "I am not sure which size is
+    // currently selected, if any" (sm11 and sm12).
+    <button type="button" onClick={onClick} title={title} aria-pressed={on ?? false}
       className={cn(FOCUS, 'rounded-md border px-2 py-1 text-xs font-medium capitalize transition-colors',
         on ? 'border-primary bg-primary/10 text-primary' : 'border-border bg-card hover:bg-muted/60')}>
       {children}
@@ -378,7 +380,10 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                 {k === 'small' ? 'S' : k === 'medium' ? 'M' : 'L'}
               </Chip>
             ))}
-            <span className="w-full pt-1 text-[11px] text-muted-foreground">
+            {/* Said as the chosen size's, not as a figure beside three buttons that could be any of
+                theirs: "unclear whether '6 × 4 tiles' is the current size or a label for S". */}
+            <span data-part="size-now" className="w-full pt-1 text-[11px] text-muted-foreground">
+              {{ small: 'S', medium: 'M', large: 'L' }[subject.enclosureSize ?? 'medium']} is{' '}
               {Math.round(ENCLOSURE_SIZE[subject.enclosureSize ?? 'medium'].w / 22)} &times;{' '}
               {Math.round(ENCLOSURE_SIZE[subject.enclosureSize ?? 'medium'].h / 22)} tiles
               {living.length ? '' : ' · nothing lives here yet'}
@@ -441,12 +446,17 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               the edge of a habitat was two menus: "why is the fence colour a separate menu from the
               boundary type?" It is one thing, the boundary, and you choose what it is and then what
               it looks like. */}
-          <Row label="Colour">
-            {FENCE_COLOURS.map((c) => (
-              <Swatch key={c} hex={c} label="Fence" on={design.colors?.fence === c}
-                onClick={() => set({ colors: { ...design.colors, fence: c } })} />
-            ))}
-          </Row>
+          {/* Only once there is something to colour, and named after it. Shown first, its swatches
+              all called "Fence", it read as a choice to make before the type, and as fence-only
+              after choosing a high fence (sm11, sm12: four times). */}
+          {chosenBarrier(design) && (
+            <Row label="Colour" part="barrier-colour">
+              {FENCE_COLOURS.map((c) => (
+                <Swatch key={c} hex={c} label={`${chosenBarrier(design)!.label} colour`} on={design.colors?.fence === c}
+                  onClick={() => set({ colors: { ...design.colors, fence: c } })} />
+              ))}
+            </Row>
+          )}
           </>
         );
       case 'inside': {
@@ -463,14 +473,10 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
               const n = countOf(k);
               return (
                 <div key={k} data-part={`inside-${k}`} className="flex items-center gap-1.5">
-                  <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-1.5">
-                    <input type="checkbox" className="h-3.5 w-3.5 shrink-0 accent-primary" checked={n > 0}
-                      aria-label={k}
-                      onChange={(e) => (e.target.checked
-                        ? api.onAddInside?.(subject.id, k)
-                        : Array.from({ length: n }, () => api.onRemoveInside?.(subject.id, k)))} />
-                    <span className="truncate text-xs capitalize">{k}</span>
-                  </label>
+                  {/* One way to add, not two. A tick box beside "One more" read as two different
+                      things, and the playtests asked which one adds (sm11, sm12: four times). The
+                      count is what is in there; the buttons change it. */}
+                  <span className="min-w-0 flex-1 truncate text-xs capitalize">{k}</span>
                   <span className="flex shrink-0 items-center gap-0.5">
                     <button type="button" data-part={`fewer-${k}`} disabled={!n}
                       aria-label={`One fewer ${k}`} title={`One fewer ${k}`}
@@ -478,7 +484,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
                       className={cn(FOCUS, 'flex h-6 w-6 items-center justify-center rounded-md border border-border text-muted-foreground hover:bg-muted disabled:opacity-30')}>
                       <Minus className="h-3 w-3" />
                     </button>
-                    <span className="w-4 text-center text-xs tabular-nums">{n}</span>
+                    <span className="w-4 text-center text-xs tabular-nums" aria-label={`${n} ${k} in there`}>{n}</span>
                     <button type="button" data-part={`more-${k}`}
                       aria-label={`One more ${k}`} title={`One more ${k}`}
                       onClick={() => api.onAddInside?.(subject.id, k)}
