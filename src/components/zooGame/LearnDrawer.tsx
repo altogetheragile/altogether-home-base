@@ -4,6 +4,7 @@ import { BookOpen, X } from 'lucide-react';
 import type { ZooGameState } from './types';
 import { valueMeasures, decisionsIn, whoIs, betLine } from './engine';
 import { ScrumReferenceBody } from './ScrumTeaching';
+import { GlossaryBody } from './GlossaryTerm';
 import { ArtifactsBody } from './ArtifactsPanel';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
@@ -20,9 +21,10 @@ import type { GameNote } from './notesDock';
 // Artifacts drawer, and the notes the game has already said this Sprint. What went from the strip:
 // four dials with no values, two drawer buttons, a help icon and a wordmark.
 
-export type Section = 'scrum' | 'value' | 'sprint' | 'notes';
+export type Section = 'scrum' | 'glossary' | 'value' | 'sprint' | 'notes';
 const SECTIONS: { key: Section; label: string }[] = [
   { key: 'scrum', label: 'Scrum' },
+  { key: 'glossary', label: 'Glossary' },
   { key: 'value', label: 'Value' },
   { key: 'sprint', label: 'This Sprint' },
   { key: 'notes', label: 'Notes' },
@@ -112,6 +114,7 @@ export function LearnDrawer({ state, notes, onSetProductGoal, onSetDod, onSetDor
 
             <div className="min-h-0 flex-1 overflow-y-auto px-3 py-2.5">
               {at === 'scrum' && <ScrumReferenceBody />}
+              {at === 'glossary' && <GlossaryBody />}
 
               {at === 'value' && (
                 <div className="space-y-2">
