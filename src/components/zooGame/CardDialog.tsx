@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
 import { nextStep, whatToFix, openWhenShown } from './nextFix';
-import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, enclosureReady, activeWipLimit, acSettled, outgrown } from './engine';
+import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, enclosureReady, looseAnimal, activeWipLimit, acSettled, outgrown } from './engine';
 import { parkCanSeeStep } from './design';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 import { AlertCircle, Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
@@ -49,7 +49,7 @@ function whyNotStart(state: ZooGameState, item: BacklogItem): string | null {
   return null;
 }
 
-export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish, onOpen, onAskToCheck, onHandBack, onToggleTask }: {
+export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish, onOpen, onAskToCheck, onHandBack, onToggleTask, onPutIn }: {
   state: ZooGameState;
   item: BacklogItem | null;
   onClose: () => void;
@@ -57,6 +57,8 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
   onStart?: (id: string) => void;
   /** Put it in your hands, which opens the park on it. */
   onBuilding?: (id: string) => void;
+  /** Put an animal into a habitat without carrying it across the park. */
+  onPutIn?: (id: string, enclosureId: string) => void;
   /** Move it to Done. The board's card has offered this since it was written and the dialog did
    *  not, so an item with every step ticked and every criterion met opened on "Pick it up" - the
    *  thing you do to work that is NOT finished. Reported from playing it: "why is this giving a
@@ -120,6 +122,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
   // Back to the build, on the control that fixes what the park found. "Pick it up" on work already
   // in Doing read as a way to accept criteria and was pressed twenty times in one playtest.
   const fix = doing ? whatToFix(state, item) : null;
+  const loose = doing ? looseAnimal(state, item) : null;
   const carryOn = () => { if (fix) openWhenShown(item.id, fix.group); onBuilding?.(item.id); onClose(); };
 
   return (
@@ -171,6 +174,13 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
                       {t.done ? <><Check className="h-3 w-3" aria-hidden="true" /><span className="sr-only">{i + 1}, done:</span></> : i + 1}
                     </span>
                     <span className={cn(t.done && 'text-muted-foreground line-through decoration-emerald-500/40')}>{t.label}</span>
+                    {/* The sign-off is the Definition of Done's, not the Developers' plan, and this game's
+                        rule rather than Scrum's: "the Sprint Backlog is a plan by and for the Developers"
+                        (scrum-master playtest sm8). Said beside it. */}
+                    {isSignOffTask(t.label) && (
+                      <span data-part="dod-step" title="This step is here because your Definition of Done asks for the Product Owner's sign-off. That is this game's rule, not the Scrum Guide's."
+                        className="ml-auto shrink-0 self-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-zoo-quiet">from your Definition of Done</span>
+                    )}
                     {/* A step in the team's own words: the park cannot see it, so it never ticks itself,
                         and Done waits for it. Said beside it, where the tick is. */}
                     {!t.done && t.label.trim() && !isSignOffTask(t.label) && !parkCanSeeStep(item, t.label) && (
@@ -249,9 +259,16 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
                   <Button variant="outline" onClick={() => { onBuilding(item.id); onClose(); }}>Pick it up again</Button>
                 </>
               ) : (
+                <>
+                {loose?.home && onPutIn && (
+                  <Button data-part="put-in" onClick={() => { onPutIn(item.id, loose.home!.id); onClose(); }}>
+                    Put it in the {loose.home.name}
+                  </Button>
+                )}
                 <Button data-part="carry-on" variant={canAsk && !fix ? 'outline' : 'default'} onClick={carryOn}>
                   {doing ? (fix?.where ? `Fix it under ${fix.where}` : 'Carry on building') : 'Pick it up'} &rarr;
                 </Button>
+                </>
               )}
               {canAsk && onAskToCheck && (asked
                 ? <span className="text-xs text-muted-foreground">Waiting on {po} to look at it.</span>

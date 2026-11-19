@@ -29,15 +29,21 @@ function Choice({ options, value, onPick }: { options: { key: string; label: str
   return (
     <div className="flex flex-wrap gap-1">
       {options.map((o) => (
-        <button key={o.key} type="button" onClick={() => onPick(o.key)} title={o.hint}
+        // Says which one is chosen, to a screen reader and to the eye. The scrum-master playtest
+        // (sm8) could not tell whether its press had taken, and pressed again.
+        <button key={o.key} type="button" onClick={() => onPick(o.key)} title={o.hint} aria-pressed={value === o.key}
           className={cn(FOCUS, 'rounded-md border px-2 py-1 text-[11px] font-medium transition-colors',
             value === o.key ? 'border-primary bg-primary/10 text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
-          {o.label}
+          {value === o.key && <span aria-hidden>&#10003; </span>}{o.label}
         </button>
       ))}
     </div>
   );
 }
+
+/** Whether a habitat is named after this animal: "Lion Enclosure" for the Lion. */
+const ownHabitat = (habitat: string, item: BacklogItem): boolean =>
+  habitat.toLowerCase().includes(item.name.toLowerCase().split(/\s+/)[0]);
 
 /** The shape decisions this item needs, if any. Returns null when there is nothing to decide - a
  *  pathway needs no kind, and the game should not invent a question to ask. */
@@ -61,8 +67,12 @@ export function ShapeChooser({ item, enclosures, onPlan }: {
     // enclosure it lives in is Done, so deciding this decides the order of the Sprint.
     return (
       <Field label="Which habitat does it live in?" note="The habitat has to be built before the animal can start.">
-        <Choice options={enclosures.map((e) => ({ key: e.id, label: e.name }))}
-          value={item.enclosureId} onPick={(k) => onPlan({ enclosureId: k === item.enclosureId ? '' : k })} />
+        {/* Pressing the chosen habitat again leaves it chosen. It used to take the animal back out,
+            and the persona that pressed it to make sure (sm8) built a lion that lived nowhere and
+            spent the rest of the Sprint trying to put it down. Its own habitat is listed first. */}
+        <Choice options={[...enclosures].sort((a, b) => Number(ownHabitat(b.name, item)) - Number(ownHabitat(a.name, item)))
+          .map((e) => ({ key: e.id, label: e.name }))}
+          value={item.enclosureId} onPick={(k) => onPlan({ enclosureId: k })} />
       </Field>
     );
   }

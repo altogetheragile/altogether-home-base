@@ -6,7 +6,7 @@ import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { AlertTriangle, Check, Circle, GripVertical, X } from 'lucide-react';
 import { useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
-import { acWaived, readyToMove } from './engine';
+import { acWaived, readyToMove, looseAnimal } from './engine';
 import { nextStep } from './nextFix';
 
 // ============= The inspector =============
@@ -21,7 +21,7 @@ import { nextStep } from './nextFix';
 // screen is the enclosure.
 
 
-export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, open, onOpenChange, corner = 'tr', className }: {
+export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, onPutIn, open, onOpenChange, corner = 'tr', className }: {
   state: ZooGameState;
   item: BacklogItem;
   /** Inside a habitat: one pill, so the enclosure is not covered by its own criteria. */
@@ -31,6 +31,8 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
    *  "cannot draw a path properly". Still readable, just not in the way. */
   quiet?: boolean;
   onAskToCheck?: (id: string) => void;
+  /** Put an animal into a habitat without carrying it there: the way in for a keyboard. */
+  onPutIn?: (id: string, enclosureId: string) => void;
   /** Opened and closed from outside, where the strip's chip carries the count and is the thing a
    *  player presses to read the detail. Left undefined, the panel keeps its own pill and its own
    *  state, which is how it works anywhere there is no strip. */
@@ -159,6 +161,14 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, ope
         })}
         {!criteria.length && <li className="text-[12px] text-muted-foreground">Nothing written yet. Criteria are the Product Owner&rsquo;s.</li>}
       </ul>
+      {(() => {
+        // An animal standing loose: one press puts it where it lives (sm8 playtest).
+        const home = looseAnimal(state, item)?.home;
+        return home && onPutIn ? (
+          <Button size="sm" data-part="put-in" className={cn(FOCUS, 'mt-2 h-7 w-full px-2 text-xs')}
+            onClick={() => onPutIn(item.id, home.id)}>Put it in the {home.name}</Button>
+        ) : null;
+      })()}
       <div className="mt-2 border-t border-border pt-2">
         {accepted ? (
           <p className="text-[11px] font-medium text-emerald-700 dark:text-emerald-400">

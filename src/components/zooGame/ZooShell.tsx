@@ -633,7 +633,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                         habitat it collapses to a pill, because in there the whole picture is the pen. */}
                     {inHand && (inHand.acceptance ?? []).length > 0 && (
                       <ParkInspector state={state} item={insideItem ?? inHand} collapsed={!!insideItem} quiet={drawing}
-                        corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck}
+                        corner={insideItem ? 'tl' : farthestCorner(inHand)} onAskToCheck={onAskToCheck} onPutIn={onPutIn}
                         // The strip's chip says how far off this item is, so the panel does not also
                         // leave a pill saying it over the park: the chip IS the pill now, and it opens
                         // the detail. Only while there is a strip to press - the inspector keeps its
