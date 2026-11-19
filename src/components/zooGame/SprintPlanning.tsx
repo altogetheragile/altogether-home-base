@@ -6,7 +6,7 @@ import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, spr
 import { useYou } from './you';
 
 
-import { TaskEditor, SplitEpicPanel } from './Board';
+import { TaskEditor, SplitEpicPanel, ChooseSolutionPanel } from './Board';
 import { PbiCard } from './PbiCard';
 import { ShapeChooser } from './ShapeChooser';
 import { Workspace } from './ui/Workspace';
@@ -58,6 +58,8 @@ interface SprintPlanningProps {
   onSetSprintGoal: (goal: string) => void;
   onTakeSignal: (index: number) => void;
   onSplitEpic: (id: string, memberIds: string[]) => void;
+  /** Decide what will meet a Need, from Planning as from Refinement. */
+  onChooseSolution?: (id: string, pick: string) => void;
   /** Called when the player moves between planning topics - used to clear the transient
    *  "Ask the PO" note so it doesn't linger onto the next topic. */
   onNavigateStep?: () => void;
@@ -258,7 +260,7 @@ function Meter({ committed, capacity, count, basis }: { committed: number; capac
 
 /** Sprint Planning as its three topics, one screen each: agree the Sprint Goal, forecast the work,
  *  then plan how it gets done. */
-export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onAgreeForecast, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
+export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], mySeat = null, onAgreeSprintGoal, onAgreeForecast, onEstimate, onSetTasks, onPlanShape, onToggleGoalCritical, onReorderForecast, onRefine, onSetSprintGoal, onTakeSignal, onSplitEpic, onChooseSolution, onNavigateStep, onSetTopic, onSetBet, teachCard, onMarkTaught }: SprintPlanningProps) {
   // Where the Scrum Team is in the event, not where this browser is. Sprint Planning has three
   // topics in an order, and a topic each player was privately on meant the seats played by the
   // game could not tell which one the team was in.
@@ -509,11 +511,15 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
 
           {fixingItem && (
             <Workspace wide={fixingItem.category === 'epic'}
-              title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : `Size ${fixingItem.name}`}
+              title={fixingItem.category === 'epic' ? `Split ${fixingItem.name}` : fixingItem.category === 'need' ? `What will meet ${fixingItem.name}?` : `Size ${fixingItem.name}`}
               subtitle="Refining here is allowed, but a Product Backlog refined during the last Sprint would not need it - and this is Planning's time."
               onClose={() => setFixing(null)}>
               {fixingItem.category === 'epic'
                 ? <SplitEpicPanel epic={fixingItem} onSplit={(ids) => { onSplitEpic(fixingItem.id, ids); setFixing(null); }} />
+                // The same choice Refinement offers: the Developers decide what will meet the need,
+                // and the item becomes that thing, ready to size.
+                : fixingItem.category === 'need' && onChooseSolution
+                ? <ChooseSolutionPanel item={fixingItem} onChoose={(pick) => { onChooseSolution(fixingItem.id, pick); setFixing(null); }} />
                 : <PlanningPoker item={fixingItem} state={state} seed={state.gameSeed}
                   onCommit={(pts) => { onEstimate(fixingItem.id, pts); setFixing(null); }} />}
             </Workspace>

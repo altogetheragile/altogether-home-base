@@ -4,7 +4,7 @@ import { PbiCard } from './PbiCard';
 import { OpenCard } from './OpenCard';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
-import { Lock, Plus, X, Scissors, Wand2 } from 'lucide-react';
+import { Lock, Plus, X, Scissors, Wand2, HelpCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FOCUS } from './ui/tokens';
 
@@ -65,7 +65,12 @@ export function PickCard({ item, chosen, why, note, onPick, onFix, readOnly, arr
           ) : null} />
           {why && onFix && (
             <Button className="w-full" onClick={() => { setReading(false); onFix(); }}>
-              {item.category === 'epic' ? <><Scissors className="mr-1.5 h-4 w-4" /> Split it</> : <><Wand2 className="mr-1.5 h-4 w-4" /> Size it</>}
+              {/* What is missing decides the button. A Need is not ready because nobody has decided
+                  what will meet it, and "Size it" sent the scrum-master playtest (sm10) round the
+                  planning poker fifty times without changing that. */}
+              {item.category === 'epic' ? <><Scissors className="mr-1.5 h-4 w-4" /> Split it</>
+                : item.category === 'need' ? <><HelpCircle className="mr-1.5 h-4 w-4" /> What will meet this?</>
+                : <><Wand2 className="mr-1.5 h-4 w-4" /> Size it</>}
             </Button>
           )}
           {!readOnly && !why && (
