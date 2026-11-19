@@ -548,7 +548,17 @@ function applyPlanChecks(state: ZooGameState): ZooGameState {
       touched = true;
       return { ...t, done: true };
     });
-    if (!touched) return item;
+    if (!touched) {
+      // Nothing newly ticked, but a finished plan over an uncommitted build still has to be
+      // committed. "Send it back" keeps the build as a draft and leaves the plan ticked, so after
+      // the Developers fixed what Priya found - a pair of lions instead of one - nothing ever ticked
+      // again, nothing committed it, and the card said "build it on the park" for two Sprints (the
+      // scrum-master playtest, sm9).
+      const built = commitWhenBuilt(item);
+      if (built === item) return item;
+      changed = true;
+      return settleStatus(built);
+    }
     changed = true;
     // ...and a plan with nothing left in it is the Developers saying it is built, whether they
     // ticked the last step or the park did. Without this the draft was never committed, so the card
