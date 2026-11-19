@@ -1,3 +1,5 @@
+import { SamSays } from '@/components/zooGame/SamSays';
+import { samScreen, forgetQuiet } from '@/components/zooGame/samLines';
 import { YouContext, useYou } from '@/components/zooGame/you';
 import { useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'sonner';
@@ -136,6 +138,8 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
   // This guard sits inside `case 'intro'`, so resuming a saved game mid-Sprint does not put the
   // reading back in front of you.
   const [beforeStart, setBeforeStart] = useState(true);
+  // Bumped to bring back every prompt Sam was told not to show, with the teaching.
+  const [samAgain, setSamAgain] = useState(0);
   const [startTab, setStartTab] = useState<StartTab>('zoo');
 
   // The id of the just-delivered feature, so the park can pop it in. Cleared shortly after.
@@ -422,7 +426,7 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
         // easily switch between them?"
         if (beforeStart) {
           return <BeforeYouStart tab={startTab} onTab={setStartTab} onDone={() => setBeforeStart(false)}
-            read={(state.taught ?? []).length} onForgetTeaching={forgetTaught}
+            read={(state.taught ?? []).length} onForgetTeaching={() => { forgetQuiet(); setSamAgain((n) => n + 1); forgetTaught(); }}
             onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
         }
         return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={startFromTheBrief}
@@ -481,6 +485,11 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
       {saves && <SaveGameDialog open={saveOpen} onOpenChange={setSaveOpen} defaultName={saveName} isUpdate={!!saveId} saving={isSaving} onSave={handleSave} />}
       {saves && <ZooSavedGamesDialog open={savesOpen} onOpenChange={setSavesOpen} onResume={handleResume} />}
       <Celebration trigger={celebrate} origin={celebrateOrigin} />
+      {/* What to do on this screen, from the Scrum Master. Playing alone only: in a shared game the
+          Scrum Master is one of the players, wearing the hat, and a line in their name that they did
+          not say would be the game speaking for a person. */}
+      {solo && <SamSays key={samAgain} screen={samScreen(state, { beforeStart, building: buildingId, metTeam })}
+        name={state.team.scrumMaster.name} onReading={onReading} />}
     </div>
   );
 }
