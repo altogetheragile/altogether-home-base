@@ -210,9 +210,10 @@ seconds of the day they are done on, the day's spend is one line in the decision
 refinement step between Sprints - it is work done during one, for the Sprints after it.
 
 **AI wands help after the learner has tried.** The Sprint Goal wand rewords what they wrote (#599);
-the steps wand fills the gaps in a plan they have started and is absent until they start one; the
-user story wand fills the parts they left blank and leaves their words alone. No button in the game
-now offers to do the thinking first - the thinking is what the screens are for.
+the user story wand fills the parts they left blank and leaves their words alone. The steps wand is
+the exception, by Al's choice (19 Nov 2026): on a blank plan it is "Suggest the steps" and writes the
+whole breakdown for the team to change; on a started plan it is "Fill in the gaps in this plan" and
+keeps their wording. Greyed out until a step was written, it read as missing.
 
 ### 2. Product Goals as a series
 Al's idea, not yet designed: PG1 delivers the Big Cats; achieving it lets the player set the next

@@ -23,8 +23,12 @@ const item = (tasks: string[] = []): BacklogItem => ({
 } as unknown as BacklogItem);
 
 describe('the steps wand', () => {
-  it('does nothing for somebody who has written nothing', () => {
-    expect(fillTheGaps(item()), 'it wrote the whole plan for a blank card').toEqual([]);
+  // Changed on 19 Nov 2026, at Al's request: "There used to be a wizard button to add tasks in step
+  // three of Sprint Planning. Can we add it back in?" A blank plan gets the whole suggested breakdown;
+  // a started one still keeps its wording and gets only what it is missing.
+  it('suggests the whole breakdown for a blank plan', () => {
+    expect(fillTheGaps(item())).toEqual(suggestTasks(item()));
+    expect(fillTheGaps(item()).length).toBeGreaterThan(0);
   });
 
   it('keeps every word the learner wrote', () => {
@@ -88,5 +92,23 @@ describe('what the button says it will do', () => {
     );
     expect(container.textContent, 'a wand still offers to write the thing itself')
       .not.toMatch(/Auto-suggest|Suggest tasks|Suggest steps for all/);
+  });
+});
+
+describe('the steps wand on screen', () => {
+  it('is pressable on a blank plan, says "Suggest the steps", and writes the breakdown', async () => {
+    const { TaskEditor } = await import('./Board');
+    let set: SprintTask[] | null = null;
+    const { getByRole } = render(<TaskEditor item={item()} onSetTasks={(_id, tasks) => { set = tasks; }} />);
+    const wand = getByRole('button', { name: /Suggest the steps/ });
+    expect(wand).not.toBeDisabled();
+    fireEvent.click(wand);
+    expect(set).toEqual(suggestTasks(item()));
+  });
+
+  it('becomes "Fill in the gaps in this plan" once a step is written', async () => {
+    const { TaskEditor } = await import('./Board');
+    const { getByRole } = render(<TaskEditor item={item(['Fence it'])} onSetTasks={() => {}} />);
+    expect(getByRole('button', { name: /Fill in the gaps in this plan/ })).not.toBeDisabled();
   });
 });

@@ -3591,7 +3591,11 @@ export function suggestSprintGoal(items: BacklogItem[]): string {
  */
 export function fillTheGaps(item: BacklogItem): SprintTask[] {
   const mine = (item.tasks ?? []).filter((t) => t.label.trim());
-  if (!mine.length) return mine;
+  // A blank plan gets the whole suggested breakdown, to change as they like. It used to get nothing
+  // ("a wand only helps after the learner has tried", #605), and the button sat greyed out with no
+  // word on screen saying why. Asked for back on 19 Nov 2026: "There used to be a wizard button to
+  // add tasks in step three of Sprint Planning. Can we add it back in?"
+  if (!mine.length) return suggestTasks(item);
   // Matched loosely on purpose: "fence it" and "Fence it securely" are the same step said twice,
   // and a plan with both in it is a plan nobody trusts.
   const said = (label: string) => label.toLowerCase().replace(/[^a-z ]/g, '').split(/\s+/).filter((w) => w.length > 3);
