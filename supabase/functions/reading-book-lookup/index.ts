@@ -1,6 +1,6 @@
 // Fill in a reading list book from an Amazon link, without reading Amazon.
 //
-// POST { url } as an admin. Returns what could be found:
+// POST { url, title? } as an admin. The title, when given, is searched for if the link has none. Returns what could be found:
 //   { asin, title, author, cover_url, matchedBy: 'isbn' | 'title' | null, note }
 //
 // The ASIN comes from the link. For a printed book it is the ISBN-10, which Open Library looks up
@@ -13,7 +13,7 @@
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.5';
-import { parseAmazonUrl, isIsbn10, pickByTitle, titleFromSlug, titleQueries, SHORT_HOSTS, type OpenLibraryDoc } from '../_shared/bookLookup.ts';
+import { parseAmazonUrl, isIsbn10, pickByTitle, titleFromSlug, titleQueries, titleToSearch, lookupNote, SHORT_HOSTS, type OpenLibraryDoc } from '../_shared/bookLookup.ts';
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -92,8 +92,9 @@ serve(async (req) => {
       if (doc?.title) matchedBy = 'isbn';
       else doc = null;
     }
-    for (const q of parts.slug && !doc ? titleQueries(parts.slug) : []) {
-      doc = pickByTitle(parts.slug, await search(`q=${encodeURIComponent(q)}`));
+    const wanted = titleToSearch(parts.slug, typeof body?.title === 'string' ? body.title.slice(0, 300) : '');
+    for (const q of wanted.words && !doc ? titleQueries(wanted.words) : []) {
+      doc = pickByTitle(wanted.words, await search(`q=${encodeURIComponent(q)}`));
       if (doc) { matchedBy = 'title'; break; }
     }
 
@@ -109,12 +110,10 @@ serve(async (req) => {
       }
     }
 
-    const title = doc?.title ?? (parts.slug ? titleFromSlug(parts.slug) : null);
+    // A title the admin typed is kept as typed: it is theirs, and often fuller than the record's.
+    const title = wanted.typed ? String(body.title).trim() : doc?.title ?? (parts.slug ? titleFromSlug(parts.slug) : null);
     const author = doc?.author_name?.slice(0, 3).join(', ') ?? null;
-    const note = matchedBy === 'isbn' ? 'Found by its ISBN.'
-      : matchedBy === 'title' ? 'Found by the title in the link. Check it is the right book.'
-        : parts.slug ? 'Not found. The title is taken from the link; add the author yourself.'
-          : 'Not found, and the link has no title in it. Fill in the title and author yourself.';
+    const note = lookupNote(matchedBy, parts.slug, wanted.typed);
     return json({ asin: parts.asin, title, author, cover_url, matchedBy, note });
   } catch (e) {
     return json({ error: `The lookup failed: ${(e as Error).message}` }, 502);

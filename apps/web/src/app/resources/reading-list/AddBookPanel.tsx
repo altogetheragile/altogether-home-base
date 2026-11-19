@@ -30,7 +30,7 @@ export function AddBookPanel({ topics }: { topics: { id: string; name: string }[
     setBusy('lookup');
     setMessage(null);
     try {
-      const r = await lookUpAmazonLink(link);
+      const r = await lookUpAmazonLink(link, title);
       setFound(r);
       if (r.title) setTitle(r.title);
       if (r.author) setAuthor(r.author);
