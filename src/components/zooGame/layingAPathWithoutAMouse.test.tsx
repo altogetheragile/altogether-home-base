@@ -182,6 +182,33 @@ describe('the pen, said in words', () => {
   });
 });
 
+// The eleventh scrum-master playtest walked the pen from the Tiger Enclosure to the path, stood on
+// it, and read "You are on a path from the way in" - with nothing to say whether that was the end
+// or whether it wanted another Enter.
+describe('the pen, at the far end of a path', () => {
+  const where = (c: HTMLElement) => c.querySelector('[data-part="pen-where"]')?.textContent ?? '';
+  it('says how to finish once it has walked to the path, and not before', () => {
+    const s = started();
+    const forItem = s.backlog.find((it) => it.status === 'committed')!;
+    const c = render(
+      <MemoryRouter>
+        <ParkPlan state={s} tool="path" runFor={forItem.id} onAddConnector={() => {}} onPlaceItem={() => {}} />
+      </MemoryRouter>,
+    ).container;
+    const park = c.querySelector('[data-part="park-plan"]') as SVGSVGElement;
+    fireEvent.focus(park);
+    fireEvent.keyDown(park, { key: 'Enter' });
+    expect(where(c), 'it has only just started').not.toMatch(/finish/);
+    const KEYS: Record<string, string> = { up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+    for (let i = 0; i < 200 && !/You are on a path/.test(where(c)); i += 1) {
+      const m = where(c).match(/nearest path from the way in is (\d+) paces? (up|down|left|right)/);
+      expect(m, where(c)).toBeTruthy();
+      fireEvent.keyDown(park, { key: KEYS[m![2]] });
+    }
+    expect(where(c)).toContain('Press Enter twice here to finish the path.');
+  });
+});
+
 describe('a path that stops short', () => {
   // The scrum-master playtest laid the same path six times, ten paces short of the way in each time,
   // and the criterion only ever said "nothing reaches it yet". On the park the gap is plain to see;

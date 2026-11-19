@@ -3016,6 +3016,8 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
   const turnedAway = ids.filter((id) => !committed.has(id));
   const started: ZooGameState = {
     ...state, phase: 'sprint', committedIds: [...committed], backlog, forecast: [], forecastAgreed: [],
+    // Read into this Sprint's log below; the next Sprint's forecast is somebody's own choice again.
+    forecastBy: undefined,
     // Record the capacity forecast we committed against, to compare with actual delivery at Review.
     sprintForecast: sprintCapacity(state).points,
     // Seed the burndown at the full commitment (day 0); each day's end appends the remaining.

@@ -324,7 +324,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'SET_FORECAST':
       // Remembered rather than noted: a forecast is built item by item, and what matters is who
       // chose the one that got committed.
-      return setForecast({ ...state, forecastBy: action.by ?? state.forecastBy }, action.ids);
+      // Selecting the Sprint Backlog is the Developers' (seatRules), so a move with no seat on it -
+      // playing alone, where you hold the Developers' seats - is still theirs. Left blank, the
+      // Retrospective told a solo player who had chosen every item "Nobody here picked it" (sm11).
+      return setForecast({ ...state, forecastBy: action.by ?? 'developer' }, action.ids);
     // An older session or trail, replayed. Work is not priced in seconds of day any more: a day is
     // a timebox, and what a team gets through in one is their velocity. Nothing to spend.
     case 'SPEND_DAY':
