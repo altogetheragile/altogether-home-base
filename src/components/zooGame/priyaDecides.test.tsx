@@ -27,7 +27,7 @@ const sprint = (over: Partial<ZooGameState> = {}): ZooGameState => {
 const offered = (): ZooGameState => {
   const s = sprint();
   const item = s.backlog.find((it) => it.status === 'committed' && it.sprintNumber === s.sprintNumber)!;
-  return askToCheck(setDraftDesign(startItem(s, item.id), item.id, {} as never), item.id);
+  return askToCheck(setDraftDesign(startItem(s, item.id), item.id, { parts: {}, colors: {} } as never), item.id);
 };
 
 /** The solo game's AI beat: Priya's seat, with nothing held back for the player. (ZooGame holds

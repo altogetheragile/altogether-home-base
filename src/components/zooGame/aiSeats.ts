@@ -1,9 +1,9 @@
 import type { ZooGameState, ZooAction } from './types';
 import type { SeatName } from './useZooSessions';
-import { notReady, cannotOpenGround, PLACEMENT_CHOICES, acSettled, readyToOpen, goalSource, suggestSprintGoal } from './engine';
+import { notReady, cannotOpenGround, PLACEMENT_CHOICES, readyToOpen, goalSource, suggestSprintGoal, acToJudge, acFailing } from './engine';
 import { lookAhead } from './lookAhead';
 import { DEFAULT_BRIEF } from './config';
-import { isChecked } from './parkChecks';
+import { poLooksAt } from './parkChecks';
 
 import { plotOrder } from './parkZones';
 
@@ -188,11 +188,26 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   // Coming to look at finished work. The sign-off is this seat's answer now, not something that
   // follows from the criteria on its own - so with nobody sitting here, work whose every criterion
   // is a fact would build itself and then wait for ever.
+  //
+  // She looks before she answers. Where the park shows something about a criterion that is hers to
+  // judge - can I walk right round it? - she goes and sees, and says no when it is not so. Saying
+  // yes without looking taught that acceptance is a rubber stamp: in a playtest she said "I can
+  // walk right round it" about an enclosure she had not been near.
   const asked = (state.questions ?? []).find((q) => q.id.startsWith('check-'));
   if (asked?.itemId) {
-    const name = state.backlog.find((it) => it.id === asked.itemId)?.name ?? 'it';
+    const item = state.backlog.find((it) => it.id === asked.itemId);
+    const name = item?.name ?? 'it';
+    const seen = item ? acToJudge(item).map((label) => ({ label, look: poLooksAt(state, item, label) })) : [];
+    const no = seen.find((x) => x.look && !x.look.met);
+    if (no && item && !acFailing(item).length) {
+      return { action: { type: 'ANSWER_QUESTION', id: asked.id, choice: 'back', by: 'product_owner' },
+               says: `Not yet. I went to look at the ${name}, and ${no.label.replace(/^Can I /, 'I cannot ').replace(/\?$/, '')}: ${no.look!.evidence}, then ask me again.` };
+    }
+    const looked = seen.find((x) => x.look?.met);
     return { action: { type: 'ANSWER_QUESTION', id: asked.id, choice: 'accept', by: 'product_owner' },
-             says: `I have looked at ${name}. That is what I asked for.` };
+             says: looked
+               ? `I have looked at ${name}: ${looked.label.replace(/^Can I /, 'I can ').replace(/\?$/, '')}. That is what I asked for.`
+               : `I have looked at ${name}. That is what I asked for.` };
   }
 
   // A question about HOW the work gets built, handed straight back.
@@ -211,18 +226,9 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
              says: 'Your call. How it gets built is yours - I care what it has to do.' };
   }
 
-  // Accepting the work. Done waits for the Product Owner's sign-off, and the sign-off follows the
-  // acceptance criteria - so with nobody in this seat the Developers would build everything and
-  // none of it could ever be Done. They only answer the ones that are theirs: half of every list
-  // is a fact the park measures for itself, and agreeing with a measurement is not a decision.
-  if (state.phase === 'sprint') {
-    for (const it of state.backlog.filter((x) => x.sprintNumber === state.sprintNumber
-      && x.status === 'committed' && x.design)) {
-      const i = (it.acceptance ?? []).findIndex((label, k) => !acSettled(it, k) && !isChecked(state, it, label));
-      if (i >= 0) return { action: { type: 'CONFIRM_AC', id: it.id, index: i, value: true },
-        says: `Looked at ${it.name}: yes, ${it.acceptance[i].replace(/\?$/, '').replace(/^Can I /, 'I can ')}.` };
-    }
-  }
+  // She does not tick criteria nobody has asked her about. She used to go down every card in the
+  // Sprint saying yes to the ones that are hers, unasked and unlooked - which is the Developers'
+  // "Ask Priya to check it" with the asking taken out. She judges them when they ask, above.
 
   // Done and shut: releasing is this seat's call, and she makes it at once. Value only counts once
   // visitors can use it, and the Guide is clear that the Review is not a gate to releasing it.

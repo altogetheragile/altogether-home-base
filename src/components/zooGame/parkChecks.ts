@@ -4,7 +4,7 @@ import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled, acTally } from
 import { whereItStands, groundSize } from './parkModel';
 import { spansTheWater, inWater } from './parkWater';
 import { PACE } from './parkLayout';
-import { areasOnAPath, pathShortfall, pathTo, whatVisitorsCanReach } from './parkNetwork';
+import { areasOnAPath, pathShortfall, pathTo, whatVisitorsCanReach, wayRound } from './parkNetwork';
 
 // ============= The criteria the park can answer for itself =============
 //
@@ -465,6 +465,17 @@ export const asAsked = (label: string): string => {
  *  zone has no answer until the thing is standing somewhere, and reading that silence as "somebody
  *  else's judgement" would offer half-built work for sign-off. */
 export const answerable = (label: string): boolean => !!criterionFor(label)?.answer;
+
+/** What the Product Owner sees when she comes to look at a criterion that is hers to judge, where
+ *  there is something on the park to see. Not the park's answer: the park never ticks these. It is
+ *  what a Product Owner played by the game looks at before saying yes, so she can also say no. */
+const PO_LOOKS: Record<string, (state: ZooGameState, item: BacklogItem) => Verdict | null> = {
+  'right-round-it': wayRound,
+};
+export function poLooksAt(state: ZooGameState, item: BacklogItem, label: string): Verdict | null {
+  const look = PO_LOOKS[criterionFor(label)?.id ?? ''];
+  return look ? look(state, item) : null;
+}
 
 /** The park's answer to one criterion, or null when it is a matter of judgement.
  *
