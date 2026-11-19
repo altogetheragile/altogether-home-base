@@ -2,6 +2,7 @@ import { SCRUM_CARDS, SCRUM_INTRO, EVENT_CONTRACT, ARTIFACT_PROVENANCE, CARDS_BY
 import { COACH_NUDGES, RETRO_QUESTIONS } from './engine';
 import { BOARD_PAGES } from './board/boardPages';
 import { BOARD_INPUTS, BOARD_OUTPUTS, BOARD_DESC } from './board/boardLabels';
+import { SAM_SAYS } from './samLines';
 
 // ============= The teaching copy, as data you can edit =============
 //
@@ -15,7 +16,7 @@ import { BOARD_INPUTS, BOARD_OUTPUTS, BOARD_DESC } from './board/boardLabels';
 // edit there breaks a screen rather than improving a sentence.
 
 /** Where a piece of copy appears, so the admin list can be grouped the way the game is played. */
-export type CopyGroup = 'How the zoo works' | 'Scrum on one page' | 'Your Product Goal' | 'Teaching cards' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions';
+export type CopyGroup = 'How the zoo works' | 'Scrum on one page' | 'Your Product Goal' | 'Teaching cards' | 'What events touch' | 'Artifacts' | 'The coach' | 'Retrospective questions' | "Sam's prompts";
 
 export interface CopyEntry {
   /** Stable id - the database key. Never renamed once shipped, or overrides orphan. */
@@ -326,6 +327,15 @@ export function copyEntries(): CopyEntry[] {
       apply: (v) => { RETRO_QUESTIONS[i].text = v; },
     });
   });
+
+  // What to do on each screen, from the Scrum Master, in the order a game meets them.
+  for (const [screen, line] of Object.entries(SAM_SAYS)) {
+    out.push({
+      key: `sam.${screen}`, group: "Sam's prompts", label: line.where,
+      where: `Sam's prompt on ${line.where}`, value: line.text, long: true, phases: [line.phase],
+      apply: (v) => { line.text = v; },
+    });
+  }
 
   return out;
 }
