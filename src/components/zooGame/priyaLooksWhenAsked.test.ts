@@ -20,7 +20,7 @@ function built(at = { x: 600, y: 400 }, ask = true): ZooGameState {
   s = startItem(s, habitat.id);
   s = setDraftDesign(s, habitat.id, { parts: {}, colors: {} } as never);
   s = { ...s, backlog: s.backlog.map((it) => (it.id === habitat.id
-    ? { ...it, pos: at, acceptance: [ROUND], acConfirmed: [] } : it)) };
+    ? { ...it, design: it.draftDesign, pos: at, acceptance: [ROUND], acConfirmed: [] } : it)) };
   return ask ? askToCheck(s, habitat.id) : s;
 }
 const habitatOf = (s: ZooGameState) => s.backlog.find((it) => it.acceptance?.[0] === ROUND)!;

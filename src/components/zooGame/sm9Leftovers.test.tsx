@@ -45,4 +45,14 @@ describe('refinement planned into a Sprint', () => {
     expect(c.querySelector('[data-part="refine-note"]')?.textContent).toMatch(/Refined the Product Backlog this Sprint/);
     expect(c.querySelector('[data-column="done"]')?.textContent ?? '').not.toMatch(/Refin/);
   });
+
+  it('says the points are the game\'s, and refinement in Scrum an ongoing activity', () => {
+    // sm15: read as Scrum making refinement a scheduled event with a cost.
+    for (const done of [false, true]) {
+      const c = board(sprint({ points: 1, done }));
+      const whose = c.querySelector('[data-part="refine-note-whose"]')?.textContent ?? '';
+      expect(whose).toMatch(/ongoing activity, not an event/);
+      expect(whose).toMatch(/this game.s way/);
+    }
+  });
 });

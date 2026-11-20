@@ -51,12 +51,26 @@ describe('every move across the board is recorded', () => {
     let out = reducer(s, { type: 'START_ITEM', id: habitat });
     // ...built and accepted, the way the board's own gate requires.
     out = { ...out, backlog: out.backlog.map((it) => (it.id === habitat
-      ? { ...it, status: 'done' as const, acConfirmed: (it.acceptance ?? []).map(() => true),
+      ? { ...it, design: it.design ?? { tiles: [] } as never, acConfirmed: (it.acceptance ?? []).map(() => true),
           tasks: (it.tasks ?? []).map((t) => ({ ...t, done: true })) }
       : it)) };
-    const done = reducer(out, { type: 'OPEN_ITEM', id: habitat });
+    const done = reducer(out, { type: 'FINISH_ITEM', id: habitat, by: 'developer' });
+    expect(done.backlog.find((it) => it.id === habitat)?.status, 'the setup did not let it reach Done').toBe('done');
     const last = moves(done)[moves(done).length - 1];
-    expect(last.what, 'reaching Done - the move the Sprint is for - went unrecorded').toMatch(/moved .+ to Done \(\d+ points\)/);
+    expect(last.what, 'reaching Done - the move the Sprint is for - went unrecorded').toMatch(/moved to Done \(\d+ points\)/);
+    expect(last.cost).toMatch(/the Developers said it meets the Definition of Done/);
+  });
+
+  it('records opening to visitors as opening, not as the move to Done', () => {
+    // sm14, sm15: the Retrospective read "Product Owner moved Lion Enclosure to Done" beside "the
+    // Developers said it meets the DoD". Opening is the release; Done was the Developers' call.
+    const { s, habitat } = midSprint();
+    const built = { ...s, backlog: s.backlog.map((it) => (it.id === habitat
+      ? { ...it, status: 'done' as const, tasks: (it.tasks ?? []).map((t) => ({ ...t, done: true })) } : it)) };
+    const opened = reducer(built, { type: 'OPEN_ITEM', id: habitat, by: 'product_owner' });
+    const last = moves(opened)[moves(opened).length - 1];
+    expect(last.what).toMatch(/^The Product Owner opened .+ to visitors\.$/);
+    expect(last.what).not.toMatch(/Done/);
   });
 
   it('records nothing when the move did not happen', () => {

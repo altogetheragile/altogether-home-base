@@ -617,6 +617,11 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                     {refineDone ? 'Refined the Product Backlog this Sprint' : 'Refining the Product Backlog is planned this Sprint'}
                   </span>
                   <Chip tone="teach">{state.sprintRefinement!.points} pt{state.sprintRefinement!.points === 1 ? '' : 's'}</Chip>
+                  {/* Said on the board as well as in Planning: without it the note read as Scrum
+                      making refinement a scheduled event with a cost (sm15, about 9 steps). */}
+                  <span data-part="refine-note-whose" className="basis-full text-[11px] text-muted-foreground">
+                    In Scrum, refinement is an ongoing activity, not an event. Setting points aside for it is this game&rsquo;s way of making time for it.
+                  </span>
                   {refineTodo && (
                     <>
                       <span className="text-[11px] text-muted-foreground">
