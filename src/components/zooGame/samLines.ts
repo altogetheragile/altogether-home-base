@@ -31,11 +31,12 @@ export interface SamLine {
 export const SAM_SAYS: Record<SamScreen, SamLine> = {
   'before-start': {
     where: 'Before you start', phase: 'intro',
-    text: "I'm Sam, your Scrum Master. This page shows how the zoo works and how Scrum fits on one page. Read as much as you like, then press Write your Product Goal. All of it is in Learn later.",
+    text: "I'm Sam, your Scrum Master. This page shows how the zoo works and how Scrum fits on one page. Read as much as you like, then press To the Product Goal. All of it is in Learn later.",
   },
   'product-goal': {
     where: 'Your Product Goal', phase: 'intro',
-    text: "First, the Product Goal: the future state of the zoo the Scrum Team is working towards. Write it in your own words, or start from one of the shapes, then press Start. Priya, our Product Owner, turns it into a starter Product Backlog.",
+    // Sam speaks only in a solo game, where Priya is the Product Owner and the Goal is hers.
+    text: "First, the Product Goal: the future state of the zoo the Scrum Team is working towards. Priya, our Product Owner, has written it: developing it is her accountability. Read it, suggest where it starts if the team sees a better place, then press Start. She writes her starter Product Backlog to it.",
   },
   'meet-team': {
     where: 'Meet the Scrum Team', phase: 'brief',

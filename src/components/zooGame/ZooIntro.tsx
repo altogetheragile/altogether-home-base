@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { PRODUCT_GOAL } from './config';
+import { PRODUCT_GOAL, GOAL_FOCUSES, DEFAULT_BRIEF, priyaGoal, areaAnimals } from './config';
 import { Pencil, Wand2 } from 'lucide-react';
 import { ResumeSavedGame } from './ResumeSavedGame';
 import { BoardIcon, BOARD } from './board/BoardIcon';
@@ -23,7 +23,13 @@ interface ZooIntroProps {
   onBack?: () => void;
   /** ...and back to what the GAME is, which is a different question from what Scrum is. */
   onOrient?: () => void;
-  onSetGoal: (goal: string) => void;
+  onSetGoal: (goal: string, focus?: string | null) => void;
+  /** The Product Owner's name, when the game plays her. The Product Goal is then hers to write, and
+   *  the player - holding the Scrum Master's and the Developers' seats - reads it and may suggest
+   *  where it starts. Absent, the player is the Product Owner and writes it. */
+  productOwner?: string;
+  /** Where her Goal starts, if the Scrum Team suggested somewhere. */
+  goalFocus?: string;
   /** Writing the Goal in one of the other shapes - optional, and none of them Scrum. */
   goalShape?: GoalShape;
   goalMeasures?: GoalMeasure[];
@@ -40,7 +46,118 @@ interface ZooIntroProps {
  *  Goal is, and then the Product Goal itself - which is the one thing the player writes before they
  *  start, so it is the last thing on the page and the most prominent. The player is the Product
  *  Owner here, and the Goal is theirs to shape. */
-export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy }: ZooIntroProps) {
+export function ZooIntro({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy, productOwner, goalFocus }: ZooIntroProps) {
+  // Playing alone, Priya is the Product Owner and the Goal is hers. The screen said "You are the
+  // Product Owner, so this one is yours to write" to somebody holding Sam's seat and the
+  // Developers', and the playtests asked, every run: "am I the Product Owner, or is Priya?" And the
+  // Goal they wrote never reached her starter Product Backlog: a Goal about the water got Big Cats.
+  const [focus, setFocus] = useState<string | null>(goalFocus ?? null);
+  if (productOwner) {
+    return <PriyasGoal po={productOwner} focus={focus} onFocus={setFocus}
+      teachCard={teachCard} onMarkTaught={onMarkTaught} onBack={onBack} onOrient={onOrient} onOpenSaves={onOpenSaves} copy={copy}
+      onStart={() => { onSetGoal(priyaGoal(focus), focus); onStart(); }} />;
+  }
+  return <YourGoal {...{ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy }} />;
+}
+
+/** The page's top line: the ways back, and the copy editor. Shared by both ways of meeting the Goal. */
+function TopLinks({ onBack, onOrient, copy }: Pick<ZooIntroProps, 'onBack' | 'onOrient' | 'copy'>) {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+      <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <GameLinks variant="home" />
+        <span aria-hidden className="h-3 w-px bg-border" />
+        {onOrient && (
+          <button type="button" onClick={onOrient} data-part="to-orientation"
+            className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
+            &larr; How the zoo works
+          </button>
+        )}
+        {onBack && (
+          <button type="button" onClick={onBack} className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:underline")}>
+            Scrum on one page
+          </button>
+        )}
+      </span>
+      {copy && <CopyEditor phase="intro" {...copy} />}
+    </div>
+  );
+}
+
+/** Priya's Product Goal, read by the Scrum Team. Hers to develop and communicate; theirs to
+ *  understand, question and suggest to. Suggesting where it starts rewrites it, and her starter
+ *  Product Backlog follows: the area the Goal starts with is the one she puts on top. */
+function PriyasGoal({ po, focus, onFocus, teachCard, onMarkTaught, onBack, onOrient, onOpenSaves, copy, onStart }: {
+  po: string; focus: string | null; onFocus: (f: string | null) => void; onStart: () => void;
+} & Pick<ZooIntroProps, 'teachCard' | 'onMarkTaught' | 'onBack' | 'onOrient' | 'onOpenSaves' | 'copy'>) {
+  const goal = priyaGoal(focus);
+  return (
+    <div className="h-full overflow-y-auto">
+      <div className="mx-auto flex min-h-full w-full max-w-4xl flex-col gap-3 px-4 pb-8 pt-5">
+        <TopLinks onBack={onBack} onOrient={onOrient} copy={copy} />
+        <header className="space-y-1 text-center">
+          <h1 className={TEXT.hero}>{INTRO_COPY.title}</h1>
+          <p className="mx-auto max-w-2xl text-sm text-muted-foreground">{INTRO_COPY.strapline}</p>
+        </header>
+        <section data-part="priyas-goal" className="space-y-2 rounded-lg border-2 border-primary/40 bg-primary/5 p-4">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.08em] text-primary">
+              Commitment of the Product Backlog
+            </span>
+            <span className="ml-auto">
+              <ExplainButton cards={['product-goal', 'product-backlog']} teachCard={teachCard} onMarkTaught={onMarkTaught} />
+            </span>
+          </div>
+          <p className="text-sm leading-snug text-muted-foreground">
+            {po}, your Product Owner, has written the Product Goal. Developing it and communicating it is the
+            Product Owner&rsquo;s accountability in Scrum. You hold Sam&rsquo;s seat and the Developers&rsquo;:
+            read it, and if the Scrum Team sees a better place to start, suggest one.
+          </p>
+          <blockquote data-part="po-goal" className="rounded-md border-2 border-primary/50 bg-background px-3 py-2 text-base font-semibold leading-snug">
+            <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground">Product Goal &middot; {po}&rsquo;s</span>
+            {goal}
+          </blockquote>
+          <div>
+            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">Suggest where it starts</div>
+            <div className="flex flex-wrap gap-1.5">
+              {GOAL_FOCUSES.map((z) => (
+                <button key={z} type="button" data-part={`focus-${z}`} aria-pressed={focus === z} onClick={() => onFocus(focus === z ? null : z)}
+                  title={`${areaAnimals(z).join(', ')}`}
+                  className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                    focus === z ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-card hover:bg-muted/60')}>
+                  {z}
+                </button>
+              ))}
+              <button type="button" data-part="focus-none" aria-pressed={focus === null} onClick={() => onFocus(null)}
+                className={cn(FOCUS, 'rounded-full border px-3 py-1 text-xs font-medium transition-colors',
+                  focus === null ? 'border-primary bg-primary/15 text-primary' : 'border-border bg-card hover:bg-muted/60')}>
+                Leave it to {po}
+              </button>
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              {focus
+                ? `${po} rewrites her Goal to start there, and puts ${focus} at the top of her starter Product Backlog.`
+                : `${po} starts with ${DEFAULT_BRIEF.firstZone}. Suggest an area and she rewrites her Goal, and her Product Backlog, to start there.`}
+            </p>
+          </div>
+        </section>
+        <div className="flex-1" aria-hidden />
+        <div className={ACTION_BAR}>
+          {onOpenSaves ? <ResumeSavedGame onOpen={onOpenSaves} /> : <span />}
+          <span className="flex w-full flex-col items-stretch gap-2 sm:w-auto sm:flex-row sm:items-center sm:justify-end">
+            <span className="text-[11px] text-muted-foreground">Next, {po} hands over her starter Product Backlog, written for this Goal.</span>
+            <Button size="lg" data-part="start" className={cn(BAR_ACTION, 'rounded-full px-6')} onClick={onStart}>
+              Start &rarr;
+            </Button>
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** The Product Goal, written by the player: they hold the Product Owner's seat. */
+function YourGoal({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaught, onBack, onOrient, onSetGoal, onSetGoalShape, onStart, onOpenSaves, copy }: ZooIntroProps) {
   // Empty while it is still the game's own suggestion, so the placeholder is doing the suggesting.
   // The field used to hold the default AS TEXT, identical to the placeholder behind it - so somebody
   // typing their own Goal appended it to one they had not written, and the game ran on whichever

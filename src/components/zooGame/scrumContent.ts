@@ -532,6 +532,7 @@ export const ORIENTATION = {
       { name: 'You write your Definition of Done', text: 'In Refinement, before the first Sprint. The game starts you with three lines: keep them, change them or add your own, and agree it as a Scrum Team. Or start without one, and the Retrospective offers it once the Review has shown what that cost.' },
     ],
   },
-  onward: 'Write your Product Goal',
+  // Not "Write your": playing alone, Priya writes it, as the Product Owner (2020 Scrum Guide).
+  onward: 'To the Product Goal',
   aside: 'What is Scrum? One page',
 };

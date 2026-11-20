@@ -71,6 +71,8 @@ const asWritten = (was: ZooGameState, fresh: ZooGameState): ZooGameState => ({
   productGoal: was.productGoal,
   productGoalShape: was.productGoalShape,
   productGoalMeasures: was.productGoalMeasures,
+  // ...and where Priya's Goal starts, which her starter Product Backlog is written to.
+  goalFocus: was.goalFocus,
   taught: was.taught ?? [],
 });
 
@@ -103,8 +105,10 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
           : action.phase === 'planning'
             ? arriveAtPlanning({ ...state, phase: action.phase })
             : { ...state, phase: action.phase };
-    case 'SET_PRODUCT_GOAL':
-      return setProductGoal(state, action.goal);
+    case 'SET_PRODUCT_GOAL': {
+      const next = setProductGoal(state, action.goal);
+      return action.focus === undefined ? next : { ...next, goalFocus: action.focus || undefined };
+    }
     case 'SET_SPRINT_GOAL': {
       const next = setSprintGoal(state, action.goal);
       return action.suggested ? { ...next, sprintGoalSuggestedIn: state.sprintNumber } : next;

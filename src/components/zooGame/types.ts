@@ -552,6 +552,10 @@ export interface ZooGameState {
   team: ScrumTeam;
   /** The long-term objective the Product Backlog is ordered toward (coached, editable). */
   productGoal: string;
+  /** Where the Product Owner's Product Goal starts - one of the zoo's areas - when the game plays the
+   *  Product Owner and the Scrum Team suggested one. Her starter Product Backlog opens that area
+   *  first, so the Goal and the Backlog say the same thing. */
+  goalFocus?: string;
   /** The single objective for the current Sprint (coached, outcome-shaped). Empty
    *  until set at Planning. The Daily Scrum inspects progress toward it. */
   sprintGoal: string;
@@ -860,7 +864,7 @@ export type ZooAction =
   | { type: 'TICK_DAY' }
   | { type: 'SET_CLOCK_PAUSED'; paused: boolean }
   | { type: 'TICK_SCRUM' }
-  | { type: 'SET_PRODUCT_GOAL'; goal: string }
+  | { type: 'SET_PRODUCT_GOAL'; goal: string; focus?: string | null }
   | { type: 'SET_SPRINT_GOAL'; goal: string; suggested?: boolean }
   | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
   | { type: 'SET_SPRINT_BET'; bet: { who: SegmentId | 'all'; metric: 'happiness' | 'visitors'; by: number } | null }

@@ -71,8 +71,12 @@ cannot shape it, and the starter Product Backlog is not quite the one Al describ
 
 A solo game, and a shared game with no trainer, always runs the whole flow in Scrum's order:
 
-1. **Product Goal.** The player writes or picks one, as now.
-2. **The starter Product Backlog.** The Product Owner hands over **an epic for each zone**, and
+1. **Product Goal.** Whoever holds the Product Owner seat writes it: developing and communicating
+   it is the Product Owner's accountability (2020 Scrum Guide). Playing alone, the game plays Priya,
+   so she writes it and the player, holding the Scrum Master's and the Developers' seats, reads it
+   and may suggest which area it starts with. She rewrites it to start there (20 November 2026).
+2. **The starter Product Backlog.** The Product Owner hands over **an epic for each zone**, with the
+   area the Product Goal starts with on top, and
    one for the park's own pieces (the main pathways, the bridge). Nothing arrives refined. Today the first area
    arrives with its habitat and animal ready to build; in the whole flow that is the team's first
    piece of refinement.
