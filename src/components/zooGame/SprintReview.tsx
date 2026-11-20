@@ -5,7 +5,7 @@ import { whatVisitorsCanReach } from './parkNetwork';
 import { TeamChat } from './TeamChat';
 import { SplitPanes } from './SplitPanes';
 import { whatGotOut } from './engine';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, yourReviewTurn } from './engine';
+import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, needStillWaiting, yourReviewTurn } from './engine';
 import { PbiCard } from './PbiCard';
 import { SEAT } from './seats';
 import { CardDetail } from './Board';
@@ -803,7 +803,7 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
                     <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">{sig.estimatedValue}</span>
                     <span className="ml-auto flex flex-wrap items-center gap-2">
                       {onTakeSignal
-                        ? <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>Add to the Product Backlog</Button>
+                        ? <Button size="sm" className="h-7 px-2 text-xs" onClick={() => { onTakeSignal(i); setTaken((n) => n + 1); }}>{needStillWaiting(state, sig.drivenBy) ? 'Keep it on the Product Backlog' : 'Add to the Product Backlog'}</Button>
                         : <span data-part="signal-po" className="text-[11px] text-muted-foreground">{state.team.productOwner.name.replace(/\s*\(PO\)\s*$/, '')}&rsquo;s call</span>}
                       {onDeclineSignal && (
                         <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-muted-foreground"

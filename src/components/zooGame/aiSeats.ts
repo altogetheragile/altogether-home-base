@@ -1,6 +1,6 @@
 import type { ZooGameState, ZooAction } from './types';
 import type { SeatName } from './useZooSessions';
-import { notReady, cannotOpenGround, PLACEMENT_CHOICES, readyToOpen, goalSource, suggestSprintGoal, acToJudge, acFailing } from './engine';
+import { notReady, cannotOpenGround, PLACEMENT_CHOICES, readyToOpen, goalSource, suggestSprintGoal, acToJudge, acFailing, needStillWaiting } from './engine';
 import { lookAhead } from './lookAhead';
 import { DEFAULT_BRIEF } from './config';
 import { poLooksAt } from './parkChecks';
@@ -274,8 +274,11 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   // What the visitors asked for becomes a Product Backlog item when they decide it does, which is
   // the value call the Review exists to produce.
   if (state.phase === 'review' && state.signals.length > 0) {
+    const already = needStillWaiting(state, state.signals[0].drivenBy);
     return { action: { type: 'ACCEPT_SIGNAL', index: 0 },
-             says: `Visitors asked for this. I am putting it on the Product Backlog: ${state.signals[0].suggestion}.` };
+             says: already
+               ? `Visitors are still asking for this. ${already.name} is already on the Product Backlog, so I am keeping it there rather than adding it twice.`
+               : `Visitors asked for this. I am putting it on the Product Backlog: ${state.signals[0].suggestion}.` };
   }
   // The Sprint Goal, called on what the game can read when nobody is in this seat to call it: the
   // essentials, or with none marked, everything forecast. A player at the table calls it instead.
