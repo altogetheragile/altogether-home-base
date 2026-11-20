@@ -167,7 +167,7 @@ function TheBet({ state, onSetBet }: { state: ZooGameState; onSetBet: (bet: { wh
     );
   }
   const pick = <T extends string | number>(value: T, current: T, set: (v: T) => void, label: string) => (
-    <button key={String(value)} type="button" onClick={() => set(value)}
+    <button key={String(value)} type="button" onClick={() => set(value)} aria-pressed={value === current}
       className={cn(FOCUS, 'rounded-md border px-2 py-1 text-xs',
         value === current ? 'border-primary bg-primary/10 font-medium text-primary' : 'border-border text-muted-foreground hover:text-foreground')}>
       {label}
@@ -644,7 +644,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
-                {horizon < 1 ? ' The next Planning will have nothing to choose from unless you make time.'
+                {horizon < 1 ? ' That is less than a Sprint, so the next Planning will be short of ready work unless you make time.'
                   : horizon > 3 ? ' That is plenty - build instead.'
                     : ' Enough for now, but it burns down as you go.'}
               </p>
