@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { reviewed } from './testReviewed';
 import { initialZooState, DAY_SECONDS } from './config';
 import { wantedServices } from './parkChecks';
 import {
@@ -113,7 +114,7 @@ const takeItLive = (start: ZooGameState, id: string): ZooGameState => {
 
   // 6. ...and the Developers move it. Done is their word: the card does not walk into the column
   //    by itself when the Product Owner accepts it.
-  s = finishItem(s, id, 'developer');
+  s = finishItem(reviewed(s, id), id, 'developer');
   expect(item().status, `${item().name}: it could not be moved to Done`).toBe('done');
 
   // 7. ...and it opens to visitors.

@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils';
 import { CategoryIcon } from './Board';
 import { answerable, checkCriterion } from './parkChecks';
 import { nextStep, whatToFix, openWhenShown } from './nextFix';
-import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, enclosureReady, looseAnimal, activeWipLimit, acSettled, outgrown } from './engine';
+import { waitingForHabitat, isSignOffTask, readyToOpen, readyToMove, enclosureReady, looseAnimal, activeWipLimit, acSettled, outgrown, buildTasksDone } from './engine';
 import { parkCanSeeStep } from './design';
 import { EYEBROW, FOCUS, TONE } from './ui/tokens';
 import { AlertCircle, Check, Users, Fence, MoveHorizontal, Home, PawPrint, Footprints, Droplets, Trees, Circle, Undo2 } from 'lucide-react';
@@ -115,9 +115,11 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
   // Product Owner who may only accept work that already passes every check is a turnstile. Reported
   // from playing it: a low hedge round a lion could never be accepted, so the escape the barrier
   // decision exists for could never happen.
-  const canAsk = doing && wantsSignOff && !signedOff && !!item.design && criteria.length > 0;
+  // Built, and the plan finished: Priya looks at finished work (sm16, "choose the coat"). Failing
+  // facts do not stop the asking here - accepting it as it is stays her call.
+  const canAsk = doing && wantsSignOff && !signedOff && !!item.design && buildTasksDone(item) && criteria.length > 0;
   // Ready to be moved, and what is in the way when it is not. One rule, shared with the card.
-  const done = doing && readyToMove(item);
+  const done = doing && readyToMove(item, state);
   const left = doing ? nextStep(state, item) : '';
   // Back to the build, on the control that fixes what the park found. "Pick it up" on work already
   // in Doing read as a way to accept criteria and was pressed twenty times in one playtest.

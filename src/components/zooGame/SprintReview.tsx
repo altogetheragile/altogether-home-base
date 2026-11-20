@@ -4,7 +4,7 @@ import type { SegmentId } from './simulation/types';
 import { whatVisitorsCanReach } from './parkNetwork';
 import { TeamChat } from './TeamChat';
 import { SplitPanes } from './SplitPanes';
-import { whatGotOut } from './engine';
+import { whatGotOut, revealed } from './engine';
 import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, needStillWaiting, yourReviewTurn } from './engine';
 import { PbiCard } from './PbiCard';
 import { SEAT } from './seats';
@@ -169,7 +169,13 @@ function GoalHeadline({ state, onCall }: { state: ZooGameState; onCall?: (met: b
       <li className="text-muted-foreground">
         {facts.essentials.length
           ? `Marked essential to the Goal: ${facts.essentials.join(', ')}.`
-          : 'Nothing was marked essential to the Goal, so the forecast says nothing about which of it the Goal needed.'}
+          // Said as what it means and where it is done. "Nothing was marked essential to the Goal, so
+          // the forecast says nothing about which of it the Goal needed" was unreadable three times in
+          // one run (sm16) - and in Sprint 1 there is no star to have pressed, so it named a control the
+          // player had never been shown.
+          : revealed(state, 'essentials')
+            ? 'No item was starred as essential to the Sprint Goal in Sprint Planning, so the game cannot tell which of the unfinished work the goal depended on. That is yours to judge.'
+            : 'The game cannot tell which of the unfinished work the Sprint Goal depended on. That is yours to judge.'}
       </li>
     </ul>
   );

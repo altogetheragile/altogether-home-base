@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { reviewed } from './testReviewed';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, SKIP_PENALTY_MULT, DAILY_SCRUM_FLOOR_SECONDS, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
   planSprint, planItemShape, startItemAt, enclosureReady, pullIntoSprint, estimateItem, moveItem, pokerHand, estimateSuggestion, buildItem, editItem, addAnother, improveItem, openItem, reviewSprint, callSprintGoal, startNextSprint, acceptSignal, setProductGoal, setSprintGoal, suggestSprintGoal, addPbi, refinePbi, suggestStory, moveItemBefore, moveSprintItem, moveForecastItem, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, addConnector, updateConnector, deleteConnector, openZoo, availableItems, productGoalProgress, endDay, tickDay, tickScrum, dayTotalSeconds, scrumSpent, cancelSprint, isSignOffTask, signOffReady, goalCandidates, revealed, activeWipLimit, sprintCapacity, markTaught, runDailyScrum, skipDailyScrum, startDay, generateImpediment, suggestTasks, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, allTasksDone, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, setDailyScrumAt, setEnclosureSize, setItemPos, setItemSpot, setItemSize, addItemCopy, copyOffset, COPY_GAP, setItemCopyPiece, moveItemCopy, removeItemCopy, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, setDefinitionOfDone, setDefinitionOfReady, readyHorizon, notReady, isReady, nextNudge, holdPlannedRefinement, writeBacklog, setGoalForm, goalMeasures, GOAL_METRICS, isDraftedGoal, refinementTalk, artifactState, sprintProgress, retroQuestions, nothingFitsToday, readyToOpen, whyNothingMoves, finishItem, readyToMove, inHandItem } from './engine';
@@ -57,7 +58,7 @@ function accept(state: ZooGameState, id: string): ZooGameState {
   // anybody being asked anything.
   s = askToCheck(s, id, 'developer');
   s = answerQuestion(s, `check-${id}`, 'accept', 'product_owner');
-  return finishItem(s, id, 'developer');
+  return finishItem(reviewed(s, id), id, 'developer');
 }
 
 /** Commit ids, build them all to Done, and open (release) them - along with the paths into any zone
@@ -2447,7 +2448,7 @@ describe('zoo game: the last criterion, whoever answers it', () => {
     expect(readyToMove(path()), 'the park answered the last one and the Product Owner was skipped').toBe(false);
     s = answerQuestion(askToCheck(s, 'paths', 'developer'), 'check-paths', 'accept', 'product_owner');
     expect(readyToMove(path()), 'the park answered the last criterion and the card was still not ready').toBe(true);
-    s = finishItem(s, 'paths', 'developer');
+    s = finishItem(reviewed(s, 'paths'), 'paths', 'developer');
     expect(path().status, 'the Developers moved it and it did not go to Done').toBe('done');
   });
 
@@ -2500,9 +2501,10 @@ describe('zoo game: nothing is Done without the Product Owner', () => {
     let s = withEnclosuresBuilt(initialZooState(1), 'lion-enc');
     s = setItemTasks(s, 'lion', suggestTasks(lion(s)));
     s = planSprint(s, ['lion']);
-    s = accept(buildItem(startItem(s, 'lion'), 'lion', FULL_DESIGN), 'lion');
+    s = buildItem(startItem(s, 'lion'), 'lion', FULL_DESIGN);
     for (const t of lion(s).tasks ?? []) if (!t.done && !isSignOffTask(t.label)) s = toggleItemTask(s, 'lion', t.id);
-    s = finishItem(s, 'lion', 'developer');
+    s = accept(s, 'lion');
+    s = finishItem(reviewed(s, 'lion'), 'lion', 'developer');
     expect(lion(s).status).toBe('done');
 
     s = confirmAcceptance(s, 'lion', 0, false);
@@ -3298,7 +3300,7 @@ describe('zoo game: the park answers the criteria it can answer', () => {
     s = { ...s, backlog: s.backlog.map((it) => (it.id === 'leopard-enc' ? { ...it, signedOff: true } : it)) };
     (s.backlog.find((x) => x.id === 'leopard-enc')!.acceptance ?? [])
       .forEach((_, i) => { s = confirmAcceptance(s, 'leopard-enc', i, true); });
-    s = finishItem(s, 'leopard-enc', 'developer');
+    s = finishItem(reviewed(s, 'leopard-enc'), 'leopard-enc', 'developer');
     const built = s.backlog.find((x) => x.id === 'leopard-enc')!;
     expect(built.status).toBe('done');
     expect(built.placed).toBeFalsy();      // nothing on this path ever set it

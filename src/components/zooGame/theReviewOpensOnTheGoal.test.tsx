@@ -128,7 +128,7 @@ describe('before Priya calls it', () => {
     expect(c.querySelector('h2')!.textContent).toBe('Was the Sprint Goal met?');
     const left = c.querySelector('[data-part="goal-unfinished"]')!.textContent!;
     for (const name of s.sprintGoalFacts!.unfinished) expect(left, `${name} is not named`).toContain(name);
-    expect(c.textContent, 'it does not say nothing was marked essential').toMatch(/Nothing was marked essential/);
+    expect(c.textContent, 'it does not say the game cannot tell what the goal depended on').toMatch(/cannot tell which of the unfinished work/);
   });
 
   it('offers met and not met, neither drawn as the right one, and says whose rule it is', () => {

@@ -6,7 +6,8 @@ import { outlineOf, freeSlots } from './parkOutline';
 import { themeFor } from './zoneTheme';
 import { riverOutline, inWater, acrossTheWater } from './parkWater';
 import { insidePark, CANVAS_W, PLAY_H, PROMENADE_Y, PROMENADE_H, FRONT_Y, PACE, parkOutline, outlinePath, hedgePoints, HEDGE_STEP, HEDGE_R } from './parkLayout';
-import { ENTRANCE, pathsFromTheWayIn } from './parkNetwork';
+import { ENTRANCE, pathsFromTheWayIn, parkNetwork } from './parkNetwork';
+import { wet, type NavInput } from './parkNav';
 
 import { hasGround, groundPrice, whyNotHere } from './engine';
 import { pieceByKey, pieceOf, isPlanting, shade, groupMembers, currentDesign, enclosureWater, enclosureFlora, isTank, tankWater, barrierOf } from './design';
@@ -37,8 +38,11 @@ function penWhere(
   from: { x: number; y: number } | null,
   forBox?: { item: { name: string }; at: { x: number; y: number }; size: { w: number; h: number } },
   walkable: { x: number; y: number }[] = [],
+  ground?: NavInput,
 ): string {
-  const paces = (d: number) => Math.round(Math.abs(d) / PACE);
+  // Half a pace rounds DOWN. Rounded up, a path half a pace away was "1 pace left", one press later
+  // "1 pace right", and so on for ever.
+  const paces = (d: number) => Math.round((Math.abs(d) - 0.01) / PACE);
   const way = (dx: number, dy: number) => {
     const parts = [
       paces(dx) ? `${paces(dx)} ${paces(dx) === 1 ? 'pace' : 'paces'} ${dx > 0 ? 'right' : 'left'}` : '',
@@ -52,11 +56,18 @@ function penWhere(
   // The nearest bit of path a visitor can already walk from the way in, because that, not the gate
   // itself, is what a new path has to reach. The scrum-master run steered for the gate, stopped
   // short of it, and never knew the promenade was six paces away the whole time.
-  const nearest = walkable.reduce<{ x: number; y: number } | null>((best, p) =>
+  //
+  // ...and that a path can get to: one across the river is no use without a bridge. Steered straight
+  // at the nearest bit of promenade, the pen walked the sm17 player into the river, said "this joins
+  // the path from the way in", and the criterion called what it had laid "3 paces short".
+  const dry = (p: { x: number; y: number }) => !ground || !wet(pen, p, ground);
+  const nearest = walkable.filter(dry).reduce<{ x: number; y: number } | null>((best, p) =>
     !best || Math.hypot(p.x - pen.x, p.y - pen.y) < Math.hypot(best.x - pen.x, best.y - pen.y) ? p : best, null);
-  const toWalk = !nearest ? ` The way in is ${way(ENTRANCE.x - pen.x, FRONT_Y - pen.y)}.`
-    : near(nearest) ? ' You are on a path from the way in.'
-      : ` The nearest path from the way in is ${way(nearest.x - pen.x, nearest.y - pen.y)}.`;
+  const acrossWater = !nearest && walkable.length > 0;
+  const toWalk = acrossWater ? ' Every path from the way in is across the water from here, and a path cannot cross water without a bridge.'
+    : !nearest ? ` The way in is ${way(ENTRANCE.x - pen.x, FRONT_Y - pen.y)}.`
+      : near(nearest) ? ' You are on a path from the way in.'
+        : ` The nearest path from the way in is ${way(nearest.x - pen.x, nearest.y - pen.y)}.`;
   // ...and its door, where the park asks a visitor to arrive, rather than the middle of it. Measured
   // to the middle, "5 paces up" was the pen already standing at the door, and nobody could tell.
   const door = forBox && { x: forBox.at.x, y: forBox.at.y + forBox.size.h / 2 + 26 };
@@ -74,6 +85,10 @@ function penWhere(
   // Only at the end it did not start from: a path begun at the door has not reached anything by
   // standing beside it. The last corner pressed stands in for where it began.
   const away = (p: { x: number; y: number }) => !from || Math.hypot(p.x - from.x, p.y - from.y) > JOINS;
+  // The leg being drawn goes through water: it would be laid, and visitors could not walk it.
+  if (from && ground && wet(from, pen, ground)) {
+    return `${laying} This stretch crosses the water, and visitors cannot walk a path across water without a bridge. ${ground.crossings.length ? 'Lay it over the bridge.' : 'Nothing crosses the water yet: a bridge would.'}`;
+  }
   const atJoin = !!(from && nearest && near(nearest) && away(nearest));
   const atDoor = !!(from && forBox && door && near(door) && away(door));
   // At the finish, only where it is. "The Lion Enclosure is 6 paces up" beside "finish here" read,
@@ -338,6 +353,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
   const [penAt, setPenAt] = useState<{ x: number; y: number } | null>(null);
   // What the pen line steers by, worked out once per park rather than once per key press.
   const walkable = useMemo(() => (tool === 'path' ? pathsFromTheWayIn(state) : []), [tool, state]);
+  const ground = useMemo(() => (tool === 'path' ? parkNetwork(state) : undefined), [tool, state]);
   // The run being laid right now, if the last press carried on from where the one before it
   // stopped. A path round a habitat and up to the kiosk is ONE path with corners in it, not four
   // paths that happen to touch: "can the paths have joints like they used to?"
@@ -847,7 +863,7 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           keyboard player walked the pen blind - "I have no idea where the pen currently is or where
           the Lion Enclosure is relative to the entrance" (scrum-master playtest). */}
       {tool === 'path' && !placing && penAt && (
-        <p data-part="pen-where" aria-live="polite" className="sr-only">{penWhere(penAt, runFrom, runFor ? boxes.find((b) => b.item.id === runFor) : undefined, walkable)}</p>
+        <p data-part="pen-where" aria-live="polite" className="sr-only">{penWhere(penAt, runFrom, runFor ? boxes.find((b) => b.item.id === runFor) : undefined, walkable, ground)}</p>
       )}
       <svg ref={svgRef} data-part="park-plan" className="select-none" viewBox={view}
         // Something waiting to be put down can be put down without a pointer: the park takes focus,

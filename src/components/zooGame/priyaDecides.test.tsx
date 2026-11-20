@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
+import { planFinished } from './testReviewed';
 import { renderHook } from '@testing-library/react';
 import { act } from 'react';
 import { useAiSeats } from './useZooSession';
@@ -31,7 +32,7 @@ const offered = (): ZooGameState => {
   // (She sends back work the park says fails - see sayWhatFails.test.tsx.)
   const built = setDraftDesign(startItem(s, item.id), item.id, { parts: {}, colors: {} } as never);
   const judged = { ...built, backlog: built.backlog.map((it) => (it.id === item.id ? { ...it, design: it.draftDesign, acceptance: ['Can I get what I came for?'], acConfirmed: [] } : it)) };
-  return askToCheck(judged, item.id);
+  return askToCheck(planFinished(judged, item.id), item.id);
 };
 
 /** The solo game's AI beat: Priya's seat, with nothing held back for the player. (ZooGame holds
