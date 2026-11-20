@@ -30,7 +30,7 @@ const offered = (): ZooGameState => {
   // Built, with nothing the park says fails: only a judgement left, which is what she is asked for.
   // (She sends back work the park says fails - see sayWhatFails.test.tsx.)
   const built = setDraftDesign(startItem(s, item.id), item.id, { parts: {}, colors: {} } as never);
-  const judged = { ...built, backlog: built.backlog.map((it) => (it.id === item.id ? { ...it, acceptance: ['Can I get what I came for?'], acConfirmed: [] } : it)) };
+  const judged = { ...built, backlog: built.backlog.map((it) => (it.id === item.id ? { ...it, design: it.draftDesign, acceptance: ['Can I get what I came for?'], acConfirmed: [] } : it)) };
   return askToCheck(judged, item.id);
 };
 

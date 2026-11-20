@@ -949,6 +949,8 @@ export const acToJudge = (item: BacklogItem): string[] =>
 export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || (state.questions ?? []).some((q) => q.id === `check-${id}`)) return state;
+  // Nothing built, nothing to look at: the sign-off is on the work, not on the card (sm15).
+  if (!item.design) return state;
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
   // What is actually outstanding, and the two kinds are not the same news. The Developers ask
   // either way - it is the Product Owner's to decide, and a team that cannot even ask is a team
@@ -1739,7 +1741,7 @@ export function finishItem(state: ZooGameState, id: string, by?: string): ZooGam
   return note({
     ...state,
     backlog: state.backlog.map((it) => (it.id === id ? { ...it, status: 'done' as const } : it)),
-  }, { kind: 'moved', by, what: `${item.name} was moved to Done.`,
+  }, { kind: 'moved', by, what: `${item.name} was moved to Done (${item.estimate} points).`,
     cost: 'the Developers said it meets the Definition of Done' });
 }
 
@@ -3365,12 +3367,12 @@ export function openItem(state: ZooGameState, id: string, by?: string): ZooGameS
   }
   const backlog = state.backlog.map((it) => (it.id === id && it.status === 'done' ? { ...it, status: 'open' as const, openedIn: state.sprintNumber } : it));
   const opened: ZooGameState = { ...state, backlog };
-  // Reaching Done is the move the whole Sprint is for, so it is recorded like the rest - and with
-  // what it was worth, because a Retrospective reading "3 items" learns less than one reading the
-  // points beside the forecast.
+  // Opening is the release, not the move to Done: that was the Developers' call, recorded (with its
+  // points) by finishItem. Logged here as "moved to Done" it put the Product Owner's name on the
+  // Developers' decision, beside the line saying they made it (sm14, sm15).
   if (!item || item.status !== 'done') return opened;
   return note(opened, { kind: 'moved', by: by ?? 'developer',
-    what: `${whoIs(by ?? 'developer')} moved ${item.name} to Done (${item.estimate} points).` });
+    what: `${whoIs(by ?? 'developer')} opened ${item.name} to visitors.` });
 }
 
 // ============= Signals (persist and worsen) =============

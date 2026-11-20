@@ -643,7 +643,10 @@ export function inspect(state: ZooGameState, item: BacklogItem) {
   const accepted = criteria.length > 0 && criteria.every((_, i) => acSettled(item, i))
     && (item.tasks ?? []).some((t) => /sign[- ]?off/i.test(t.label) && t.done);
   const facts = criteria.filter(answerable);
-  const ready = criteria.length > 0 && facts.every((c) => met(c, criteria.indexOf(c)));
+  // The same rule the card and the Developers ask by. This one counted only the criteria the park
+  // can settle, so an item whose criteria are all the Product Owner's to judge was "ready" with
+  // nothing built, and Priya accepted Seating that was still to be put on the park (sm12, sm15).
+  const ready = readyToAsk(state, item);
   const missing = facts.find((c) => !met(c, criteria.indexOf(c)));
   return {
     criteria, met, done, count, po, asked, accepted, ready, tally,
