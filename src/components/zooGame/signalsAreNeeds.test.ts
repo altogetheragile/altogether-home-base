@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { noStarterFood } from './testNoStarterFood';
 import { acceptSignal, SIGNAL_NEEDS } from './engine';
 import { noOnePieceMeets, bestFor, ranked } from './toolboxItems';
 import { criterionFor, answerable } from './parkChecks';
@@ -24,7 +25,7 @@ describe('what a signal puts on the Product Backlog', () => {
   const taken = (cause: string) => {
     // A team that HAS taken refinement on, which is the case this is all about: the decision is
     // theirs to make. See below for what happens before they take it on.
-    const s = { ...seeded(), sprintNumber: 1, adopted: ['refinement'], signals: [signal(cause)] } as unknown as ZooGameState;
+    const s = { ...noStarterFood(seeded()), sprintNumber: 1, adopted: ['refinement'], signals: [signal(cause)] } as unknown as ZooGameState;
     const after = acceptSignal(s, 0);
     const made = after.backlog.find((it) => !s.backlog.some((b) => b.id === it.id));
     expect(made, `the ${cause} signal makes no item at all`).toBeTruthy();
@@ -85,7 +86,7 @@ describe('a team that has not taken refinement on yet', () => {
     //
     // Before you take refinement on, refinement still happens. You just do not see it, and you have
     // no say in it. That is the lesson the adoption is for.
-    const s = { ...seeded(), sprintNumber: 1, signals: [signal('unmet:food')] } as ZooGameState;
+    const s = { ...noStarterFood(seeded()), sprintNumber: 1, signals: [signal('unmet:food')] } as ZooGameState;
     const after = acceptSignal(s, 0);
     const made = after.backlog.find((it) => !s.backlog.some((b) => b.id === it.id))!;
     expect(made.category, 'a need was left on a Backlog nobody could refine').not.toBe('need');

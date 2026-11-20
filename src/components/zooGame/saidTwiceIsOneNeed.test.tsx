@@ -64,4 +64,22 @@ describe('a need said twice is one need', () => {
     expect(screen.getByRole('button', { name: 'Keep it on the Product Backlog' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Add to the Product Backlog' })).toBeNull();
   });
+
+  // The Product Backlog opens with "Somewhere to eat". Visitors asking for somewhere to eat while it
+  // is still waiting are asking for that one, not for a second beside it.
+  it('the starter "Somewhere to eat" is the same need as visitors asking for food', () => {
+    const s = atReview();
+    expect(needStillWaiting(s, FOOD)?.id).toBe('somewhere-to-eat');
+    const after = acceptSignal(s, 0, 'product_owner');
+    expect(eats(after).length, 'a second "Somewhere to eat" beside the starter').toBe(1);
+    expect(after.signalLog?.slice(-1)[0]?.itemId).toBe('somewhere-to-eat');
+    expect(aiTurn(s, 'product_owner')?.says).toMatch(/Somewhere to eat is already on the Product Backlog/);
+  });
+
+  it('once the starter one is open, a fresh food complaint is a fresh need', () => {
+    const s = atReview();
+    const opened = { ...s, backlog: s.backlog.map((it) => (it.id === 'somewhere-to-eat' ? { ...it, status: 'open' as const } : it)) };
+    expect(needStillWaiting(opened, FOOD)).toBeNull();
+    expect(acceptSignal(opened, 0).backlog.length).toBe(opened.backlog.length + 1);
+  });
 });

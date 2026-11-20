@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { noStarterFood } from './testNoStarterFood';
 import { render, screen, fireEvent, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintReview } from './SprintReview';
@@ -15,7 +16,7 @@ import type { ZooGameState } from './types';
 const noop = () => {};
 
 const reviewed = (over: Partial<ZooGameState> = {}): ZooGameState => ({
-  ...initialZooState(3), phase: 'review', sprintNumber: 1,
+  ...noStarterFood(initialZooState(3)), phase: 'review', sprintNumber: 1,
   lastReview: {
     overallHappiness: 46, totalAttendance: 900,
     segments: [{ segmentId: 'families', attendance: 450, happiness: 40, topExhibit: null, topExhibitShare: 0, truncationRate: 0, unmetNeeds: {} }],

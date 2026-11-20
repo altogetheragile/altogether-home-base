@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { noStarterFood } from './testNoStarterFood';
 import { reviewed } from './testReviewed';
 import { initialZooState, zooCapacity, STARTER_CAPACITY, SPRINT_DAYS, SKIP_PENALTY_MULT, DAILY_SCRUM_FLOOR_SECONDS, REFINE_COSTS, DEFAULT_WIP_LIMIT, PLANNED_REFINE_SECONDS, DAY_SECONDS, DAILY_SCRUM_SECONDS, estimatedVelocity } from './config';
 import {
@@ -793,7 +794,7 @@ describe('zoo game: timed days and the Daily Scrum', () => {
 
 describe('zoo game: emergent backlog from visitor signals', () => {
   it('a zoo with exhibits but no food produces a food signal, which the PO can accept', () => {
-    let s = bigCatsSplit(1);
+    let s = noStarterFood(bigCatsSplit(1));
     s = reviewSprint(buildAndOpen(s, ['lion', 'tiger', 'penguins'])); // no food amenity
     const food = s.signals.find((sig) => sig.drivenBy === 'unmet:food');
     expect(food).toBeTruthy();

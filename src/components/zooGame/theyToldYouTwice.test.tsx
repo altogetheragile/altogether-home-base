@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { noStarterFood } from './testNoStarterFood';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintReview } from './SprintReview';
@@ -75,7 +76,7 @@ describe('what the team already did about it', () => {
 
   /** Sprint 1: the call. Sprint 2: they say it again. */
   const afterCall = (call: 'took' | 'declined', then: (s: ZooGameState) => ZooGameState = (x) => x) => {
-    const s1 = { ...initialZooState(3), sprintNumber: 1, signals: [food] } as ZooGameState;
+    const s1 = { ...noStarterFood(initialZooState(3)), sprintNumber: 1, signals: [food] } as ZooGameState;
     const decided = call === 'took' ? acceptSignal(s1, 0) : declineSignal(s1, 0);
     return then({ ...decided, sprintNumber: 2, signals: [food] } as ZooGameState);
   };

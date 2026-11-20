@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { noStarterFood } from './testNoStarterFood';
 import { render } from '@testing-library/react';
 import { ItemBench } from './BacklogBench';
 import { CardDialog } from './CardDialog';
@@ -139,7 +140,7 @@ describe('a need the visitors raised', () => {
   it('is sized from what was chosen, not from what the complaint guessed', () => {
     // The table used to carry a size per signal, and the choice then overwrote it with a different
     // one: "somewhere to eat" was five points until somebody picked a kiosk, which is three.
-    const s = { ...seeded(), sprintNumber: 1, signals: [{ drivenBy: 'unmet:food', suggestion: 'x', estimatedValue: 'high' as const }] } as ZooGameState;
+    const s = { ...noStarterFood(seeded()), sprintNumber: 1, signals: [{ drivenBy: 'unmet:food', suggestion: 'x', estimatedValue: 'high' as const }] } as ZooGameState;
     const after = acceptSignal(s, 0);
     const made = after.backlog.find((it) => !s.backlog.some((b) => b.id === it.id))!;
     // This team has not adopted refinement, so the Developers chose off-screen - and the size that

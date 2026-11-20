@@ -3438,14 +3438,15 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
   const sig = state.signals[index];
   if (!sig) return state;
   // Raised again while the need it became is still waiting: it is the same need, so it stays the one
-  // item. Taking it again added a second "Somewhere to eat" beside the first (sm16).
+  // item. Taking it again added a second "Somewhere to eat" beside the first (sm16). The starter
+  // "Somewhere to eat" counts too: it is the need they are asking for.
   const waiting = needStillWaiting(state, sig.drivenBy);
   if (waiting) {
     const kept = { ...state, signals: state.signals.filter((_, i) => i !== index),
       signalLog: [...(state.signalLog ?? []), { sprint: state.sprintNumber, cause: sig.drivenBy,
         call: 'took' as const, suggestion: sig.suggestion, itemId: waiting.id }] };
     return note(kept, { kind: 'signal', by: by ?? 'product_owner',
-      what: `Visitors said it again, and ${waiting.name} is already on the Product Backlog: kept it there`,
+      what: `Visitors asked for it, and ${waiting.name} is already on the Product Backlog: kept it there`,
       cost: `Not added twice. It is the same need, and it is met when ${waiting.name} is built and opened` });
   }
   const raised = needFromSignal(sig, state);
@@ -3464,14 +3465,22 @@ export function acceptSignal(state: ZooGameState, index: number, by?: string): Z
     cost: `${item.name} joins the Product Backlog as a need - the Developers decide what will meet it` });
 }
 
-/** The item an earlier Review took this cause into, while it is still waiting to be built: on the
- *  Product Backlog or in the Sprint. Null once it is Done, opened, or gone. */
+/** The need a cause is already on the Product Backlog as, while it is still waiting to be built: on
+ *  the Product Backlog or in the Sprint. Null once it is Done, opened, or gone.
+ *
+ *  Either the item an earlier Review took this cause into, or the starter need that says the same
+ *  thing: the Backlog opens with "Somewhere to eat", and visitors asking for somewhere to eat are
+ *  asking for that, not for a second one beside it. */
+const STARTER_NEED_FOR: Record<string, string> = { 'unmet:food': 'somewhere-to-eat' };
 export function needStillWaiting(state: ZooGameState, cause: string): BacklogItem | null {
   const waits = (it: BacklogItem | undefined): it is BacklogItem => !!it && (it.status === 'backlog' || it.status === 'committed');
   const took = (state.signalLog ?? []).filter((c) => c.cause === cause && c.call === 'took' && c.itemId);
   const last = took[took.length - 1];
   const taken = last ? state.backlog.find((it) => it.id === last.itemId) : undefined;
-  return waits(taken) ? taken : null;
+  if (waits(taken)) return taken;
+  const starterId = STARTER_NEED_FOR[cause];
+  const starter = starterId ? state.backlog.find((it) => it.id === starterId) : undefined;
+  return waits(starter) ? starter : null;
 }
 
 /** Turn a signal down. The other half of the same decision, and the half the game used to make for
