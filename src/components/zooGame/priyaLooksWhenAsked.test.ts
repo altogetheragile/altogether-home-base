@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { planFinished } from './testReviewed';
 import { aiTurn } from './aiSeats';
 import { initialZooState } from './config';
 import { planSprint, startItem, availableItems, askToCheck, setDraftDesign } from './engine';
@@ -21,7 +22,7 @@ function built(at = { x: 600, y: 400 }, ask = true): ZooGameState {
   s = setDraftDesign(s, habitat.id, { parts: {}, colors: {} } as never);
   s = { ...s, backlog: s.backlog.map((it) => (it.id === habitat.id
     ? { ...it, design: it.draftDesign, pos: at, acceptance: [ROUND], acConfirmed: [] } : it)) };
-  return ask ? askToCheck(s, habitat.id) : s;
+  return ask ? askToCheck(planFinished(s, habitat.id), habitat.id) : s;
 }
 const habitatOf = (s: ZooGameState) => s.backlog.find((it) => it.acceptance?.[0] === ROUND)!;
 

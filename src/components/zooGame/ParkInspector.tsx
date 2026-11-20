@@ -177,7 +177,7 @@ export function ParkInspector({ state, item, collapsed, quiet, onAskToCheck, onP
             {/* "Move it to Done" only when it can be: with a step of the plan still open it said so
                 anyway, and there was nothing to move. Then it says what is left instead. */}
             {item.status === 'committed'
-              ? <>{po} accepted it &middot; {readyToMove(item) ? 'move it to Done' : nextStep(state, item).replace(/^Next: /, 'still to do: ')}</>
+              ? <>{po} accepted it &middot; {readyToMove(item, state) ? 'move it to Done' : nextStep(state, item).replace(/^Next: /, 'still to do: ')}</>
               : <>Done &middot; {item.status === 'open' ? 'open to visitors' : 'not open to visitors yet'}</>}
           </p>
         ) : asked ? (

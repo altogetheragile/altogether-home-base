@@ -160,6 +160,18 @@ export function pathShortfall(state: ZooGameState, item: BacklogItem): { gap: nu
   return { gap, laidTowards: gap < without - 8 };
 }
 
+/** Whether the water is what stands between the way in and this thing: no made route, and no
+ *  walking round it either. Asked of anything on the park, not only what is open to visitors - the
+ *  item being built is the one whose path has to get there (sm17: a path laid across the river was
+ *  called "3 paces short" while the Tiger Enclosure was still in Doing). `bridged` is whether there
+ *  is a crossing on the park to lay the path over. */
+export function cutOffByWater(state: ZooGameState, item: BacklogItem): { bridged: boolean } | null {
+  if (walkTo(state, item)) return null;
+  const boxes = boxOf(state);
+  if (!boxes.some((b) => b.item.id === item.id || b.item.id === item.enclosureId)) return null;
+  return { bridged: parkNetwork(state).crossings.length > 0 };
+}
+
 /** The paths a visitor can walk from the way in, as points: what a keyboard pen steers towards. */
 export function pathsFromTheWayIn(state: ZooGameState): Pt[] {
   const nav = buildNav(parkNetwork(state));

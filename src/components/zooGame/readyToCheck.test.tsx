@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { reviewed } from './testReviewed';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { ParkOptions } from './ParkOptions';
 import { CardDialog } from './CardDialog';
@@ -152,7 +153,7 @@ describe('the whole way to Done', () => {
     // card no longer walks into the column by itself.
     expect(readyToMove(game.backlog.find((it) => it.id === item.id)!),
       'accepted work with every step finished was not even ready to move').toBe(true);
-    game = finishItem(game, item.id, 'developer');
+    game = finishItem(reviewed(game, item.id), item.id, 'developer');
     const now = game.backlog.find((it) => it.id === item.id)!;
     expect(now.status, 'the Developers moved it and it did not go to Done').toBe('done');
   });

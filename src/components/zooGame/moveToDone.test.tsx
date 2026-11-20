@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { reviewed } from './testReviewed';
 import { render, fireEvent } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { SprintBoard } from './SprintBoard';
@@ -86,7 +87,7 @@ describe('a family of lions in a habitat big enough for them', () => {
 
   it('offers the move as a button, not only as a drag', () => {
     const onFinishItem = vi.fn();
-    const { container } = board(acceptedFamily('large'), { onFinishItem });
+    const { container } = board(reviewed(acceptedFamily('large'), lionOf(acceptedFamily('large')).id), { onFinishItem });
     const move = container.querySelector('[data-part="move-to-done"]') as HTMLButtonElement | null;
     expect(move, 'a card that is ready offers no way to move it but dragging').toBeTruthy();
     fireEvent.click(move!);
@@ -102,7 +103,7 @@ describe('a pride crammed into a small habitat', () => {
     const { container } = board(s);
     const offered = !!container.querySelector('[data-part="move-to-done"]');
     expect(offered, 'the board and the rule disagreed about whether this card may move')
-      .toBe(readyToMove(lionOf(s)));
+      .toBe(readyToMove(lionOf(s), s));
   });
 });
 
@@ -142,14 +143,14 @@ describe('the words on the card and the gate on the column', () => {
     // Whatever the state, a card offering the move must be a card the move will accept. This is the
     // shape of the bug rather than one instance of it: two rules that agreed most of the time.
     for (const home of ['small', 'medium', 'large'] as const) {
-      const s = acceptedFamily(home);
+      const s = reviewed(acceptedFamily(home), lionOf(acceptedFamily(home)).id);
       const { container } = board(s);
       const card = [...container.querySelectorAll('[data-part="board-card"]')]
         .find((c) => /Lion/.test(c.textContent ?? '') && !/Enclosure/.test(c.textContent ?? ''));
       const says = /move it to Done/i.test(card?.textContent ?? '');
       const gate = !!container.querySelector('[data-part="move-to-done"]');
       expect(says, `the card's words and the rule disagree in a ${home} habitat`)
-        .toBe(readyToMove(lionOf(s)));
+        .toBe(readyToMove(lionOf(s), s));
       expect(gate, `the card says "move it to Done" in a ${home} habitat and the column will not take it`)
         .toBe(says);
     }

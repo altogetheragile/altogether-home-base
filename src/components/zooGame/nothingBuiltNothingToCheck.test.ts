@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
-import { splitEpic, planSprint } from './engine';
+import { splitEpic, planSprint, whatIsLeft } from './engine';
+import { planFinished } from './testReviewed';
 import { inspect, answerable } from './parkChecks';
 import { emptyDesign } from './design';
 import type { ZooGameState } from './types';
@@ -41,9 +42,21 @@ describe('nothing built, nothing to check', () => {
     expect((asked.questions ?? []).some((q) => q.id === `check-${id}`)).toBe(false);
   });
 
+  it('built with a step of the plan still open, it is not asked yet', () => {
+    // sm16: Priya accepted the lions with "Choose the coat" still to do.
+    const { s, id } = startedNotBuilt();
+    const built = { ...s, backlog: s.backlog.map((it) => (it.id === id
+      ? { ...it, design: emptyDesign(it), tasks: [{ id: 't1', label: 'Choose the coat', done: false }] } : it)) };
+    expect(inspect(built, built.backlog.find((it) => it.id === id)!).ready).toBe(false);
+    const asked = reducer(built, { type: 'ASK_TO_CHECK', id });
+    expect((asked.questions ?? []).some((q) => q.id === `check-${id}`)).toBe(false);
+    expect(whatIsLeft(built, built.backlog.find((it) => it.id === id)!), 'the card sends you to Priya with the build unfinished')
+      .not.toMatch(/accept|waiting on/i);
+  });
+
   it('once it is built, it can be asked', () => {
     const { s, id } = startedNotBuilt();
-    const built = { ...s, backlog: s.backlog.map((it) => (it.id === id ? { ...it, design: emptyDesign(it) } : it)) };
+    const built = planFinished({ ...s, backlog: s.backlog.map((it) => (it.id === id ? { ...it, design: emptyDesign(it) } : it)) }, id);
     expect(inspect(built, built.backlog.find((it) => it.id === id)!).ready).toBe(true);
     const asked = reducer(built, { type: 'ASK_TO_CHECK', id });
     expect((asked.questions ?? []).some((q) => q.id === `check-${id}`)).toBe(true);

@@ -235,7 +235,7 @@ function teamHousekeeping(state: ZooGameState, dev?: ScrumTeamMember): AiMove | 
   // Definition of Done asks for a review, and a team that moves the card first has reviewed
   // nothing. Done is the Developers' word - the card no longer walks into the column when the
   // Product Owner accepts it - so where the seats are played by the game, this is them saying it.
-  const toMove = state.backlog.find((it) => it.sprintNumber === state.sprintNumber && readyToMove(it));
+  const toMove = state.backlog.find((it) => it.sprintNumber === state.sprintNumber && readyToMove(it, state));
   if (toMove) {
     return { action: { type: 'FINISH_ITEM', id: toMove.id },
              says: `${toMove.name} meets the Definition of Done. Moving it to Done.` };

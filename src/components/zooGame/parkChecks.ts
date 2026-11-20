@@ -1,10 +1,10 @@
 import type { ZooGameState, BacklogItem } from './types';
 import { groupSize, hasRoomToRoam, ENCLOSURE_SHAPES, ENCLOSURE_SIZE, PATH_WIDTHS, enclosureWater, enclosureFlora, DEFAULT_GROUP, isDeployAcceptance, currentDesign, designSatisfiesTask, homeSizeOf, isTank, barrierVerdict, chosenBarrier } from './design';
-import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled, acTally } from './engine';
+import { settleStatus, isSignOffTask, commitWhenBuilt, acSettled, acTally, buildTasksDone } from './engine';
 import { whereItStands, groundSize } from './parkModel';
 import { spansTheWater, inWater } from './parkWater';
 import { PACE } from './parkLayout';
-import { areasOnAPath, pathShortfall, pathTo, whatVisitorsCanReach, wayRound } from './parkNetwork';
+import { areasOnAPath, pathShortfall, pathTo, wayRound, cutOffByWater } from './parkNetwork';
 
 // ============= The criteria the park can answer for itself =============
 //
@@ -336,9 +336,13 @@ export const CRITERIA: CriterionDef[] = [
       // everywhere except across water.
       const route = pathTo(state, item);
       if (route) return { met: true, evidence: 'a path from the way in' };
-      const wet = whatVisitorsCanReach(state).stranded.find((x) => x.item.id === item.id);
-      // It names the CONTROL, because "no path reaches it" is a fact and not an instruction.
-      if (wet?.why === 'water') return { met: false, evidence: 'the water is in the way, and nothing crosses it - the Bridge would' };
+      // It names the CONTROL, because "no path reaches it" is a fact and not an instruction. Asked of
+      // the thing as it stands, built or not: only asking what was open to visitors, a path laid
+      // into the river while the item was in Doing was "3 paces short" instead (sm17).
+      const wet = cutOffByWater(state, item);
+      if (wet) return { met: false, evidence: wet.bridged
+        ? 'the water is in the way - lay the path over the bridge'
+        : 'the water is in the way, and nothing crosses it - the Bridge would' };
       // ...and, when a path was laid towards it and stops short, by how much. "Nothing reaches it
       // yet" was true and no help: the gap is plain to see on the park and not at all to a keyboard
       // player, who laid the same path six times, ten paces short each time.
@@ -611,6 +615,10 @@ export function applyParkChecks(state: ZooGameState): ZooGameState {
 export function readyToAsk(state: ZooGameState, item: BacklogItem): boolean {
   const criteria = (item.acceptance ?? []).filter(Boolean);
   if (!criteria.length || !item.design) return false;
+  // ...and the Developers have finished their plan. Asked with "Choose the coat" still open, Priya
+  // accepted the lions and the card went on saying "still to do: choose the coat" (sm16, 3 times):
+  // she is looking at the work, so it has to be the finished work.
+  if (!buildTasksDone(item)) return false;
   const facts = criteria.filter(answerable);
   return facts.every((c) => acSettled(item, criteria.indexOf(c)) || !!checkCriterion(state, item, c)?.met);
 }

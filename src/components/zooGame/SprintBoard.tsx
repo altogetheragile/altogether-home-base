@@ -348,7 +348,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
   // board's - and the refusal was suppressed on a card that says it is ready, so the drop simply
   // did nothing and said nothing. Reported from playing it: "I'm still sticking at move Lion to
   // Done." One rule, and the words on the card come out of the same function as the gate.
-  const readyForDone = (it: BacklogItem) => readyToMove(it);
+  const readyForDone = (it: BacklogItem) => readyToMove(it, state);
   // What is left, in words, so the card itself says why it cannot move rather than hiding it in a
   // tooltip nobody sees on a tablet. In the engine, because the card dialog asks the same question
   // and two copies of this rule is how the card and the column came to disagree.
@@ -405,7 +405,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
   /** The note a refused card carries, under the card itself. */
   // ...and it goes as soon as the work is ready. A card reading "Ready · move it to Done" with a
   // refusal above it saying the same words is the game arguing with itself.
-  const cameBack = (id: string) => (refusedMove?.id === id && !readyToMove(doing.find((x) => x.id === id) ?? todo.find((x) => x.id === id) ?? ({} as BacklogItem)) ? (
+  const cameBack = (id: string) => (refusedMove?.id === id && !readyToMove(doing.find((x) => x.id === id) ?? todo.find((x) => x.id === id) ?? ({} as BacklogItem), state) ? (
     <div role="status" className="mt-1 flex items-start gap-1.5 rounded-md border border-destructive/40 bg-destructive/5 px-2 py-1 text-[11px] text-destructive">
       <X className="mt-0.5 h-3 w-3 shrink-0" />
       <span>{refusedMove.why}</span>

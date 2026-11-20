@@ -949,8 +949,9 @@ export const acToJudge = (item: BacklogItem): string[] =>
 export function askToCheck(state: ZooGameState, id: string, by?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
   if (!item || (state.questions ?? []).some((q) => q.id === `check-${id}`)) return state;
-  // Nothing built, nothing to look at: the sign-off is on the work, not on the card (sm15).
-  if (!item.design) return state;
+  // Nothing built, nothing to look at: the sign-off is on the work, not on the card (sm15). And not
+  // half of it: a plan step still open is work still to do (sm16, "choose the coat").
+  if (!item.design || !buildTasksDone(item)) return state;
   const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
   // What is actually outstanding, and the two kinds are not the same news. The Developers ask
   // either way - it is the Product Owner's to decide, and a team that cannot even ask is a team
@@ -1691,8 +1692,19 @@ export function settleStatus(item: BacklogItem): BacklogItem {
 
 /** Whether this card is waiting for the Developers to move it to Done: everything the agreement
  *  asks for is in, and nobody has said so yet. */
-export const readyToMove = (item: BacklogItem): boolean =>
-  item.status === 'committed' && !!item.started && !!item.design && readyForDone(item);
+export const readyToMove = (item: BacklogItem, state?: ZooGameState): boolean =>
+  item.status === 'committed' && !!item.started && !!item.design && readyForDone(item)
+  && !(state && awaitingReview(state, item));
+
+/** The team's Definition of Done asks for a second Developer's eyes, and nobody else has been on it.
+ *
+ *  The rail asked for the review as "your move" while the card beside it said "Ready · move it to
+ *  Done" and the move went through without it (sm17). The Definition of Done is the Developers'
+ *  commitment; a line in it that the park can check is one the work has to meet. The same rule the
+ *  rail asks by. */
+export const awaitingReview = (state: ZooGameState, item: BacklogItem): boolean =>
+  (state.definitionOfDone ?? []).some((l) => /peer.?review|another developer|reviewed by/i.test(l))
+  && (item.assignedDevs ?? []).length < 2;
 
 /** What is left before this can be moved to Done, in words, or that nothing is.
  *
@@ -1716,11 +1728,15 @@ export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
   }
   // Nothing left: the card says so and waits to be moved. Done is the Developers' word, so the
   // card does not walk into the column by itself when the Product Owner accepts.
-  if (readyToMove(item)) return 'Ready \u00b7 move it to Done';
+  if (readyToMove(item, state)) return 'Ready \u00b7 move it to Done';
+  if (readyToMove(item) && awaitingReview(state, item)) return 'Next: a second pair of eyes - choose another Developer to review it';
   if (!isDesignDone(item, currentDesign(item), homeSizeOf(item, state.backlog))) return 'Next: build it on the park';
+  // The Developers' own plan before anybody else's eye: Priya is asked to look at finished work, so
+  // a step still open comes first (sm16).
+  const own = (item.tasks ?? []).find((t) => t.label.trim() && !t.done && !isSignOffTask(t.label));
   const left = (item.acceptance ?? []).filter((_, i) => !acSettled(item, i)).length;
-  if (left) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
-  const task = (item.tasks ?? []).find((t) => t.label.trim() && !t.done);
+  if (left && !own) return `Next: accept ${left} more criteri${left === 1 ? 'on' : 'a'}`;
+  const task = own ?? (item.tasks ?? []).find((t) => t.label.trim() && !t.done);
   // A step the park cannot see is the team's to tick, and the card says so - otherwise it reads as
   // work still to do on the park, which is where the scrum-master playtest looked for four Sprints.
   if (task && !isSignOffTask(task.label) && !parkCanSeeStep(item, task.label)) {
@@ -1737,7 +1753,7 @@ export function whatIsLeft(state: ZooGameState, item: BacklogItem): string {
  *  accident somewhere else - and it is refused, with the reason, where the work is not ready. */
 export function finishItem(state: ZooGameState, id: string, by?: string): ZooGameState {
   const item = state.backlog.find((it) => it.id === id);
-  if (!item || !readyToMove(item)) return state;
+  if (!item || !readyToMove(item, state)) return state;
   return note({
     ...state,
     backlog: state.backlog.map((it) => (it.id === id ? { ...it, status: 'done' as const } : it)),
@@ -5058,8 +5074,7 @@ export function asksNow(state: ZooGameState): Ask[] {
         itemId: it.id });
     }
     // A second pair of eyes, which the Definition of Done asks for and only a Developer can give.
-    if (it.status === 'committed' && it.started && it.design && (it.assignedDevs ?? []).length < 2
-      && state.definitionOfDone.some((l) => /peer.?review|another developer|reviewed by/i.test(l))) {
+    if (it.status === 'committed' && it.started && it.design && awaitingReview(state, it)) {
       out.push({ id: `review-${it.id}`, of: 'developer', kind: 'review',
         text: `${it.name} is waiting for a second pair of eyes.`, itemId: it.id });
     }

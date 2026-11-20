@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { reviewed } from './testReviewed';
 import { initialZooState, DAY_SECONDS } from './config';
 import { reducer } from './useZooGame';
 import { splitEpic, planSprint, decisionsIn, yourDev } from './engine';
@@ -54,7 +55,7 @@ describe('every move across the board is recorded', () => {
       ? { ...it, design: it.design ?? { tiles: [] } as never, acConfirmed: (it.acceptance ?? []).map(() => true),
           tasks: (it.tasks ?? []).map((t) => ({ ...t, done: true })) }
       : it)) };
-    const done = reducer(out, { type: 'FINISH_ITEM', id: habitat, by: 'developer' });
+    const done = reducer(reviewed(out, habitat), { type: 'FINISH_ITEM', id: habitat, by: 'developer' });
     expect(done.backlog.find((it) => it.id === habitat)?.status, 'the setup did not let it reach Done').toBe('done');
     const last = moves(done)[moves(done).length - 1];
     expect(last.what, 'reaching Done - the move the Sprint is for - went unrecorded').toMatch(/moved to Done \(\d+ points\)/);

@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { planFinished } from './testReviewed';
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ParkInspector } from './ParkInspector';
@@ -40,7 +41,7 @@ describe('a criterion the Product Owner waived', () => {
     const refused = { ...s, backlog: s.backlog.map((x) => (x.id === it0.id
       // Built: there is nothing to ask the Product Owner to look at otherwise.
       ? { ...x, design: emptyDesign(x), acConfirmed: x.acceptance.map((_, i) => (i === 0 ? false : undefined)) } : x)) } as unknown as ZooGameState;
-    const after = answerQuestion(askToCheck(refused, it0.id), `check-${it0.id}`, 'accept-as-is', 'product_owner');
+    const after = answerQuestion(askToCheck(planFinished(refused, it0.id), it0.id), `check-${it0.id}`, 'accept-as-is', 'product_owner');
     return { s: after, item: after.backlog.find((x) => x.id === it0.id)! };
   };
 

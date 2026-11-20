@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest';
+import { reviewed } from './testReviewed';
 import { initialZooState } from './config';
 import { planSprint, startItem, setDraftDesign, setItemTasks, fillTheGaps, whatIsLeft, readyToMove, answerQuestion, askToCheck } from './engine';
 import { applyParkChecks } from './parkChecks';
@@ -27,6 +28,8 @@ describe('work sent back can still reach Done', () => {
     s = applyParkChecks(answerQuestion(askToCheck(s, 'lion'), 'check-lion', 'back', 'product_owner'));
     s = applyParkChecks(setDraftDesign(s, 'lion', group(1, 1)));
     s = applyParkChecks(answerQuestion(askToCheck(s, 'lion'), 'check-lion', 'accept', 'product_owner'));
+    expect(whatIsLeft(s, lion(s)), 'the review the Definition of Done asks for comes first').toMatch(/second pair of eyes/);
+    s = reviewed(s, 'lion');
     expect(whatIsLeft(s, lion(s))).toBe('Ready · move it to Done');
     expect(readyToMove(lion(s))).toBe(true);
   });
