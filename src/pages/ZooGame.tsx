@@ -433,7 +433,9 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
             read={(state.taught ?? []).length} onForgetTeaching={() => { forgetQuiet(); setSamAgain((n) => n + 1); forgetTaught(); }}
             onOpenSaves={saves && user ? () => setSavesOpen(true) : undefined} copy={copyProps} />;
         }
+        // Playing alone, the game plays Priya, so the Product Goal is hers to write (2020 Scrum Guide).
         return <ZooIntro productGoal={state.productGoal} goalShape={state.productGoalShape} goalMeasures={state.productGoalMeasures} onSetGoalShape={setGoalShape} onSetGoal={setGoal} onStart={startFromTheBrief}
+          productOwner={solo ? state.team.productOwner.name.replace(/\s*\(PO\)$/i, '') : undefined} goalFocus={state.goalFocus}
           teachCard={cardFor('intro')}
           onMarkTaught={markTaught}
           // Both ways back to the screen before: Scrum on one page, and the game's own manual.

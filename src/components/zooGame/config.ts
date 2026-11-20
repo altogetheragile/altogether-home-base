@@ -258,6 +258,30 @@ const FLAGSHIP: Record<string, { id: string; name: string; appeal: [number, numb
   Forest: { id: 'monkey', name: 'Monkey', appeal: [8, 6, 6], footprint: 'medium' },
 };
 
+/** Where the Product Owner's Product Goal starts, when the game plays the Product Owner: one of the
+ *  zoo's areas, or nowhere in particular. The Product Goal is the Product Owner's to develop and
+ *  communicate (2020 Scrum Guide), so a solo player - who holds the Scrum Master's and the
+ *  Developers' seats - does not write it. They can suggest where it starts, and Priya rewrites it
+ *  and orders her starter Product Backlog to match, so the two cannot drift apart. */
+export const GOAL_FOCUSES = ZOO_AREAS.map((a) => a.zone);
+
+/** What the area holds, as a visitor would say it: its opening animal first, then the rest. */
+export function areaAnimals(zone: string): string[] {
+  const area = ZOO_AREAS.find((a) => a.zone === zone);
+  if (!area) return [];
+  const flag = FLAGSHIP[zone]?.name;
+  const rest = area.members.filter((mem) => mem.kind === 'exhibit').map((mem) => mem.name);
+  return [...new Set([...(flag ? [flag] : []), ...rest])].map((n) => n.toLowerCase());
+}
+
+const listed = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
+
+/** Priya's Product Goal, for a focus or none. */
+export function priyaGoal(focus?: string | null): string {
+  if (!focus || !GOAL_FOCUSES.includes(focus)) return PRODUCT_GOAL;
+  return `Open a zoo that visitors love and come back to, starting with the ${focus} area: ${listed(areaAnimals(focus))}.`;
+}
+
 /** Every word this zoo is made of: its areas, its animals and its facilities, both singular and
  *  plural. Derived from the catalogues above rather than written out again, so adding a species
  *  adds it here too.

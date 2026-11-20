@@ -19,7 +19,7 @@ export function zooActions(send: (action: ZooAction) => void) {
     start: (seed?: number) => send({ type: 'START', gameSeed: seed }),
     startFromTheBrief: (seed?: number) => send({ type: 'START_FROM_THE_BRIEF', gameSeed: seed }),
     setPhase: (phase: ZooPhase) => send({ type: 'SET_PHASE', phase }),
-    setGoal: (goal: string) => send({ type: 'SET_PRODUCT_GOAL', goal }),
+    setGoal: (goal: string, focus?: string | null) => send({ type: 'SET_PRODUCT_GOAL', goal, ...(focus !== undefined ? { focus } : {}) }),
     setSprintGoal: (goal: string) => send({ type: 'SET_SPRINT_GOAL', goal }),
     setPlanningTopic: (topic: 'why' | 'what' | 'how') => send({ type: 'SET_PLANNING_TOPIC', topic }),
     answerPlacement: (id: string, choice: string) => send({ type: 'ANSWER_PLACEMENT', id, choice }),

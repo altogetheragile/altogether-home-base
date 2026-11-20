@@ -130,9 +130,14 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
   // Product Owner seat is played by the game would sit on the three questions for ever. Reported
   // from a live session joined as a Developer: the screen offered a button that was refused, and
   // there was no other way on.
+  // ...and written to her Product Goal: the area it starts with goes first. Before, the starter was
+  // the same whatever the Goal said, so a Goal about the water got Big Cats on top.
   if (state.phase === 'brief') {
-    return { action: { type: 'WRITE_BACKLOG', brief: DEFAULT_BRIEF },
-             says: `Here is what I want us to build: ${DEFAULT_BRIEF.zones.length} areas for families, and we open ${DEFAULT_BRIEF.firstZone} first.` };
+    const first = state.goalFocus && DEFAULT_BRIEF.zones.includes(state.goalFocus) ? state.goalFocus : DEFAULT_BRIEF.firstZone;
+    return { action: { type: 'WRITE_BACKLOG', brief: { ...DEFAULT_BRIEF, firstZone: first } },
+             says: state.goalFocus
+               ? `Here is what I want us to build, for the Product Goal: ${DEFAULT_BRIEF.zones.length} areas for families, and we open ${first} first.`
+               : `Here is what I want us to build: ${DEFAULT_BRIEF.zones.length} areas for families, and we open ${first} first.` };
   }
 
   // Growing the zoo: the biggest ordering decision there is, and this seat's to make. Only when the
