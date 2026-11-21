@@ -277,7 +277,7 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     const already = needStillWaiting(state, state.signals[0].drivenBy);
     return { action: { type: 'ACCEPT_SIGNAL', index: 0 },
              says: already
-               ? `Visitors are still asking for this. ${already.name} is already on the Product Backlog, so I am keeping it there rather than adding it twice.`
+               ? `Visitors are asking for this. ${already.name} is already on the Product Backlog, so I am keeping it there rather than adding it twice.`
                : `Visitors asked for this. I am putting it on the Product Backlog: ${state.signals[0].suggestion}.` };
   }
   // The Sprint Goal, called on what the game can read when nobody is in this seat to call it: the
