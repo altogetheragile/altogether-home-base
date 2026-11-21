@@ -198,7 +198,7 @@ function Chip({ on, onClick, children, title }: { on?: boolean; onClick: () => v
 
 function Swatch({ hex, on, onClick, label }: { hex: string; on: boolean; onClick: () => void; label: string }) {
   return (
-    <button type="button" aria-label={`${label} ${hex}`} title={label} onClick={onClick}
+    <button type="button" aria-label={`${label} ${hex}`} title={label} onClick={onClick} aria-pressed={on}
       className={cn(FOCUS, 'h-6 w-6 rounded-md border-2', on ? 'border-primary' : 'border-border')}
       style={{ background: hex }} />
   );
@@ -224,7 +224,7 @@ function MoreColours({ label, current, options, onPick }: {
       <PopoverContent align="start" className="zoo-theme w-auto p-2">
         <div className="grid grid-cols-6 gap-1.5">
           {options.map((c) => (
-            <button key={c} type="button" aria-label={`${label} ${c}`} title={c}
+            <button key={c} type="button" aria-label={`${label} ${c}`} title={c} aria-pressed={current === c}
               onClick={() => { onPick(c); setOpen(false); }}
               className={cn(FOCUS, 'h-7 w-7 rounded-md border-2', current === c ? 'border-primary' : 'border-border')}
               style={{ background: c }} />
