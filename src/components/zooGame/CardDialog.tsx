@@ -181,7 +181,7 @@ export function CardDialog({ state, item, onClose, onStart, onBuilding, onFinish
                         (scrum-master playtest sm8). Said beside it. */}
                     {isSignOffTask(t.label) && (
                       <span data-part="dod-step" title="This step is here because your Definition of Done asks for the Product Owner's sign-off. That is this game's rule, not the Scrum Guide's."
-                        className="ml-auto shrink-0 self-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-zoo-quiet">from your Definition of Done</span>
+                        className="ml-auto shrink-0 self-center rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-zoo-quiet">this game&rsquo;s rule, from your Definition of Done</span>
                     )}
                     {/* A step in the team's own words: the park cannot see it, so it never ticks itself,
                         and Done waits for it. Said beside it, where the tick is. */}
