@@ -29,6 +29,7 @@ const OWNER: Partial<Record<ZooAction['type'], { who: Accountability; because: s
   // This game's rule, not the Guide's, which names nobody: see `callSprintGoal`.
   CALL_SPRINT_GOAL:  { who: 'product_owner', because: 'In this game the Product Owner calls the Sprint Goal at the Review. The Guide names nobody: the Scrum Team inspects the outcome there.' },
   SET_PRODUCT_GOAL:  { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate.' },
+  NEXT_PRODUCT_GOAL: { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate, and whether it is met is hers to judge.' },
   SET_GOAL_FORM:     { who: 'product_owner', because: 'The Product Goal is the Product Owner’s to develop and communicate.' },
   WRITE_BACKLOG:     { who: 'product_owner', because: 'The Product Backlog is the Product Owner’s to create and order.' },
   ADD_PBI:           { who: 'product_owner', because: 'Anyone may suggest an item, but whether it goes on the Product Backlog is the Product Owner’s call.' },

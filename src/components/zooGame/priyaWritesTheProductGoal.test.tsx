@@ -14,11 +14,14 @@ import type { ZooGameState } from './types';
 // Backlog is written to it, rather than being the same list whatever the Goal said.
 
 describe('Priya\'s Product Goal', () => {
-  it('is the shipped Goal with no focus, and names the area and its animals with one', () => {
-    expect(priyaGoal(null)).toBe(PRODUCT_GOAL);
-    expect(priyaGoal('Waterside')).toMatch(/starting with the Waterside area: penguins and reef\.$/);
-    expect(priyaGoal('Big Cats')).toMatch(/lion, tiger and leopard/);
-    expect(priyaGoal('Atlantis'), 'an area the zoo does not have').toBe(PRODUCT_GOAL);
+  it('is a first release - one area and its animals - not the whole zoo', () => {
+    // "The initial product goal is for a whole zoo. That seems unrealistic. It is more likely a PG
+    // related to a first release e.g. a Big Cat Zone."
+    expect(priyaGoal(null), 'with no focus she opens her own first area').toMatch(/^Open the Big Cats area to visitors: the lion, tiger and leopard/);
+    expect(priyaGoal('Waterside')).toMatch(/^Open the Waterside area to visitors: the penguins and reef/);
+    expect(priyaGoal('Atlantis'), 'an area the zoo does not have').toBe(priyaGoal(null));
+    expect(priyaGoal(null)).not.toMatch(/a zoo that visitors love/);
+    expect(priyaGoal('Waterside', true), 'a later Goal builds on the last').toMatch(/^Open the Waterside area too/);
   });
 });
 
@@ -33,7 +36,7 @@ describe('the goal screen, playing alone', () => {
     expect(screen.queryByRole('textbox', { name: 'Product Goal' }), 'the player is asked to write it').toBeNull();
     expect(document.body.textContent).not.toMatch(/You are the Product Owner/);
     expect(document.querySelector('[data-part="priyas-goal"]')?.textContent).toMatch(/Priya, your Product Owner, has written the Product Goal/);
-    expect(document.querySelector('[data-part="po-goal"]')?.textContent).toContain(PRODUCT_GOAL);
+    expect(document.querySelector('[data-part="po-goal"]')?.textContent).toContain(priyaGoal(null));
   });
 
   it('takes a suggestion of where it starts, rewrites the Goal, and starts the game with both', () => {

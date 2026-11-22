@@ -1,8 +1,8 @@
 import { useReducer, useCallback, useEffect, useMemo } from 'react';
 import type { ZooGameState, ZooAction } from './types';
 import { zooActions } from './zooActions';
-import { initialZooState } from './config';
-import {say, speaking, answerHuddle, lendAHand, proposeMove, agreeMove, declineMove, openRetro, openReview, callSprintGoal, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, askScrumMaster, agreeForecast, forecastWaitingOn, setTrainerLed, playTrainerCard, handHat, asMember, joinTeam, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt, LADDER} from './engine';
+import { initialZooState, goalAreaFor } from './config';
+import {say, takeNextProductGoal, speaking, answerHuddle, lendAHand, proposeMove, agreeMove, declineMove, openRetro, openReview, callSprintGoal, dropFromSprint, planSprint, holdPlannedRefinement, askPlacement, answerPlacement, setSprintBet, agreeDefinitionOfDone, setGoalForm, planItemShape, startItemAt, pullIntoSprint, estimateItem, setItemTasks, toggleItemTask, confirmAcceptance, setDraftDesign, placeOnPark, startItem, toggleGoalCritical, setSprintDays, setLearnMode, setWipLimit, markTaught, forgetTheTeaching, setDailyScrumAt, setEnclosureSize, setServices, chooseSolution, chooseStructure, setItemPos, setItemSpot, setMemberSpot, setItemSize, setItemRot, addItemCopy, setItemCopyPiece, moveItemCopy, removePlant, nestItem, unnestItem, renameItem, splitEpic, applyPoRefinements, addPbi, refinePbi, moveItem, moveItemBefore, moveSprintItem, moveForecastItem, setUseUserStories, moveToZone, addZone, renameZone, reorderInZone, moveZone, deletePbi, duplicatePbi, assignDev, renameMember, setPathStyle, setPathRoute, addZooPath, deleteZooPath, clearZooPaths, addConnector, updateConnector, deleteConnector, buildItem, editItem, addAnother, improveItem, openItem, sendItemBack, answerQuestion, askToCheck, acceptSignal, declineSignal, setProductGoal, setSprintGoal, setDefinitionOfDone, setDefinitionOfReady, agreeSprintGoal, setForecast, reviewSprint, startNextSprint, cancelSprint, endGame, endDay, runDailyScrum, answerImpediment, askScrumMaster, agreeForecast, forecastWaitingOn, setTrainerLed, playTrainerCard, handHat, asMember, joinTeam, skipDailyScrum, startDay, tickDay, tickScrum, setClockPaused, addInside, removeInside, finishItem, moveInside, openGround, startOnTheBoard, adopt, LADDER} from './engine';
 import { writeFlowBacklog, arriveAtPlanning } from './flow';
 import { applyParkChecks } from './parkChecks';
 import { tallyWork } from './whatItCost';
@@ -73,6 +73,8 @@ const asWritten = (was: ZooGameState, fresh: ZooGameState): ZooGameState => ({
   productGoalMeasures: was.productGoalMeasures,
   // ...and where Priya's Goal starts, which her starter Product Backlog is written to.
   goalFocus: was.goalFocus,
+  goalArea: was.goalArea,
+  pastGoals: was.pastGoals,
   taught: was.taught ?? [],
 });
 
@@ -107,7 +109,13 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
             : { ...state, phase: action.phase };
     case 'SET_PRODUCT_GOAL': {
       const next = setProductGoal(state, action.goal);
-      return action.focus === undefined ? next : { ...next, goalFocus: action.focus || undefined };
+      // Priya's Goal comes with the area it opens; a Goal the Scrum Team wrote has none, and is
+      // measured by visitor happiness instead.
+      return action.focus === undefined ? { ...next, goalArea: undefined }
+        : { ...next, goalFocus: action.focus || undefined, goalArea: goalAreaFor(action.focus) };
+    }
+    case 'NEXT_PRODUCT_GOAL': {
+      return takeNextProductGoal(state);
     }
     case 'SET_SPRINT_GOAL': {
       const next = setSprintGoal(state, action.goal);

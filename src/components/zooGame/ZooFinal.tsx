@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { ZooGameState } from './types';
-import { openZoo, productGoalProgress } from './engine';
+import { openZoo, productGoalProgress, productGoalMet } from './engine';
 import { Button } from '@/components/ui/button';
 import { ActionBar, DOCK_GUTTER } from './ActionBar';
 import { PADDING, SURFACE, TEXT } from './ui/tokens';
@@ -27,7 +27,10 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
   // The same measure the Review shows and the same bar it offers "wrap up" on, so the ending cannot
   // disagree with the screen that reached it.
   const progress = Math.round(productGoalProgress(state) * 100);
-  const met = progress >= 80;
+  const met = productGoalMet(state);
+  // Goals already met count, too: a zoo that opened two areas and stopped partway into the third
+  // reached two Product Goals, and the ending says so.
+  const past = state.pastGoals ?? [];
   const sprints = `${state.sprintNumber} Sprint${state.sprintNumber === 1 ? '' : 's'}`;
   const [starting, setStarting] = useState(false);
 
@@ -40,6 +43,11 @@ export function ZooFinal({ state, onReset }: ZooFinalProps) {
             ? `You reached the Product Goal in ${sprints}.`
             : `You stopped after ${sprints}, with the Product Goal ${progress}% of the way there. Knowing when to stop is the Product Owner's call too.`}
         </p>
+        {past.length > 0 && (
+          <p data-part="final-past-goals" className="text-sm text-muted-foreground">
+            {past.length === 1 ? 'One Product Goal met before it' : `${past.length} Product Goals met before it`}: {past.map((g) => g.area ?? g.goal).join(', ')}.
+          </p>
+        )}
       </div>
       <div className="grid w-full grid-cols-2 gap-3 sm:grid-cols-4">
         <Stat label="Exhibits" value={`${exhibits}`} />

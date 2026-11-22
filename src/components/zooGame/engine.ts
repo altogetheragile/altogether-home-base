@@ -21,7 +21,7 @@ import { whatVisitorsCanReach, reachedByPath } from './parkNetwork';
 import { SIGNAL_NEEDS } from './signalNeeds';
 import { STAKEHOLDERS, STAKEHOLDER_LINES, type StakeholderLine } from './stakeholders';
 export { SIGNAL_NEEDS };
-import { starterBacklog, type StarterOptions, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, HUDDLE_SECONDS, SWARM_FACTOR } from './config';
+import { starterBacklog, type StarterOptions, toZooItem, ZOO_VOCABULARY, DEFAULT_BRIEF, IMPEDIMENT_CHANCE, REMOVE_IMPEDIMENT_MULT, SKIP_PENALTY_MULT, CAUGHT_EARLY_MULT, MISSED_SCRUM_TIP, REFINE_COSTS, PLANNED_REFINE_SECONDS, DEFAULT_WIP_LIMIT, DAY_SECONDS, TRUE_VELOCITY_PER_DAY, effortOf, DAILY_SCRUM_SECONDS, DAILY_SCRUM_FLOOR_SECONDS, DEFAULT_SERVICE_CAPACITY, zooCapacity, HUDDLE_SECONDS, SWARM_FACTOR, ZOO_AREAS, priyaGoal } from './config';
 
 /** Refining the Product Backlog DURING a running Sprint spends build time (see REFINE_COSTS): add
  *  the cost to the current day's refinement penalty. Free outside the Sprint (the
@@ -4837,9 +4837,58 @@ export const availableItems = (state: ZooGameState): BacklogItem[] => state.back
 const GOAL_HAPPINESS_FLOOR = 25; // below this, visitors are not enjoying the zoo
 export const GOAL_HAPPINESS_TARGET = 80; // "visitors love it": the Product Goal outcome
 export function productGoalProgress(state: ZooGameState): number {
+  // Priya's Goals open one area, so they are measured by how much of it visitors can walk into.
+  if (state.goalArea) {
+    const { open, total } = areaOpen(state, state.goalArea);
+    return total > 0 ? open / total : 0;
+  }
   const h = state.lastReview?.overallHappiness;
   if (h == null) return 0;
   return Math.max(0, Math.min(1, (h - GOAL_HAPPINESS_FLOOR) / (GOAL_HAPPINESS_TARGET - GOAL_HAPPINESS_FLOOR)));
+}
+
+/** How much of an area visitors can walk into: its items open, out of everything in it, counting an
+ *  epic nobody has split yet as the pieces it holds. */
+export function areaOpen(state: ZooGameState, area: string): { open: number; total: number } {
+  const inArea = state.backlog.filter((it) => it.zone === area);
+  const items = inArea.filter((it) => it.category !== 'epic');
+  const unsplit = inArea.filter((it) => it.category === 'epic').reduce((n, it) => n + (it.epicMembers?.length ?? 0), 0);
+  return { open: items.filter((it) => it.status === 'open').length, total: items.length + unsplit };
+}
+
+/** Whether the current Product Goal is met, by the measure it carries: all of its area open, or for a
+ *  Goal the Scrum Team wrote, visitors loving the zoo. The Product Owner still makes the call. */
+export function productGoalMet(state: ZooGameState): boolean {
+  return productGoalProgress(state) >= (state.goalArea ? 1 : 0.8);
+}
+
+/** The area Priya's next Product Goal would open: the next one in her Product Backlog's order that
+ *  is not open yet. Null when there is none left, which is the whole zoo open. */
+export function nextGoalArea(state: ZooGameState): string | null {
+  const areas = new Set(ZOO_AREAS.map((a) => a.zone));
+  const done = new Set([state.goalArea, ...(state.pastGoals ?? []).map((g) => g.area)]);
+  for (const it of state.backlog) {
+    if (!areas.has(it.zone) || done.has(it.zone)) continue;
+    const { open, total } = areaOpen(state, it.zone);
+    if (total > open) return it.zone;
+  }
+  return null;
+}
+
+/** Priya calls the Product Goal met and takes on the next: the next area, building on the one now
+ *  open. She orders the Product Backlog, so that area's work moves to the top of it. Refused while
+ *  the current Goal is not met, and when there is no area left to open. */
+export function takeNextProductGoal(state: ZooGameState): ZooGameState {
+  const area = nextGoalArea(state);
+  if (!state.goalArea || !productGoalMet(state) || !area) return state;
+  const isNext = (it: BacklogItem) => it.zone === area && it.status === 'backlog';
+  const moved = { ...state,
+    pastGoals: [...(state.pastGoals ?? []), { goal: state.productGoal, area: state.goalArea, metIn: state.sprintNumber }],
+    productGoal: priyaGoal(area, true), goalArea: area,
+    backlog: [...state.backlog.filter(isNext), ...state.backlog.filter((it) => !isNext(it))] };
+  return note(moved, { kind: 'product-goal', by: 'product_owner',
+    what: `The ${state.goalArea} area is open: Product Goal met. The next Product Goal opens the ${area} area`,
+    cost: `${area} moved to the top of the Product Backlog` });
 }
 
 /** Open coaching questions for the Retrospective, chosen from what actually happened this

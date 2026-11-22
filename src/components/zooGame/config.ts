@@ -170,6 +170,8 @@ export const DOD_LIBRARY: { group: string; items: string[] }[] = [
   { group: 'No regressions', items: ['Nothing already open is broken by it', 'Amenities still cope with the extra visitors'] },
 ];
 
+/** A Product Goal written in nobody's words: the fallback when a trainer's flow or a team-written
+ *  Goal is left empty. Priya's own Goals are one area at a time - see `priyaGoal`. */
 export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
 
 /** How much WORK an item is, in the points the Developers estimate in.
@@ -276,10 +278,20 @@ export function areaAnimals(zone: string): string[] {
 
 const listed = (xs: string[]) => (xs.length < 2 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`);
 
-/** Priya's Product Goal, for a focus or none. */
-export function priyaGoal(focus?: string | null): string {
-  if (!focus || !GOAL_FOCUSES.includes(focus)) return PRODUCT_GOAL;
-  return `Open a zoo that visitors love and come back to, starting with the ${focus} area: ${listed(areaAnimals(focus))}.`;
+/** The area Priya's first Product Goal opens: the one the Scrum Team suggested, or her own pick. */
+export const goalAreaFor = (focus?: string | null): string =>
+  focus && GOAL_FOCUSES.includes(focus) ? focus : DEFAULT_BRIEF.firstZone ?? GOAL_FOCUSES[0];
+
+/** Priya's Product Goal: a release, not the whole zoo. A whole zoo is nobody's next target - it is
+ *  where a run of Goals is heading - so each Goal opens one area, and the next builds on it. The
+ *  2020 Guide: the Scrum Team "must fulfill (or abandon) one objective before taking on the next".
+ *  `after` is set when this Goal follows one already met. */
+export function priyaGoal(focus?: string | null, after?: boolean): string {
+  const area = goalAreaFor(focus);
+  const animals = listed(areaAnimals(area));
+  return after
+    ? `Open the ${area} area too: the ${animals}, each in a habitat of its own, with a path to it from the way in, so a day at the zoo lasts longer.`
+    : `Open the ${area} area to visitors: the ${animals}, each in a habitat of its own, with a path to it from the way in.`;
 }
 
 /** Every word this zoo is made of: its areas, its animals and its facilities, both singular and
@@ -606,7 +618,8 @@ export function initialZooState(gameSeed = 1): ZooGameState {
         { id: 'dev3', name: 'Cara' },
       ],
     },
-    productGoal: PRODUCT_GOAL,
+    productGoal: priyaGoal(null),
+    goalArea: goalAreaFor(null),
     sprintGoal: '',
     sprintGoalMet: null,
     definitionOfDone: [...DEFAULT_DOD],

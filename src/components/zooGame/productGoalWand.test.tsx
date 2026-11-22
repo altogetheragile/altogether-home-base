@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { ZooIntro } from './ZooIntro';
 import { rewordProductGoal } from './engine';
 import { reducer } from './useZooGame';
-import { initialZooState, PRODUCT_GOAL } from './config';
+import { initialZooState } from './config';
 import type { ZooGameState, GoalShape, GoalMeasure } from './types';
 
 /** Open "Other ways to write a Product Goal", which is a drawer now.
@@ -181,7 +181,7 @@ describe('and the goal they wrote reaches the game', () => {
 
   it('still wipes it when the game is reset, which is what reset means', () => {
     const playing = started('A zoo worth the train fare.');
-    expect(reducer(playing, { type: 'RESET' }).productGoal).toBe(PRODUCT_GOAL);
+    expect(reducer(playing, { type: 'RESET' }).productGoal).toBe(initialZooState(1).productGoal);
   });
 });
 

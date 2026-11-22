@@ -118,7 +118,7 @@ function PriyasGoal({ po, focus, onFocus, teachCard, onMarkTaught, onBack, onOri
             {goal}
           </blockquote>
           <div>
-            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">Suggest where it starts</div>
+            <div className="mb-1 text-[11px] font-semibold text-muted-foreground">Suggest which area opens first</div>
             <div className="flex flex-wrap gap-1.5">
               {GOAL_FOCUSES.map((z) => (
                 <button key={z} type="button" data-part={`focus-${z}`} aria-pressed={focus === z} onClick={() => onFocus(focus === z ? null : z)}
@@ -136,8 +136,9 @@ function PriyasGoal({ po, focus, onFocus, teachCard, onMarkTaught, onBack, onOri
             </div>
             <p className="mt-1.5 text-[11px] text-muted-foreground">
               {focus
-                ? `${po} rewrites her Goal to start there, and puts ${focus} at the top of her starter Product Backlog.`
-                : `${po} starts with ${DEFAULT_BRIEF.firstZone}. Suggest an area and she rewrites her Goal, and her Product Backlog, to start there.`}
+                ? `${po} rewrites her Goal to open ${focus} first, and puts it at the top of her starter Product Backlog.`
+                : `${po} opens ${DEFAULT_BRIEF.firstZone} first. Suggest an area and she rewrites her Goal, and her Product Backlog, to open that one instead.`}
+              {' '}A whole zoo is not one release: once this area is open, {po} writes the next Product Goal to build on it.
             </p>
           </div>
         </section>
@@ -163,7 +164,8 @@ function YourGoal({ productGoal, goalShape, goalMeasures, teachCard, onMarkTaugh
   // typing their own Goal appended it to one they had not written, and the game ran on whichever
   // half survived. Reported from a play-through: "the Product Goal I wrote was thrown away... this
   // is the same pre-filled-field bug I found in the AI tools suite last week."
-  const [goal, setGoal] = useState(productGoal === PRODUCT_GOAL ? '' : productGoal);
+  // Priya's starter Goal is not the team's words either, so the box starts empty for both.
+  const [goal, setGoal] = useState(productGoal === PRODUCT_GOAL || productGoal === priyaGoal(null) ? '' : productGoal);
   // What the wand changed, cleared the moment they type again - the note was about the sentence
   // that was there.
   const [reworded, setReworded] = useState<string | null>(null);
