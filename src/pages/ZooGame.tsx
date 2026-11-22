@@ -265,7 +265,7 @@ function Screens({ game, solo = false, saves = true, seat = null, observer, cove
     for (const id of ready) {
       if (wasReady.current.has(id)) continue;
       const it = state.backlog.find((x) => x.id === id);
-      if (it) toast.success(`${it.name} meets everything the park can check. Ask ${po(state)} to look at it.`);
+      if (it) toast.success(`${it.name} meets everything the park can check. Ask ${po(state)} to check it.`);
     }
     wasReady.current = ready;
   }, [state]);
