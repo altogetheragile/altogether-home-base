@@ -148,7 +148,7 @@ export const SCRUM_CARDS: ScrumCard[] = [
     why: 'It starts the Sprint by laying out the work to be done, and produces the Sprint Backlog.',
     who: 'The whole Scrum Team. The Scrum Master typically facilitates; others may be invited for advice.',
     when: 'At the start of every Sprint.',
-    how: 'Topic one: the Product Owner proposes how the product could increase in value, and the Scrum Team defines a Sprint Goal together. Topic two: the Developers select items they forecast they can finish. Topic three: the Developers plan how, in as much detail as they need. The Scrum Team may refine items here to understand them better and pick with more confidence.',
+    how: 'Topic one: the Product Owner proposes how the product could increase in value, and the Scrum Team defines a Sprint Goal together. Topic two: the Developers select items they forecast they can finish, and the Scrum Team may refine them as it goes to understand them better and pick with more confidence. Topic three: the Developers plan how, in as much detail as they need.',
     notScrum: 'Doing the bulk of the sizing and splitting here is not forbidden, but a Planning that turns into a refinement session usually means the top of the Product Backlog was not ready.',
     timebox: 'Up to 8 hours for a one-month Sprint, usually shorter for shorter Sprints',
   },

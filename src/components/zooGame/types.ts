@@ -818,7 +818,7 @@ export interface ZooGameState {
   /** Decided at Sprint Planning topic three: the Scrum Team has set time aside in THIS Sprint to
    *  refine the Product Backlog, so every day of it starts with some of the clock already spent. */
   plannedRefinement?: boolean;
-  /** Refinement planned INTO this Sprint at topic three: an estimated piece of work in the plan,
+  /** Refinement planned INTO this Sprint at topic two: an estimated piece of work in the plan,
    *  not a flag. It takes capacity like anything else, it sits on the board, and it is not Done
    *  until the Scrum Team has actually held it. */
   sprintRefinement?: { points: number; done: boolean };

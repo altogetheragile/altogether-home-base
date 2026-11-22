@@ -3045,7 +3045,7 @@ export function planSprint(state: ZooGameState, ids: string[], refinementPoints 
     // told a team that had over-forecast by eighteen points nothing at all.
     forecastPoints: committedPts,
     dayNumber: 1, dayStage: 'building', dayTimeMult: 1, pendingImpediment: null, carriedImpediment: null,
-    // Topic three's decision. Refinement planned into a Sprint is work in the plan, with a size,
+    // Topic two's decision. Refinement planned into a Sprint is work in the plan, with a size,
     // that somebody has to actually hold - not a tax quietly docked from every day whether or not
     // anyone does it. It takes capacity from building, which is the trade-off, and it is not Done
     // until it is held.

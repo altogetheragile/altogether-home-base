@@ -2737,7 +2737,7 @@ describe('zoo game: the Product Backlog is written, not handed over', () => {
   });
 });
 
-describe('zoo game: refinement can be planned into the Sprint (topic three)', () => {
+describe('zoo game: refinement can be planned into the Sprint (topic two)', () => {
   it('goes into the Sprint as sized work, not as a flag', () => {
     const plain = planSprint(bigCatsSplit(1), ['lion-enc']);
     const withRefine = planSprint(bigCatsSplit(1), ['lion-enc'], 2);

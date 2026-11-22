@@ -46,7 +46,7 @@ describe('the refinement question at Sprint Planning', () => {
   // "None / 1 pt / 2 pts / 3 pts ... a game mechanic I haven't seen before" - every run.
   it('says what the points are, and that budgeting them is the game\'s', () => {
     const base = initialZooState(1);
-    const s = { ...base, phase: 'planning', planningTopic: 'how', sprintGoal: 'A pleasanter park', sprintGoalAgreed: ['developer'] } as ZooGameState;
+    const s = { ...base, phase: 'planning', planningTopic: 'what', sprintGoal: 'A pleasanter park', sprintGoalAgreed: ['developer'] } as ZooGameState;
     const { container } = render(
       <MemoryRouter>
         <SprintPlanning state={s} onPlan={noop} onSetForecast={noop} onSetSprintGoal={noop}
