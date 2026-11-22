@@ -284,11 +284,15 @@ export const CRITERIA: CriterionDef[] = [
       // ...and what would fix it, in the words of the thing you would change: a bigger pen, or
       // fewer animals. A criterion that only says no is a door with no handle.
       const roomy = (['small', 'medium', 'large'] as const).find((k) => hasRoomToRoam(design.group!, k, species));
+      // Says which habitat, and that fewer is the other way out. "6 in a medium habitat - they need
+      // a large one" sent the persona hunting under How many for a habitat size, which lives on the
+      // habitat (sm20, three steps).
+      const home = state.backlog.find((it) => it.id === item.enclosureId)?.name;
       return {
         met: false,
         evidence: roomy
-          ? `${n} in ${named(size)} habitat - they need ${named(roomy)} one`
-          : `${n} is too many for any habitat - fewer of them`,
+          ? `${n} in ${home ? `${named(size).replace(/^an? /, 'the ')} ${home}` : `${named(size)} habitat`} - they need ${named(roomy)} one, or fewer of them under How many`
+          : `${n} is too many for any habitat - fewer of them under How many`,
       };
     },
   },

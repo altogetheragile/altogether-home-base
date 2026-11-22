@@ -194,5 +194,8 @@ describe('when the ask disappears', () => {
     const { container } = inspector(crowded, family);
     expect(container.textContent, 'nothing says why it cannot be asked for yet').toMatch(/Not ready to ask/);
     expect(container.textContent, 'nothing says what would fix it').toMatch(/they need a (small|medium|large) one/);
+    // ...which habitat, and the other way out (sm20: hunted under How many for a habitat size).
+    expect(container.textContent, 'the habitat is not named').toContain(`the small ${h.name}`);
+    expect(container.textContent, 'fewer is not offered').toMatch(/or fewer of them under How many/);
   });
 });

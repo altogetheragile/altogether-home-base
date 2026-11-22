@@ -721,7 +721,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   {nextUnplanned ? <>Next item without a plan: <strong className="text-foreground">{nextUnplanned.name}</strong></>
                     // Not "every item has steps" while the one open here has none: the claim was
                     // about the others, and read as though this one were done.
-                    : chosen.every((it) => steps(it).length > 0) ? 'Every item has steps.' : 'No other item is waiting for a plan.'}
+                    // "No other item is waiting" beside one with no steps read as "this one is done
+                    // too" (sm20). Say it is the last.
+                    : chosen.every((it) => steps(it).length > 0) ? 'Every item has steps.' : 'This is the only item still without a plan.'}
                 </span>
                 {nextUnplanned && (
                   <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => setOpenPlan(nextUnplanned.id)}>
