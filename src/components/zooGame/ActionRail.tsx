@@ -221,13 +221,14 @@ export function ActionRail({ state, seat, solo = false, onAnswerPlacement, onSta
     const room = wip === 0 || doing < wip;
     const next = room ? whatToPullNext(state) : [];
     if (next.length) {
+      // Names the cards and has no buttons of its own. A button saying "Main Pathways" above the
+      // Main Pathways card read as the same item listed twice (sm18, sm19: "two Main Pathways
+      // buttons ... I am not sure what distinguishes them"). The card is where you start it.
       actions.push({
         id: 'pull-next', actor: 'Developers',
-        text: 'What will you pull next?',
-        answers: next.map(({ item }, i) => ({
-          label: item.name, primary: i === 0, act: () => onStartItem(item.id),
-        })),
-        note: next.map(({ item, why }) => `${item.name}: ${why}`).join('  \u00b7  '),
+        text: 'Which card will you pull next?',
+        answers: [],
+        note: `${next.map(({ item, why }) => `${item.name}: ${why}`).join('  \u00b7  ')}  Open the card in To Do and press Start it, or drag it into Doing.`,
       });
     } else if (you && onLendAHand) {
       // Nothing to start is not nothing to do, and this is what the work-in-progress limit is

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { render, fireEvent } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { ActionRail } from './ActionRail';
 import { initialZooState } from './config';
@@ -105,7 +105,7 @@ describe('the rail asks it', () => {
 
   it('asks when there is nothing in hand', () => {
     const c = rail(sprint(), () => {});
-    expect(c.textContent, 'the rail never asks what to pull').toMatch(/What will you pull next\?/);
+    expect(c.textContent, 'the rail never asks what to pull').toMatch(/Which card will you pull next\?/);
   });
 
   it('says nothing once something is in hand', () => {
@@ -113,7 +113,7 @@ describe('the rail asks it', () => {
     const s = sprint();
     const started = startItem(s, whatToPullNext(s)[0].item.id);
     expect(rail(started, () => {}).textContent, 'the rail asks again while the team is building')
-      .not.toMatch(/What will you pull next\?/);
+      .not.toMatch(/Which card will you pull next\?/);
   });
 
   it('carries the reason for each candidate', () => {
@@ -124,15 +124,18 @@ describe('the rail asks it', () => {
     expect(said, 'no reason is given for any of them').toMatch(/Top of the list|depends on it|cannot start until/i);
   });
 
-  it('pulls the one you press', () => {
+  it('names the cards and has no buttons of its own, so nothing looks like a second card', () => {
+    // A button named "Main Pathways" above the Main Pathways card read as the item listed twice
+    // (sm18, sm19). The question names the cards and says where they are started.
     const s = sprint();
-    const want = whatToPullNext(s)[0].item;
-    let pulled: string | null = null;
-    const c = rail(s, (id) => { pulled = id; });
-    const button = [...c.querySelectorAll('button')].find((b) => b.textContent?.trim() === want.name);
-    expect(button, `no button for ${want.name}`).toBeTruthy();
-    fireEvent.click(button!);
-    expect(pulled, 'pressing a candidate pulled nothing').toBe(want.id);
+    const c = rail(s, () => {});
+    const rail_ = c.querySelector('[data-part="action-rail"]')!;
+    for (const { item } of whatToPullNext(s)) {
+      expect(rail_.textContent, `${item.name} is not named`).toContain(item.name);
+      expect([...rail_.querySelectorAll('button')].some((b) => b.textContent?.trim() === item.name),
+        `${item.name} is still a button of its own`).toBe(false);
+    }
+    expect(rail_.textContent).toMatch(/Open the card in To Do and press Start it, or drag it into Doing/);
   });
 
   it('lets somebody waiting on an answer go first', () => {
@@ -147,8 +150,8 @@ describe('the rail asks it', () => {
     const shown = rail(asked, () => {});
     const open = shown.querySelector('[data-part="action-rail"] > p')?.textContent ?? '';
     expect(open, 'the pull prompt pushed a waiting question off the rail').toMatch(/Rounded or square/);
-    expect(open).not.toMatch(/What will you pull next\?/);
+    expect(open).not.toMatch(/Which card will you pull next\?/);
     // ...and it is still there, listed under the question rather than lost.
-    expect(shown.querySelector('[data-part="rail-rest"]')?.textContent).toMatch(/What will you pull next\?/);
+    expect(shown.querySelector('[data-part="rail-rest"]')?.textContent).toMatch(/Which card will you pull next\?/);
   });
 });
