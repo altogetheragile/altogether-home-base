@@ -5,7 +5,7 @@ import { whatVisitorsCanReach } from './parkNetwork';
 import { TeamChat } from './TeamChat';
 import { SplitPanes } from './SplitPanes';
 import { whatGotOut, revealed } from './engine';
-import { productGoalProgress, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, needStillWaiting, yourReviewTurn } from './engine';
+import { productGoalProgress, productGoalMet, areaOpen, nextGoalArea, goalMeasures, availableItems, readyHorizon, notReady, sprintCapacity, zoneSlices, isSignOffTask, GOAL_HAPPINESS_TARGET, betVerdict, betLine, valueMeasures, decisionsIn, saidBefore, needStillWaiting, yourReviewTurn } from './engine';
 import { PbiCard } from './PbiCard';
 import { SEAT } from './seats';
 import { CardDetail } from './Board';
@@ -43,6 +43,9 @@ interface SprintReviewProps {
   onContinue: () => void;
   /** The PO judging the Product Goal met - the game has no fixed length. */
   onWrapUp?: () => void;
+  /** The Product Owner calls the Product Goal met and takes on the next. Absent when the game plays
+   *  the Product Owner: Priya does it herself. */
+  onNextGoal?: () => void;
   /** Release something Done to visitors, from the Review. The Guide is explicit that the Review
    *  is not a gate to releasing value, so this is not "approving" anything: it is the Product
    *  Owner doing here what they could have done the day the item was Done. */
@@ -237,7 +240,7 @@ function GoalHeadline({ state, onCall }: { state: ZooGameState; onCall?: (met: b
   );
 }
 
-export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onOpen, onConfirmAc, onToggleTask, onSendBack, onCallGoal, teachCard, onMarkTaught, onSay }: SprintReviewProps) {
+export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue, onWrapUp, onNextGoal, onOpen, onConfirmAc, onToggleTask, onSendBack, onCallGoal, teachCard, onMarkTaught, onSay }: SprintReviewProps) {
   const r = state.lastReview;
   const velocity = state.velocity[state.velocity.length - 1] ?? 0;
   // What they TOOK, which is not what they thought they could do. The header counts against this
@@ -257,6 +260,12 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
   const openZones = slices.filter((z) => z.open).map((z) => z.zone);
   const startedNotOpen = slices.filter((z) => !z.open && z.delivered > 0);
   const progress = Math.round(productGoalProgress(state) * 100);
+  const goalMet = productGoalMet(state);
+  const po = state.team.productOwner.name.replace(/\s*\(PO\)\s*$/, '');
+  const area = state.goalArea ? areaOpen(state, state.goalArea) : null;
+  // Priya called the last one met at this Review and took on the next.
+  const justMet = (state.pastGoals ?? []).filter((g) => g.metIn === state.sprintNumber).slice(-1)[0];
+  const nextArea = goalMet ? nextGoalArea(state) : null;
   const goalChecks = goalMeasures(state);
   const history = (state.happiness ?? []).slice(-6);
   // Output-chasing: a lot delivered but visitors are not loving it (low happiness).
@@ -453,10 +462,35 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
           <span className="text-[11px] text-muted-foreground">Sprint {state.sprintNumber} &middot; no set number of Sprints</span>
         </div>
         <p className="text-sm font-medium">{state.productGoal}</p>
+        {(state.pastGoals ?? []).length > 0 && (
+          <ul data-part="past-goals" className="space-y-0.5 text-[11px] text-muted-foreground">
+            {(state.pastGoals ?? []).map((g) => (
+              <li key={g.goal} className="flex gap-1.5"><Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-600" /><span>Met in Sprint {g.metIn}: {g.goal}</span></li>
+            ))}
+          </ul>
+        )}
         {/* A bar implies a finish line, so the finish line is named. And a bar reading 0% before
             anything has been measured is a claim: until the first Review has run there is no
-            happiness to read, and "not measured yet" is the true thing to say. */}
-        {r ? (
+            happiness to read, and "not measured yet" is the true thing to say. Priya's Goals are
+            measured by the park instead, which can be read from the start. */}
+        {area ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"
+                role="progressbar" aria-label="Progress toward the Product Goal"
+                aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}
+                aria-valuetext={`${progress}% of the way to the Product Goal`}>
+                <div className={cn('h-full rounded-full', goalMet ? 'bg-emerald-500' : 'bg-primary')} style={{ width: `${progress}%` }} />
+              </div>
+              <span className="font-mono text-xs tabular-nums text-muted-foreground">{progress}%</span>
+            </div>
+            <p data-part="goal-area-progress" className="text-[11px] text-muted-foreground">
+              <strong className="text-foreground">{area.open} of {area.total}</strong> pieces of the {state.goalArea} area are open to
+              visitors. That is what this bar measures: the Goal is met when all of it is open.
+              {r ? <> Visitor happiness is {Math.round(r.overallHappiness)}.</> : null}
+            </p>
+          </>
+        ) : r ? (
           <>
             <div className="flex items-center gap-2">
               {/* A bar is a number drawn as a shape. Drawn as two divs it is a shape only, and the
@@ -875,17 +909,30 @@ export function SprintReview({ state, onTakeSignal, onDeclineSignal, onContinue,
       {/* The one decision only the Product Owner makes, after the visitors have been heard. */}
       <section className={cn(SURFACE.card, PADDING.roomy, 'space-y-2')}>
         <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Is the Product Goal met? &middot; the Product Owner&rsquo;s call</span>
-        <p className="text-[11px] text-muted-foreground">
-          {progress >= 80
-            ? 'Visitors love the zoo. If you judge the Product Goal met, wrap up - or keep going and make it better.'
-            : 'Not there yet. Another Sprint of value - things to see, somewhere to eat, a park that is easy to get around - moves it.'}
+        <p data-part="goal-call" className="text-[11px] text-muted-foreground">
+          {justMet
+            ? `${po} called it: the ${justMet.area} area is open, so that Product Goal is met. Her next one builds on it, and the Product Backlog is ordered for it: ${state.productGoal}`
+            : state.goalArea
+              ? goalMet
+                ? nextArea
+                  ? `The ${state.goalArea} area is open. Whether that meets the Product Goal is ${po}'s call, and the next Product Goal is hers to write.`
+                  : 'Every area of the zoo is open. If you judge the Product Goal met, wrap up - or keep going and make it better.'
+                : `Not there yet: ${area!.total - area!.open} more of the ${state.goalArea} area to open.`
+              : goalMet
+                ? 'Visitors love the zoo. If you judge the Product Goal met, wrap up - or keep going and make it better.'
+                : 'Not there yet. Another Sprint of value - things to see, somewhere to eat, a park that is easy to get around - moves it.'}
         </p>
-        {onWrapUp && (
+        {(onWrapUp || (onNextGoal && nextArea)) && (
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Button size="sm" variant={progress >= 80 ? 'default' : 'outline'} onClick={onWrapUp}>
-              {progress >= 80 ? 'The Product Goal is met - wrap up' : 'End it here anyway'}
-            </Button>
-            {progress < 80 && <span className="text-[11px] text-zoo-quiet">It is your call as PO - but the visitors are not there yet.</span>}
+            {onNextGoal && nextArea && (
+              <Button size="sm" data-part="next-goal" onClick={onNextGoal}>Call it met and take on the next Product Goal</Button>
+            )}
+            {onWrapUp && (
+              <Button size="sm" variant={goalMet && !nextArea && !justMet ? 'default' : 'outline'} onClick={onWrapUp}>
+                {justMet || (goalMet && nextArea) ? 'Wrap up the game here' : goalMet ? 'The Product Goal is met - wrap up' : 'End it here anyway'}
+              </Button>
+            )}
+            {!goalMet && !justMet && onWrapUp && <span className="text-[11px] text-zoo-quiet">It is the Product Owner&rsquo;s call - but the Product Goal is not met yet.</span>}
           </div>
         )}
       </section>

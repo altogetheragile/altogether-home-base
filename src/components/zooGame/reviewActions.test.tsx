@@ -36,7 +36,8 @@ describe('the ending', () => {
 
   it('celebrates one that was actually reached', () => {
     // The same measure the Review offers "wrap up" on, so the two cannot disagree.
-    const text = finished({ happiness: [80], lastReview: { totalAttendance: 900, overallHappiness: 80 } } as never);
+    // A Goal the Scrum Team wrote, measured by happiness; Priya's are measured by the park.
+    const text = finished({ goalArea: undefined, happiness: [80], lastReview: { totalAttendance: 900, overallHappiness: 80 } } as never);
     expect(text).toMatch(/You reached the Product Goal in 3 Sprints/);
   });
 });

@@ -139,7 +139,7 @@ export interface SprintBet {
  *  reads. Nothing in the game reads these except the Retrospective. */
 export interface TeamDecision {
   sprint: number;
-  kind: 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back' | 'question' | 'trainer';
+  kind: 'product-goal' | 'forecast' | 'daily-scrum' | 'unready' | 'dod' | 'wip' | 'refinement' | 'placement' | 'moved' | 'signal' | 'sent-back' | 'question' | 'trainer';
   /** The accountability that did it, where the game knows. Playing alone you are all three, so
    *  there is nobody to name and this is left off. */
   by?: string;
@@ -556,6 +556,11 @@ export interface ZooGameState {
    *  Product Owner and the Scrum Team suggested one. Her starter Product Backlog opens that area
    *  first, so the Goal and the Backlog say the same thing. */
   goalFocus?: string;
+  /** The area Priya's current Product Goal opens. Set for her Goals, which are one area at a time,
+   *  and absent for a Goal the Scrum Team wrote, which is measured by visitor happiness instead. */
+  goalArea?: string;
+  /** Product Goals already met, oldest first: the zoo growing one release at a time. */
+  pastGoals?: { goal: string; area?: string; metIn: number }[];
   /** The single objective for the current Sprint (coached, outcome-shaped). Empty
    *  until set at Planning. The Daily Scrum inspects progress toward it. */
   sprintGoal: string;
@@ -865,6 +870,7 @@ export type ZooAction =
   | { type: 'SET_CLOCK_PAUSED'; paused: boolean }
   | { type: 'TICK_SCRUM' }
   | { type: 'SET_PRODUCT_GOAL'; goal: string; focus?: string | null }
+  | { type: 'NEXT_PRODUCT_GOAL' }
   | { type: 'SET_SPRINT_GOAL'; goal: string; suggested?: boolean }
   | { type: 'SET_PLANNING_TOPIC'; topic: 'why' | 'what' | 'how' }
   | { type: 'SET_SPRINT_BET'; bet: { who: SegmentId | 'all'; metric: 'happiness' | 'visitors'; by: number } | null }

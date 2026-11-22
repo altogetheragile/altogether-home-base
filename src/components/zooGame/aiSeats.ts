@@ -1,8 +1,8 @@
 import type { ZooGameState, ZooAction } from './types';
 import type { SeatName } from './useZooSessions';
-import { notReady, cannotOpenGround, PLACEMENT_CHOICES, readyToOpen, goalSource, suggestSprintGoal, acToJudge, acFailing, needStillWaiting } from './engine';
+import { notReady, cannotOpenGround, PLACEMENT_CHOICES, readyToOpen, goalSource, suggestSprintGoal, acToJudge, acFailing, needStillWaiting, productGoalMet, nextGoalArea } from './engine';
 import { lookAhead } from './lookAhead';
-import { DEFAULT_BRIEF } from './config';
+import { DEFAULT_BRIEF, priyaGoal } from './config';
 import { poLooksAt } from './parkChecks';
 import { whatToFix } from './nextFix';
 
@@ -286,6 +286,15 @@ export function aiTurn(state: ZooGameState, seat: SeatName, mustAgree: readonly 
     const met = state.sprintGoalFacts.reading;
     return { action: { type: 'CALL_SPRINT_GOAL', met },
              says: met ? 'What the Sprint Goal was for got Done.' : 'What the Sprint Goal was for is not Done yet.' };
+  }
+  // The Product Goal, once its area is open: met, and the next one taken on. Hers to judge and hers
+  // to write - the Product Owner develops and communicates the Product Goal.
+  if (state.phase === 'review' && state.goalArea && productGoalMet(state)) {
+    const next = nextGoalArea(state);
+    if (next) {
+      return { action: { type: 'NEXT_PRODUCT_GOAL' },
+               says: `The ${state.goalArea} area is open, so I am calling our Product Goal met. My next Product Goal builds on it: ${priyaGoal(next, true)}` };
+    }
   }
   return null;
 }
