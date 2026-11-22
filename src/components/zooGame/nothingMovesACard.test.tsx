@@ -194,10 +194,10 @@ describe('the rail', () => {
     const open = held(sprint());
     const { container } = rail(open);
     expect(container.textContent, 'the board offered you work while somebody waited on you')
-      .not.toMatch(/What will you pull next/);
+      .not.toMatch(/Which card will you pull next/);
     expect(container.textContent, 'something else was waiting behind the question').not.toMatch(/\d+ more/);
     // The control: with nothing held up, the board does offer you work.
     expect(rail(sprint()).container.textContent, 'the rail never offers work at all')
-      .toMatch(/What will you pull next/);
+      .toMatch(/Which card will you pull next/);
   });
 });
