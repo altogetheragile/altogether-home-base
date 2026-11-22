@@ -19,10 +19,11 @@ interface PlanningPokerProps {
 }
 
 /** Estimate a Product Backlog item by planning poker: the Developers each reveal a card, and the
- *  forecast is the most common value (ties rounding up). The Product Owner commits a
- *  size - a shared forecast from size and complexity, not a promise. */
+ *  forecast is the most common value (ties rounding up). The Developers settle the size - a shared
+ *  forecast from size and complexity, not a promise. */
 export function PlanningPoker({ item, state, seed, onCommit, talk: withTalk = true }: PlanningPokerProps) {
-  const hand = useMemo(() => pokerHand(item, seed, state.dodAgreed), [item, seed, state.dodAgreed]);
+  const devs = state.team.developers;
+  const hand = useMemo(() => pokerHand(item, seed, state.dodAgreed, devs.length), [item, seed, state.dodAgreed, devs.length]);
   const suggestion = useMemo(() => estimateSuggestion(hand), [hand]);
   const [pick, setPick] = useState(suggestion);
   const talk = useMemo(() => refinementTalk(state, item), [state, item]);
@@ -71,14 +72,19 @@ export function PlanningPoker({ item, state, seed, onCommit, talk: withTalk = tr
       )}
 
       <div className="mb-3 flex items-center gap-2">
+        {/* Each card under the name of the Developer who played it: "8 8 8 8" with no names was
+            read as four unlabelled numbers (scrum-master playtest sm21). */}
         {hand.map((c, i) => (
-          <span key={i} className="flex h-12 w-9 items-center justify-center rounded-md border border-border bg-card font-mono text-lg font-bold shadow-sm">{c}</span>
+          <span key={i} data-part="poker-card" className="flex flex-col items-center gap-0.5">
+            <span className="flex h-12 w-9 items-center justify-center rounded-md border border-border bg-card font-mono text-lg font-bold shadow-sm">{c}</span>
+            <span className="text-[10px] text-muted-foreground">{devs[i]?.name ?? `Developer ${i + 1}`}</span>
+          </span>
         ))}
         <span className="ml-2 text-sm text-muted-foreground">team suggests <span className="font-semibold text-foreground">{suggestion}</span></span>
       </div>
 
       <div className="mb-3">
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Commit the size</div>
+        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Settle the size</div>
         <div className="flex flex-wrap gap-1.5">
           {FIB.map((f) => (
             <button key={f} type="button" onClick={() => setPick(f)}
@@ -88,7 +94,9 @@ export function PlanningPoker({ item, state, seed, onCommit, talk: withTalk = tr
       </div>
 
       <div className="flex justify-end">
-        <Button size="sm" onClick={() => onCommit(pick)}>Commit {pick} pts</Button>
+        {/* Not "Commit": in Scrum a commitment is a Goal, and "Commit 2 pts" was read as pulling the
+            item into the Sprint (scrum-master playtest sm21). This only sizes it. */}
+        <Button size="sm" onClick={() => onCommit(pick)}>Size it at {pick} pts</Button>
       </div>
     </div>
   );

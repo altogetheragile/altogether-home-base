@@ -31,7 +31,11 @@ describe('meeting the Scrum Team', () => {
     const { container } = render(
       <MemoryRouter><MeetTheTeam state={state()} onNext={() => {}} /></MemoryRouter>,
     );
-    expect(container.textContent).toMatch(/3 Developers × a 3-day Sprint/);
+    // The sum is shown, and it adds up: 7 points a day for 3 days is 21 (sm21 could not make
+    // "3 Developers x a 3-day Sprint is about 21" add up).
+    expect(container.textContent).toMatch(/A 3-day Sprint is about 21 points of work for these 3 Developers/);
+    expect(container.textContent).toMatch(/first guess of 7 points a day/);
+    expect(container.textContent, 'losing a Developer never moved the number').not.toMatch(/lose a Developer/);
     expect(container.textContent, 'capacity is a number with no story').toMatch(/points/);
   });
 

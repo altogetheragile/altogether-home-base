@@ -21,7 +21,7 @@ const atReview = (phase: ZooGameState['phase']): ZooGameState => ({
 /** The badge is drawn inside the park's lazy-loaded drawing, so it is waited for. */
 const badge = async (s: ZooGameState) => {
   render(<MemoryRouter><ParkView state={s} large focus increment /></MemoryRouter>);
-  return (await screen.findByText(/^Increment/, {}, { timeout: 5000 })).textContent ?? '';
+  return (await screen.findByText(/open to visitors/, {}, { timeout: 5000 })).textContent ?? '';
 };
 
 describe('the visitors on the park', () => {

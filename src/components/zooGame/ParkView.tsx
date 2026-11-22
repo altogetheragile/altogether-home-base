@@ -569,7 +569,9 @@ export function ParkView({ state, placing, onPlace, compact = false, large = fal
                   promise, and who is walking round it. One line, on the park. */}
               {focus && (
                 <div className="pointer-events-none absolute left-2 top-2 z-20 rounded-md border border-border bg-background/90 px-2 py-1 text-xs font-semibold shadow-sm backdrop-blur-sm">
-                  Increment {open.length} <span className="font-normal text-muted-foreground">&middot;</span> Site{sites.length === 1 ? '' : 's'} {sites.length}
+                  {/* Counts, said as counts. "Increment 2 · Sites 0" in Sprint 1 read as the
+                      second Increment, and "Sites" meant nothing (scrum-master playtest sm21). */}
+                  {open.length} open to visitors <span className="font-normal text-muted-foreground">&middot;</span> {sites.length} being built
                   <span className="font-normal text-muted-foreground"> &middot; {total ? total.toLocaleString() : 'no'} visitors{lookingBack ? ' this Sprint' : ''}</span>
                 </div>
               )}
