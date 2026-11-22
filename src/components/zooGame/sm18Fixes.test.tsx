@@ -59,7 +59,7 @@ describe('how much ready work is waiting', () => {
   it('does not say there is nothing when there is some', () => {
     // Less than a Sprint of it: one small sized item, everything else still to size.
     let kept = false;
-    const { container } = planning('how', (st) => ({ ...st, backlog: st.backlog.map((it) => {
+    const { container } = planning('what', (st) => ({ ...st, backlog: st.backlog.map((it) => {
       if (!kept && !it.unsized && it.estimate > 0 && it.estimate <= 5) { kept = true; return it; }
       return { ...it, unsized: true };
     }) }));

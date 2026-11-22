@@ -232,15 +232,22 @@ function BacklogHeading({ count, note, onRefine }: { count: number; note?: strin
 }
 
 /** How full the Sprint is. The one number that matters while selecting, said as a picture. */
-function Meter({ committed, capacity, count, basis }: { committed: number; capacity: number; count: number; basis: { estimated: boolean; measuredSprints: number; discarded: number } }) {
-  const over = committed > capacity;
-  const pct = Math.min(100, capacity ? (committed / capacity) * 100 : 0);
+function Meter({ committed, refining = 0, capacity, count, basis }: { committed: number; refining?: number; capacity: number; count: number; basis: { estimated: boolean; measuredSprints: number; discarded: number } }) {
+  // Refinement set aside comes out of the same capacity as the items, so it is counted in the total.
+  const total = committed + refining;
+  const over = total > capacity;
+  const pct = Math.min(100, capacity ? (total / capacity) * 100 : 0);
   return (
     <div className="space-y-1.5">
       <div className="flex items-baseline justify-between">
         <span className="text-sm font-semibold">{count} item{count === 1 ? '' : 's'} in this Sprint</span>
-        <span className={cn('font-mono text-sm font-semibold', over ? 'text-destructive' : 'text-foreground')}>{committed} pts<span className="text-muted-foreground"> of {capacity}</span></span>
+        <span className={cn('font-mono text-sm font-semibold', over ? 'text-destructive' : 'text-foreground')}>{total} pts<span className="text-muted-foreground"> of {capacity}</span></span>
       </div>
+      {refining > 0 && (
+        <p data-part="meter-refining" className="text-[11px] text-muted-foreground">
+          {committed} pt{committed === 1 ? '' : 's'} of items and {refining} pt{refining === 1 ? '' : 's'} set aside for refinement.
+        </p>
+      )}
       {/* The figure is named, beside what it measures. "8 / 0 pts" after a Sprint that finished
           nothing was read as "I cannot parse" (scrum-master playtest): the 0 was the velocity, and
           nothing said so. */}
@@ -285,8 +292,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
     onSetForecast([...(typeof next === 'function' ? next(new Set(state.forecast)) : next)]);
   const [fixing, setFixing] = useState<string | null>(null);   // refining an item mid-Planning
   const [openPlan, setOpenPlan] = useState<string | null>(null); // which item's task plan is open
-  // Topic three's other question, which the Guide asks and the game did not: does the state of the
-  // Backlog mean refinement has to be planned INTO this Sprint?
+  // Does the state of the Backlog mean refinement has to be planned INTO this Sprint? Asked in topic
+  // two, where the Developers decide how much the Sprint can hold, because it comes out of that.
   // A Scrum Team that took "set aside time to refine" out of a Retrospective opens Planning with a
   // point of it already set aside. That is what the improvement bought them; making them remember
   // to click it every Sprint would be the same as not having it.
@@ -297,7 +304,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   const committed = chosen.reduce((s, i) => s + i.estimate, 0);
   const cap = sprintCapacity(state);
   const capacity = cap.points;
-  const over = committed > capacity;
+  const over = committed + refinePts > capacity;
   const hasGoal = isDraftedGoal(state.sprintGoal);
   // The Product Owner proposes; the whole Scrum Team defines. So a drafted sentence is not
   // yet a Sprint Goal - it is a proposal until the accountabilities at the table agree it.
@@ -539,7 +546,35 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               </div>
             </>}
             right={<>
-              <Meter committed={committed} capacity={capacity} count={chosen.length} basis={cap} />
+              <Meter committed={committed} refining={refinePts} capacity={capacity} count={chosen.length} basis={cap} />
+              {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
+                  somebody has to hold it. A yes/no flag made it a tax nobody paid attention to.
+                  Here in topic two, beside the total, because it comes out of the same capacity: read
+                  in topic three it looked out of place in every scrum-master playtest (sm18, sm19). */}
+              <section data-part="refine-points" className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.06]' : 'border-border')}>
+                <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
+                {/* What the points ARE. "None / 1 pt / 2 pts / 3 pts" was a game mechanic nobody had
+                    met, read as unexplained in every scrum-master playtest (sm13: three times). The
+                    Guide makes refinement an ongoing activity; budgeting it in points is this game's. */}
+                <p data-part="refine-points-mean" className="mt-0.5 text-[11px] text-muted-foreground">
+                  Points set aside from this Sprint&rsquo;s work for the whole Scrum Team to refine the Product Backlog, so later Sprints start with ready work. Setting it aside in points is this game&rsquo;s way of making time for it.
+                </p>
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
+                  {horizon < 1 ? ' That is less than a Sprint, so the next Planning will be short of ready work unless you make time.'
+                    : horizon > 3 ? ' That is plenty - build instead.'
+                      : ' Enough for now, but it burns down as you go.'}
+                </p>
+                <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  {REFINE_POINT_OPTIONS.map((v) => (
+                    <button key={v} type="button" onClick={() => setRefinePts(v)} aria-pressed={refinePts === v}
+                      className={cn(FOCUS, 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
+                        refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border hover:bg-muted')}>
+                      {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
+                    </button>
+                  ))}
+                </div>
+              </section>
               {/* The bet is the fourth rung: a team that has not yet sat through three Reviews of
                   finding out has no reason to want to predict first. Absent until they take it on. */}
               {onSetBet && adopted(state, 'sprint-bet') && <TheBet state={state} onSetBet={onSetBet} />}
@@ -632,32 +667,6 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               })}
             </div>
 
-            {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
-                somebody has to hold it. A yes/no flag made it a tax nobody paid attention to. */}
-            <section className={cn('rounded-lg border px-3 py-2.5', refinePts ? 'border-violet-400/60 bg-violet-500/[0.06]' : 'border-border')}>
-              <h3 className="text-sm font-semibold">How much refinement will you do this Sprint?</h3>
-              {/* What the points ARE. "None / 1 pt / 2 pts / 3 pts" was a game mechanic nobody had
-                  met, read as unexplained in every scrum-master playtest (sm13: three times). The
-                  Guide makes refinement an ongoing activity; budgeting it in points is this game's. */}
-              <p data-part="refine-points-mean" className="mt-0.5 text-[11px] text-muted-foreground">
-                Points set aside from this Sprint&rsquo;s work for the whole Scrum Team to refine the Product Backlog, so later Sprints start with ready work. Setting it aside in points is this game&rsquo;s way of making time for it.
-              </p>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">
-                About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
-                {horizon < 1 ? ' That is less than a Sprint, so the next Planning will be short of ready work unless you make time.'
-                  : horizon > 3 ? ' That is plenty - build instead.'
-                    : ' Enough for now, but it burns down as you go.'}
-              </p>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {REFINE_POINT_OPTIONS.map((v) => (
-                  <button key={v} type="button" onClick={() => setRefinePts(v)} aria-pressed={refinePts === v}
-                    className={cn(FOCUS, 'rounded-md border px-2.5 py-1 text-xs font-medium transition-colors',
-                      refinePts === v ? 'border-violet-500 bg-violet-500/15 text-violet-700 dark:text-violet-300' : 'border-border hover:bg-muted')}>
-                    {v === 0 ? 'None' : `${v} pt${v === 1 ? '' : 's'}`}
-                  </button>
-                ))}
-              </div>
-            </section>
           </div>
           </>}
           second={<>

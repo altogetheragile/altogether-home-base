@@ -70,7 +70,7 @@ interface SprintBoardProps {
   onAskScrumMaster?: () => void;
   onSkipDailyScrum: () => void;
   onStartDay: () => void;
-  /** Hold the refinement the Scrum Team planned into this Sprint at topic three. */
+  /** Hold the refinement the Scrum Team planned into this Sprint at topic two. */
   onHoldRefinement?: () => void;
   /** Selecting an item on the park, so starting one takes you straight to building it there. */
   onBuilding: (id: string | null) => void;
@@ -311,7 +311,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
   const deploy = committed.filter((it) => it.status === 'done');
   const done = committed.filter((it) => it.status === 'open');
   const atWipLimit = activeWipLimit(state) > 0 && doing.length >= activeWipLimit(state);
-  // Refinement planned in at topic three: on the board until somebody holds it.
+  // Refinement planned in at topic two: on the board until somebody holds it.
   const refineTodo = !!state.sprintRefinement && !state.sprintRefinement.done;
   const refineDone = !!state.sprintRefinement?.done;
   // Ideas that waited for the Sprint where they matter introduce themselves in the Sprint they
@@ -604,7 +604,7 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
               {/* One row, exactly as tall as the region: the columns scroll inside it. Without the
                   explicit row the cells took their content's height and the region clipped them,
                   so a card lower down the column could not be reached at all. */}
-              {/* Refinement planned in at topic three, as a note over the board rather than a card in
+              {/* Refinement planned in at topic two, as a note over the board rather than a card in
                   To Do. A card beside the Lion read as a Sprint Backlog item, and refinement is not
                   one: nothing about it reaches a visitor, and the Guide makes it an ongoing activity
                   (sm9, and again in sm11 and sm12). The points are this game's way of making time. */}
