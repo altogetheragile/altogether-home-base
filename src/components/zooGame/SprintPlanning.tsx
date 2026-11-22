@@ -255,7 +255,7 @@ function Meter({ committed, refining = 0, capacity, count, basis }: { committed:
           run there is nothing measured to go on. */}
       <p className="text-[11px] text-muted-foreground">
         {basis.estimated
-          ? <><strong className="text-foreground">Expected velocity {capacity} pts</strong> - nothing measured at this Sprint length yet{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
+          ? <><strong className="text-foreground">First guess {capacity} pts</strong> - no Sprint of this length has been measured yet, so this is the game&rsquo;s starting rate, not velocity{basis.discarded > 0 ? `, so ${basis.discarded} earlier Sprint${basis.discarded === 1 ? '' : 's'} of a different length ${basis.discarded === 1 ? 'is' : 'are'} not counted` : ''}.</>
           : <><strong className="text-foreground">Velocity {capacity} pts</strong> - measured over your last {basis.measuredSprints} Sprint{basis.measuredSprints === 1 ? '' : 's'} of this length{basis.discarded > 0 ? `, ignoring ${basis.discarded} at a different length` : ''}{capacity === 0 ? ': nothing reached Done, so there is nothing yet to forecast from' : ''}.</>}
       </p>
       <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
@@ -330,6 +330,8 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
   const stars = revealed(state, 'essentials');
   const horizon = readyHorizon(state);
+  // Zero can also mean nothing was measured to divide by; only say "nothing sized" when that is so.
+  const noneReady = !items.some((it) => notReady(it, state) === null);
   // How the work gets done is topic three's whole job. "Suggest steps for all" is one press away for
   // a team that would rather start from a breakdown, and it shows only while it would add something.
   const wandWouldAdd = chosen.some((i) => fillTheGaps(i).length > (i.tasks ?? []).filter((t) => t.label.trim()).length);
@@ -560,7 +562,11 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   Points set aside from this Sprint&rsquo;s work for the whole Scrum Team to refine the Product Backlog, so later Sprints start with ready work. Setting it aside in points is this game&rsquo;s way of making time for it.
                 </p>
                 <p className="mt-0.5 text-[11px] text-muted-foreground">
-                  About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.
+                  {/* "About 0 Sprints of ready work is waiting" beside 13 items was read as a
+                      contradiction (scrum-master playtest sm21): say why it is nothing. */}
+                  {noneReady
+                    ? <><strong>No ready work</strong> is waiting: nothing on the Product Backlog is ready to pull yet, and items marked ? still need sizing.</>
+                    : <>About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.</>}
                   {horizon < 1 ? ' That is less than a Sprint, so the next Planning will be short of ready work unless you make time.'
                     : horizon > 3 ? ' That is plenty - build instead.'
                       : ' Enough for now, but it burns down as you go.'}

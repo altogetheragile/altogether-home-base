@@ -1160,7 +1160,10 @@ const snapFib = (n: number): number => FIB.reduce((a, b) => (Math.abs(b - n) < M
 /** Deterministic planning-poker hand for an item: several estimators reveal a
  *  Fibonacci card clustered around the item's true size, so the spread is real but
  *  reproducible. */
-export function pokerHand(item: BacklogItem, seed: number, dodAgreed = true): number[] {
+/** One card for each Developer: "The Developers who will be doing the work are responsible for the
+ *  sizing" (Scrum Guide 2020). Four cards for a team of three Developers was read as a mystery
+ *  (scrum-master playtest sm21), and nothing said whose card was whose. */
+export function pokerHand(item: BacklogItem, seed: number, dodAgreed = true, developers = 3): number[] {
   const rng = makeRng(hashStr('poker:' + item.id, seed));
   const base = item.trueSize ?? item.estimate ?? 5;
   // Without an agreed Definition of Done there is no shared idea of finished, so the Developers are
@@ -1168,7 +1171,7 @@ export function pokerHand(item: BacklogItem, seed: number, dodAgreed = true): nu
   // been reviewed, placed and released. The cards come out miles apart, and they should - the
   // spread is the evidence. Agree a Definition of Done and the same item settles.
   const spread = dodAgreed ? 0.7 : 2.6;
-  return Array.from({ length: 4 }, () => snapFib(Math.max(1, base * (1 + (rng.next() - 0.5) * spread))));
+  return Array.from({ length: Math.max(1, developers) }, () => snapFib(Math.max(1, base * (1 + (rng.next() - 0.5) * spread))));
 }
 
 /** How far apart the cards are, as a multiple: 1 is agreement, 8 is four people costing four

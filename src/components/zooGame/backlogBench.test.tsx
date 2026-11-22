@@ -73,7 +73,7 @@ describe('the Product Backlog tab as a bench', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /^Refine Lion Enclosure$/ })[0]);
     fireEvent.click(within(bench() as HTMLElement).getByRole('button', { name: /Size it/i }));
     // Planning poker: the Developers show their hands, and the size is committed from the bench.
-    const commit = screen.getAllByRole('button').find((b) => /Commit|Agree|Size it as/i.test(b.textContent ?? ''));
+    const commit = screen.getAllByRole('button').find((b) => /Size it at \d+ pts/.test(b.textContent ?? ''));
     expect(commit, 'the bench opens no way to actually size it').toBeTruthy();
     fireEvent.click(commit!);
     expect(onEstimate).toHaveBeenCalled();
@@ -111,7 +111,7 @@ describe('when the act is finished', () => {
     fireEvent.click(screen.getAllByRole('button', { name: /^Refine Lion Enclosure$/ })[0]);
     expect(bench(), 'the item did not open').toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Size it/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Commit \d+ pts/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Size it at \d+ pts/ }));
     expect(bench(), 'committing a size left the takeover sitting there').toBeNull();
   });
 });

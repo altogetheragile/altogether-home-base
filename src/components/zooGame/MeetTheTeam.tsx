@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS } from './ui/tokens';
 import { sprintCapacity, yourDev, scrumMasterOf } from './engine';
+import { TRUE_VELOCITY_PER_DAY } from './config';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
@@ -182,9 +183,13 @@ export function MeetTheTeam({ state, seat = null, onNext, onRename, next }: {
       <section className="rounded-xl border border-border bg-muted/30 px-4 py-3">
         <h3 className="text-sm font-bold">What the team means for the Sprint</h3>
         <p className="mt-1 text-sm">
-          {state.team.developers.length} Developers &times; a {state.sprintDays}-day Sprint is about{' '}
-          <strong>{cap.points || Math.round(state.team.developers.length * state.sprintDays * 2.5)} points</strong> of capacity.
-          Change the Sprint length, or lose a Developer, and the number moves. Nobody assigns work: the Developers pull it.
+          {/* The arithmetic, shown. "3 Developers x a 3-day Sprint is about 21 points" was a sum
+              nobody could do (scrum-master playtest sm21), and the Developer count never entered
+              it: the first guess is a rate per day, and only the Sprint length moves it. */}
+          A {state.sprintDays}-day Sprint is about{' '}
+          <strong>{cap.points} points</strong> of work for these {state.team.developers.length} Developers
+          {cap.estimated ? <>: this game&rsquo;s first guess of {TRUE_VELOCITY_PER_DAY} points a day, until a Sprint has been measured</> : <>, from what they finished in recent Sprints</>}.
+          Change the Sprint length and the number moves. Nobody assigns work: the Developers pull it.
         </p>
         <p className="mt-1 text-[11px] text-muted-foreground">
           {seat

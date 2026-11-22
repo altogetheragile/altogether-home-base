@@ -349,7 +349,7 @@ export function developersTurn(state: ZooGameState, mustAgree: readonly string[]
   // and they say the number rather than just applying it.
   const item = topUnsized(state);
   if (item && (state.phase === 'refine' || state.phase === 'planning')) {
-    const points = settle(pokerHand(item, state.gameSeed, state.dodAgreed));
+    const points = settle(pokerHand(item, state.gameSeed, state.dodAgreed, state.team.developers.length));
     return { action: { type: 'ESTIMATE_ITEM', id: item.id, points },
              says: `We sized ${item.name} at ${points}.` };
   }
