@@ -673,6 +673,21 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               })}
             </div>
 
+            {/* The bar every plan here builds to. "How can I access the DoD? I'm in Topic 3 ... I
+                can't see the definition of done" (Al, 23 November 2026): a sign-off step said it
+                came from the Definition of Done, and the Definition of Done was only in Learn. */}
+            <section data-part="plan-dod" className="rounded-lg border border-border bg-muted/30 px-2.5 py-2">
+              <h3 className="text-xs font-semibold">Definition of Done</h3>
+              <p className="text-[11px] text-muted-foreground">Every item in this Sprint has to meet it before it is Done.</p>
+              {state.definitionOfDone.length
+                ? <ul className="mt-1 list-disc space-y-0.5 pl-4 text-[11px]">{state.definitionOfDone.map((d) => <li key={d}>{d}</li>)}</ul>
+                : <p className="mt-1 text-[11px] font-medium">Nobody has written one yet.</p>}
+              {state.definitionOfDone.some((d) => /sign|confirmed by the product owner/i.test(d)) && (
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  The Product Owner&rsquo;s sign-off becomes a step in each plan: this game&rsquo;s rule, not the Guide&rsquo;s. The rest are checked when you move an item to Done{state.definitionOfDone.some((d) => /peer.?review|another developer/i.test(d)) ? ': peer review is met when more than one Developer has worked the item' : ''}.
+                </p>
+              )}
+            </section>
           </div>
           </>}
           second={<>
