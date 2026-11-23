@@ -65,7 +65,7 @@ describe('how much ready work is waiting', () => {
     }) }));
     const line = container.querySelector('[data-part="refine-points-mean"]')?.nextElementSibling?.textContent ?? '';
     expect(line).toMatch(/of ready work is waiting/);
-    expect(line).toMatch(/About 0\.\d Sprints/);
+    expect(line).toMatch(/about 0\.\d Sprints/);
     expect(line).not.toMatch(/nothing to choose from/);
     expect(line).toMatch(/short of ready work/);
   });

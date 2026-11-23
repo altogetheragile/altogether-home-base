@@ -2,7 +2,7 @@ import { SplitPanes } from './SplitPanes';
 import { PriyaHandover } from './PriyaHandover';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, goalSource, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
+import { START_READY, availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, goalSource, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
 import { useYou } from './you';
 
 
@@ -305,6 +305,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   const cap = sprintCapacity(state);
   const capacity = cap.points;
   const over = committed + refinePts > capacity;
+  // Ready work not yet in the Sprint. When there is none and the Sprint is short of its number, the
+  // shortfall is the plan, not a mistake: Refinement aimed for enough to begin, not to fill it.
+  const readyLeft = items.filter((i) => !selected.has(i.id) && notReady(i, state) === null).length;
   const hasGoal = isDraftedGoal(state.sprintGoal);
   // The Product Owner proposes; the whole Scrum Team defines. So a drafted sentence is not
   // yet a Sprint Goal - it is a proposal until the accountabilities at the table agree it.
@@ -329,7 +332,11 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
   const candidates = goalCandidates(state);
   // Marking what the Goal rests on means nothing until you have watched a Sprint run.
   const stars = revealed(state, 'essentials');
-  const horizon = readyHorizon(state);
+  // What is left for the NEXT Planning, which is what the refinement question is about: the ready
+  // work not going into this Sprint. Counting the items just pulled in said "0.5 Sprints of ready
+  // work is waiting" beside a Sprint that took all of it (23 November 2026).
+  const readyLeftPts = items.filter((i) => !selected.has(i.id) && notReady(i, state) === null).reduce((n, i) => n + i.estimate, 0);
+  const horizon = capacity > 0 ? Math.round((readyLeftPts / capacity) * 10) / 10 : readyHorizon(state);
   // Zero can also mean nothing was measured to divide by; only say "nothing sized" when that is so.
   const noneReady = !items.some((it) => notReady(it, state) === null);
   // How the work gets done is topic three's whole job. "Suggest steps for all" is one press away for
@@ -549,6 +556,14 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             </>}
             right={<>
               <Meter committed={committed} refining={refinePts} capacity={capacity} count={chosen.length} basis={cap} />
+              {/* "The initial pages suggested the 10 points would be enough. Step 2 is suggesting
+                  estimated velocity is 21 points" (Al, 23 November 2026). Both are true, and nothing
+                  joined them: Refinement's half a Sprint was enough to BEGIN, and this is the Sprint. */}
+              {cap.estimated && readyLeft === 0 && chosen.length > 0 && committed + refinePts < capacity && (
+                <p data-part="ready-ran-out" className="text-[11px] text-muted-foreground">
+                  That is all the ready work. Refinement aimed for about {Math.round(capacity * START_READY)} pts, enough to begin rather than to fill the Sprint, so the other {capacity - committed - refinePts} pts are room to refine more as you go, or to size another item here and pull it in.
+                </p>
+              )}
               {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
                   somebody has to hold it. A yes/no flag made it a tax nobody paid attention to.
                   Here in topic two, beside the total, because it comes out of the same capacity: read
@@ -566,7 +581,9 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                       contradiction (scrum-master playtest sm21): say why it is nothing. */}
                   {noneReady
                     ? <><strong>No ready work</strong> is waiting: nothing on the Product Backlog is ready to pull yet, and items marked ? still need sizing.</>
-                    : <>About <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.</>}
+                    : readyLeft === 0
+                      ? <>With these in the Sprint, <strong>no ready work</strong> is left for the next Planning.</>
+                      : <>Besides what is in this Sprint, about <strong>{horizon} Sprint{horizon === 1 ? '' : 's'}</strong> of ready work is waiting.</>}
                   {horizon < 1 ? ' That is less than a Sprint, so the next Planning will be short of ready work unless you make time.'
                     : horizon > 3 ? ' That is plenty - build instead.'
                       : ' Enough for now, but it burns down as you go.'}

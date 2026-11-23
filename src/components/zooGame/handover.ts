@@ -44,7 +44,7 @@ export function handover(state: ZooGameState): Handover | null {
         // team's Sprint (sm13).
         // ...and then it was still read as items: "0 of 11 points" beside 13 cards, "why 11 rather
         // than 13?" (sm16, sm17). So it leads with what is counted, and says the target last.
-        progress: `Sized and ready to start: ${pts(ready)} so far. The team can do about ${pts(cap)} a Sprint, so about ${pts(Math.round(cap * START_READY))} ready is enough to begin. This counts points, not items`,
+        progress: `Sized and ready to start: ${pts(ready)} so far. The team can do about ${pts(cap)} a Sprint, so about ${pts(Math.round(cap * START_READY))} ready is enough to begin the Sprint, not to fill it: the rest is refined during the Sprint. This counts points, not items`,
       };
     }
     if (!state.dodAgreed) {
