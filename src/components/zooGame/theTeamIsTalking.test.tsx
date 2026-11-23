@@ -109,7 +109,7 @@ describe('the question channel, out loud', () => {
     expect(texts(s), 'the question exists as a row on a rail and nowhere else')
       .toContainEqual(expect.stringMatching(/Rounded or octagon/));
     expect(last(s)!.from, 'nobody asked it - it just appeared')
-      .toBe(s.team.developers[0].name);
+      .toBe(s.team.developers[1].name);
   });
 
   it('puts YOUR answer in the thread, on your side of it', () => {

@@ -819,7 +819,12 @@ export function askIfDue(state: ZooGameState): ZooGameState {
   if (!item) return state;
   // Once per item per Sprint: a question already asked and answered is not asked again.
   if ((state.decisions ?? []).some((d) => d.kind === 'question' && d.what.includes(item.name))) return state;
-  const asker = state.team.developers.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? state.team.developers[0];
+  // A teammate asks, never your own Developer: when the asker was you, the screen had "Ada (you)"
+  // asking the Product Owner and the rail waiting on her at once, and "Ada is listed as a Developer
+  // (YOU), not the Product Owner" (sm23). Somebody else on the item first, then anybody else.
+  const you = yourDev(state);
+  const others = state.team.developers.filter((d) => d.id !== you?.id);
+  const asker = others.find((d) => (item.assignedDevs ?? []).includes(d.id)) ?? others[0] ?? state.team.developers[0];
   // Two shapes the Shape tool really has. It asked "rounded or square?", and there is no square
   // in the tool: "the options shown are Rounded, Pill, Round, Hexagon, Octagon - none of them is
   // labelled square" (scrum-master playtest).
