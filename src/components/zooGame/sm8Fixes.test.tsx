@@ -70,6 +70,6 @@ describe('an animal standing loose in the Sprint', () => {
 describe('the sign-off step', () => {
   it('says it is the Definition of Done\'s, not a step the Developers chose', () => {
     render(<TaskEditor item={lion({ tasks: [{ id: 'a', label: 'Choose the coat', done: false }, { id: 'b', label: "Get the PO's sign-off", done: false }] })} onSetTasks={() => {}} />);
-    expect(screen.getAllByText('from your Definition of Done')).toHaveLength(1);
+    expect(screen.getAllByText('this game\u2019s rule, from your Definition of Done')).toHaveLength(1);
   });
 });

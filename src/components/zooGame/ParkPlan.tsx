@@ -79,6 +79,12 @@ function penWhere(
   // first to start the path before walking?"
   const laying = from ? 'Laying a path: Enter presses a corner here.'
     : 'No path started yet. Press Enter here to start the path, or walk to where it should start first.';
+  // Not started, with two places named and no order between them, the scrum-master playtest (sm22)
+  // walked nine paces towards one, turned round, walked back and lost a dozen steps. Say the plan:
+  // start at either end, then walk to the other.
+  if (!from && forBox && toThing && toWalk && !near(door!) && nearest && !near(nearest)) {
+    return `No path started yet. A path joins two ends:${toWalk.replace(' The nearest', ' the nearest')}${toThing.replace(/\.$/, ' (its door).')} Walk to either end and press Enter to start, then walk to the other.`;
+  }
   // A path under way that has reached the other end says how to finish it. "You are on a path from
   // the way in" alone left the scrum-master playtest (sm11) standing on the join, asking whether it
   // was done or needed another Enter.
@@ -95,6 +101,12 @@ function penWhere(
   // to somebody who had just walked down from it, as having walked the wrong way (sm13, twice).
   if (atJoin) return `${laying} This joins the path from the way in. Press Enter twice here to finish the path.`;
   if (atDoor) return `${laying} You are at the ${forBox!.item.name}. Press Enter twice here to finish the path.`;
+  // Laying, only the end still to reach matters. "The nearest path is 18 paces down" beside "the
+  // Tiger Enclosure is 11 paces down", after starting at the path, read as two destinations (sm22).
+  const startedAtPath = !!(from && nearest && Math.hypot(nearest.x - from.x, nearest.y - from.y) <= JOINS);
+  const startedAtDoor = !!(from && door && Math.hypot(door.x - from.x, door.y - from.y) <= JOINS);
+  if (startedAtPath && toThing) return `${laying}${toThing}`;
+  if (startedAtDoor && toWalk) return `${laying}${toWalk}`;
   return `${laying}${toWalk}${toThing}`;
 }
 /** Countryside drawn round the plot, so the park's own boundary has something to be a boundary

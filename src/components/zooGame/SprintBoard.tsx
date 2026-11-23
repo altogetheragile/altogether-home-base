@@ -31,6 +31,7 @@ import { EYEBROW, FOCUS, TAP, TONE } from './ui/tokens';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
 import { personSize } from './board/personShape';
+import { PLANNED_REFINE_SECONDS } from './config';
 
 interface SprintBoardProps {
   state: ZooGameState;
@@ -625,7 +626,9 @@ export function SprintBoard({ state, rail, move, onEstimate,    onFinishItem, on
                   {refineTodo && (
                     <>
                       <span className="text-[11px] text-muted-foreground">
-                        The whole Scrum Team, for later Sprints. Holding it costs the day&rsquo;s build time.
+                        {/* How much, and when: "does holding it cost build time now or later?" was
+                            asked six times in the scrum-master playtest (sm22). */}
+                        The whole Scrum Team, for later Sprints. Holding it takes {PLANNED_REFINE_SECONDS * state.sprintRefinement!.points} seconds off today&rsquo;s build time as soon as you press it.
                       </span>
                       <Button size="sm" className={cn(TONE.teach.solid, 'ml-auto h-7 px-2 text-xs text-white hover:bg-violet-700')}
                         onClick={() => { setShowBacklog(true); onHoldRefinement?.(); }}>

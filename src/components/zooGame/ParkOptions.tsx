@@ -809,7 +809,7 @@ export function ParkOptions({ state, item, api, inside, drawing, onDrawing, clas
             // example zoom and the Review's two pictures.
             aria-label={`${inside ? `Inside ${inside.name}` : subject.name}, the one being built`
               + (how.criteria.length > 0 ? ` - ${how.count} criteria met` : '')
-              + (ask ? ` - ask ${how.po} to accept it` : api.onOpenCard ? ' - open its card' : '')}
+              + (ask ? ` - ask ${how.po} to check it` : api.onOpenCard ? ' - open its card' : '')}
             className={cn(FOCUS, 'flex h-9 min-w-0 shrink items-center gap-1.5 rounded-md border px-2.5 text-xs',
               how.accepted ? 'border-emerald-500/60 bg-emerald-500/10'
                 : ask ? 'border-primary/60 bg-primary/10' : 'border-border bg-card',

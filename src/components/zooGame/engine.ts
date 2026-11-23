@@ -3151,11 +3151,10 @@ export function agreeDefinitionOfDone(state: ZooGameState): ZooGameState {
 export function holdPlannedRefinement(state: ZooGameState): ZooGameState {
   const planned = state.sprintRefinement;
   if (!planned || planned.done) return state;
-  return {
-    ...state,
-    sprintRefinement: { ...planned, done: true },
-    refinePenalty: state.refinePenalty + PLANNED_REFINE_SECONDS * planned.points,
-  };
+  // Charged off the day's clock like any other refining in a Sprint. It only went on the tally:
+  // when the clock moved out of the DayTimer (#418) the tally stopped being subtracted, so holding
+  // it was free while the board said it cost the day (found from sm22's questions about it).
+  return chargeRefine(state, { ...state, sprintRefinement: { ...planned, done: true } }, PLANNED_REFINE_SECONDS * planned.points);
 }
 
 /** What the Developers could pull next, and why each one is worth pulling.

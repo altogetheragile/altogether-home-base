@@ -178,7 +178,10 @@ describe('the pen, said in words', () => {
     fireEvent.keyDown(park, { key: 'ArrowDown' });
     expect(where(c), 'walking the pen did not change what is said about where it is').not.toBe(before);
     fireEvent.keyDown(park, { key: 'ArrowRight', shiftKey: true });
-    expect(where(c), 'walked away from it, the pen says which way back to the door').toMatch(new RegExp(`The ${forItem.name} is \\d+ paces left`));
+    // Started at the door, the door is behind you: only the end still to reach is named (sm22 read
+    // two places as two destinations).
+    expect(where(c), 'started at the door, it names the path still to reach').toMatch(/The nearest path from the way in is .*paces/);
+    expect(where(c), 'started at the door, it still steers back to it').not.toMatch(new RegExp(`The ${forItem.name} is \\d+ paces`));
   });
 });
 

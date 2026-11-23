@@ -317,7 +317,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
             {/* The Definition of Done's step, not one the Developers chose (sm8 playtest). */}
             {isSignOffTask(t.label) && (
               <span data-part="dod-step" title="This step is here because your Definition of Done asks for the Product Owner's sign-off. That is this game's rule, not the Scrum Guide's."
-                className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-zoo-quiet">from your Definition of Done</span>
+                className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-zoo-quiet">this game&rsquo;s rule, from your Definition of Done</span>
             )}
             {/* Said as it is written: a step the park cannot see never ticks itself, and Done waits
                 for every step. */}
