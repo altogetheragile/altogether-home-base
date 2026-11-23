@@ -1045,6 +1045,11 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           <rect width="12" height="12" fill="#d8d2c2" fillOpacity="0.5" />
           <line x1="0" y1="0" x2="0" y2="12" stroke="#b5ab91" strokeWidth="3" />
         </pattern>
+        {/* The river, which was here before the zoo was. Drawn under the areas and everything in
+            them, because it is the ground rather than something standing on it - and under the
+            treeline, which it ran over at both ends of the park (Al, 23 November 2026). */}
+        <path data-part="river" d={outlinePath(riverOutline())} fill="#6db6d8" stroke="#4f9cbf" strokeWidth={2} />
+
         {/* The treeline along the boundary, from the same points, and open along the front where
             the way in is - so the plan and the Increment agree about where the park stops. Seen
             from straight above, a tree is its canopy. */}
@@ -1095,9 +1100,6 @@ export function ParkPlan({ state, height = 520, selected, onSelect, onPlaceItem,
           ))}
         </g>
 
-        {/* The river, which was here before the zoo was. Drawn under the areas and everything in
-            them, because it is the ground rather than something standing on it. */}
-        <path data-part="river" d={outlinePath(riverOutline())} fill="#6db6d8" stroke="#4f9cbf" strokeWidth={2} />
 
         {/* The ground each area of the zoo owns, marked out from the day the brief was agreed.
             An area nobody has opened yet is drawn as ground with a name on it - which is the rest
