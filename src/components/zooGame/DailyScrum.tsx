@@ -391,7 +391,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
               <span className={cn('block h-full rounded-full transition-[width] duration-500 ease-linear', low ? 'bg-amber-500' : 'bg-muted-foreground')} style={{ width: `${boxPct}%` }} />
             </span>
           )}
-          <span className="text-[11px] text-muted-foreground">15 minutes in the Guide</span>
+          <span data-part="timebox-scale" className="text-[11px] text-muted-foreground">Game seconds. The Guide&rsquo;s timebox is 15 minutes.</span>
         </div>
       </div>
 
