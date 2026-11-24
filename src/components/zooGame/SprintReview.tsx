@@ -169,7 +169,10 @@ function GoalHeadline({ state, onCall }: { state: ZooGameState; onCall?: (met: b
     <ul data-part="goal-facts" className="mt-1 space-y-0.5 text-sm">
       <li><span className="font-semibold">Done:</span> {facts.done.length ? facts.done.join(', ') : 'nothing'}</li>
       <li data-part="goal-unfinished"><span className="font-semibold">Left unfinished:</span> {left.length ? left.join(', ') : 'nothing'}</li>
-      <li className="text-muted-foreground">
+      {/* Only when something was left: "the game cannot tell which of the unfinished work the
+          goal depended on" beside "Left unfinished: nothing" warned about work there was none of
+          (sm23, sm24). */}
+      {(left.length > 0 || facts.essentials.length > 0) && <li className="text-muted-foreground">
         {facts.essentials.length
           ? `Marked essential to the Goal: ${facts.essentials.join(', ')}.`
           // Said as what it means and where it is done. "Nothing was marked essential to the Goal, so
@@ -179,7 +182,7 @@ function GoalHeadline({ state, onCall }: { state: ZooGameState; onCall?: (met: b
           : revealed(state, 'essentials')
             ? 'No item was starred as essential to the Sprint Goal in Sprint Planning, so the game cannot tell which of the unfinished work the goal depended on. That is yours to judge.'
             : 'The game cannot tell which of the unfinished work the Sprint Goal depended on. That is yours to judge.'}
-      </li>
+      </li>}
     </ul>
   );
   if (called === null) {
