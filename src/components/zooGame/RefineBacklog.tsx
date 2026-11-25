@@ -278,15 +278,16 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
           onClose={() => setFocus(null)} />
       )}
 
-      <ActionBar>
+      {/* Only once there is somewhere to go. Before the Definition of Done is decided it was a floating
+          note, "Sprint Planning opens once...", sitting over the very buttons that decide it: "What
+          is this?" (Al, 25 November 2026). The move card above already says what to do. */}
+      {state.dodAgreed && <ActionBar>
         {/* Never refused, even with nothing Ready: "The Scrum Team may refine these items during this
             process" (Sprint Planning, Scrum Guide 2020), and the game lets them, at Planning's cost. */}
         {/* ...but not round the Definition of Done. Planning sizes work too, and nothing is sized
             before the Scrum Team has agreed what Done means, or chosen to start without one. */}
-        {state.dodAgreed
-          ? <Button onClick={onPlan}>Go to Sprint Planning &rarr;</Button>
-          : <span data-part="plan-after-dod" className="text-xs text-muted-foreground">Sprint Planning opens once the Definition of Done is agreed, or you choose to start without one.</span>}
-      </ActionBar>
+        <Button onClick={onPlan}>Go to Sprint Planning &rarr;</Button>
+      </ActionBar>}
     </div>
   );
 }

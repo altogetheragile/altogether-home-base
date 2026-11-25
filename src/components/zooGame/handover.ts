@@ -15,8 +15,10 @@ import { availableItems, isReady, enoughToStart, sprintCapacity, START_READY, go
 export interface Handover {
   /** Which step it hands over. The Definition of Done shares the Refinement screen. */
   key: 'refinement' | 'dod' | 'start' | 'goal';
-  /** Priya's line. */
+  /** The line, said across the table. */
   says: string;
+  /** Who says it: Priya unless said otherwise. */
+  who?: 'product_owner' | 'scrum_master';
   /** What the team is being asked to do, in one line: the "needs you" card. */
   asks: string;
   /** How far along it is, where that can be counted. */
@@ -38,7 +40,12 @@ export function handover(state: ZooGameState): Handover | null {
     if (!state.dodAgreed) {
       return {
         key: 'dod',
-        says: 'Before we size anything: what does Done mean? A size is a guess at what it takes to finish something, so we need to agree what finished looks like first.',
+        // Sam's to ask, not Priya's: "This should be the scrum master, no?" (Al, 25 November 2026).
+        // The Definition of Done is the whole Scrum Team's, and the Guide has the Scrum Master
+        // "Helping the Scrum Team focus on creating high-value Increments that meet the Definition
+        // of Done". Priya is a member of the team being asked, not the one asking.
+        who: 'scrum_master',
+        says: 'Before we size anything: what does Done mean? A size is a guess at what it takes to finish something, so we need to agree as a team what finished looks like first.',
         asks: 'Agree the Definition of Done as a Scrum Team, or start without one.',
       };
     }
