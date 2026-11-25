@@ -124,7 +124,7 @@ function step(state: ZooGameState, action: ZooAction): ZooGameState {
     case 'SET_DOR':
       return setDefinitionOfReady(state, action.dor);
     case 'SET_DOD':
-      return setDefinitionOfDone(state, action.dod, action.by);
+      return setDefinitionOfDone(state, action.dod, action.by, action.draft);
     case 'ACCEPT_SIGNAL':
       return acceptSignal(state, action.index, action.by);
     case 'DECLINE_SIGNAL':

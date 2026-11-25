@@ -3963,10 +3963,16 @@ export function setDefinitionOfReady(state: ZooGameState, dor: string[]): ZooGam
   return { ...state, definitionOfReady: dor.map((d) => d.trim()).filter((d) => d.length > 0) };
 }
 
-export function setDefinitionOfDone(state: ZooGameState, dod: string[], by?: string): ZooGameState {
+export function setDefinitionOfDone(state: ZooGameState, dod: string[], by?: string, draft = false): ZooGameState {
   const next = dod.map((d) => d.trim()).filter((d) => d.length > 0);
   const before = state.definitionOfDone;
   if (next.length === before.length && next.every((d, i) => d === before[i])) return state;
+  // ...except while the Scrum Team is still working on the suggestion it was handed, before anyone
+  // has pressed "We agree". Every keystroke there was a save, so cutting half a line to paste it as
+  // a line of its own agreed the Definition of Done mid-edit and folded the editor away under the
+  // player: "When I cut ', confirmed by the Product Owner' to paste it as a separate DoD criteria
+  // the DOD dialog collapsed" (Al, 25 November 2026). A draft changes the lines and nothing else.
+  if (draft && !state.dodAgreed) return syncSignOffTasks({ ...state, definitionOfDone: next });
   // Writing one IS agreeing it. There is no second act: the whole Scrum Team is sitting here, and a
   // team that has just decided what Done means has not left the agreeing for later.
   //
