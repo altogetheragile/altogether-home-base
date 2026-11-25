@@ -1,5 +1,5 @@
 import { useYou } from './you';
-import { Fragment, useEffect, useRef, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import type { ZooGameState, ChatMessage, ChatWho } from './types';
 import { SEAT } from './seats';
 import { Person } from './board/Person';
@@ -80,8 +80,11 @@ export function Bubble({ msg, opens = true, loud = false }: { msg: ChatMessage; 
             have to read twice. You are a Developer, so you are teal like the rest of them. */}
         {/* `whitespace-pre-line`, because some messages are several lines of one thing said at
             once - a Developer's three lines at the Daily Scrum are one turn, not three. */}
-        <span style={mine ? { backgroundColor: SEAT.developers.ink } : undefined}
-          className={cn('mt-0.5 inline-block whitespace-pre-line rounded-2xl text-left',
+        {/* A line handing over the next step is highlighted in the speaker's colour, and keyed by its
+            words so a new line pulses again. See `.zoo-prompt`. */}
+        <span key={loud ? msg.text : undefined} data-prompt={loud && !mine ? 'yes' : undefined}
+          style={mine ? { backgroundColor: SEAT.developers.ink } : loud ? ({ '--prompt': HEX[msg.who] } as CSSProperties) : undefined}
+          className={cn('inline-block whitespace-pre-line rounded-2xl text-left', loud && !mine ? 'zoo-prompt mt-2' : 'mt-0.5',
             loud ? 'border-2 border-[hsl(var(--zoo-ink))] bg-white px-3.5 py-2 text-[15px] font-medium leading-snug shadow-[3px_3px_0_hsl(var(--zoo-ink))]'
               : 'px-2.5 py-1.5 text-[12px] leading-snug',
             loud && 'relative',

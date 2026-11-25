@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -57,7 +57,9 @@ function SamBubble({ screen, dontShow, setDontShow, close, big = true, textId }:
   return (
     <div className="mt-1 flex items-end gap-3">
       <Person hex={SEAT.scrumMaster.hex} initials="SM" style={personSize(big ? 52 : 40)} className="mb-1 shrink-0" />
-      <div className={cn('relative min-w-0 flex-1 rounded-3xl rounded-bl-md border-[3px] border-[hsl(var(--zoo-ink))] bg-white',
+      {/* Sam telling you what next, highlighted like every other prompt: see `.zoo-prompt`. */}
+      <div data-prompt="yes" style={{ '--prompt': SEAT.scrumMaster.hex } as CSSProperties}
+        className={cn('zoo-prompt relative min-w-0 flex-1 rounded-3xl rounded-bl-md border-[3px] border-[hsl(var(--zoo-ink))] bg-white',
         big ? 'px-6 py-5 shadow-[5px_5px_0_hsl(var(--zoo-ink))]' : 'px-4 py-3 shadow-[3px_3px_0_hsl(var(--zoo-ink))]')}>
         {/* A div, not a paragraph: a term's definition opens inside it. Its words that are in the
             glossary can be pressed for what they mean. */}

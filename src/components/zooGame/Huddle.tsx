@@ -68,7 +68,7 @@ export function Huddle({ state, onAnswer }: {
       <div className={cn(SURFACE.card, PADDING.default)}>
         <ul className="flex flex-col gap-2">
           <Bubble msg={{ id: 'huddle-proposal', who: 'product_owner', from: state.team.productOwner.name,
-            text: says, day: state.dayNumber, itemId: candidate?.id }} />
+            text: says, day: state.dayNumber, itemId: candidate?.id }} loud />
         </ul>
       </div>
 
