@@ -40,9 +40,13 @@ export function DayClock({ state, onPause }: {
   // it: "there is a funny thing on the header."
   if (!big) {
     return (
-      <div data-part="day-clock" className="flex min-w-0 shrink-0 items-center gap-2">
-        <span className="truncate text-sm font-semibold text-white/80">{note ?? 'no Sprint yet'}</span>
-        {small && <span className="shrink-0 text-[10px] leading-none text-white/60">{small}</span>}
+      // Allowed to shrink, and cut off where it runs out of room. It was `shrink-0` with a `shrink-0`
+      // line beside it, so on a narrower window "Sprint 1 · planning the Sprint has begun · day 1
+      // starts when you do" ran on top of the value counter and the Sprint Goal: "The text is a big
+      // fat mess. Everything is punched up and overlapping" (Al, 25 November 2026).
+      <div data-part="day-clock" className="flex min-w-0 shrink items-center gap-2 overflow-hidden">
+        <span className="shrink-0 whitespace-nowrap text-sm font-semibold text-white/80">{note ?? 'no Sprint yet'}</span>
+        {small && <span data-part="day-clock-small" className="min-w-0 truncate text-[10px] leading-none text-white/60">{small}</span>}
       </div>
     );
   }

@@ -286,7 +286,8 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
               : 'Suggests the steps to build it. They are yours to change.'}
             onClick={() => set(fillTheGaps(item))}>
             <Wand2 className="mr-1 h-3.5 w-3.5" />
-            {(item.tasks ?? []).some((t) => t.label.trim() && !isSignOffTask(t.label)) ? 'Fill in the gaps in this plan' : 'Suggest the steps'}
+            {/* Named for its item, so it cannot be mistaken for the one that does every item. */}
+            {(item.tasks ?? []).some((t) => t.label.trim() && !isSignOffTask(t.label)) ? 'Fill in the gaps in this plan' : `Suggest steps for ${item.name}`}
           </Button>}
           {/* The way out, where you would look for it: on the thing you opened, not under it. */}
           {onClose && (
@@ -300,7 +301,7 @@ export function TaskEditor({ item, onSetTasks, onToggleGoalCritical, onClose }: 
       <div className="mt-2 space-y-1">
         {tasks.length === 0 && (
           <div className="space-y-1">
-            <p className="text-[11px] text-zoo-quiet">Write the steps yourself, or press Suggest the steps for a breakdown you can change.</p>
+            <p className="text-[11px] text-zoo-quiet">Write the steps yourself, or have them suggested for a breakdown you can change.</p>
             {/* What a step looks like: a piece of work a Developer can pick up and finish, in a day or
                 less. An example, not one of theirs - it is never added to the plan. */}
             <p data-part="step-example" className="flex items-center gap-1.5 rounded border border-dashed border-border px-2 py-1 text-[11px] italic text-muted-foreground">

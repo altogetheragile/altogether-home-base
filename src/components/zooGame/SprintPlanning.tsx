@@ -657,6 +657,20 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
               <p className="text-[11px] text-muted-foreground">
                 Select one to plan it on the right. Need another item? Go back to topic two.
               </p>
+              {/* For every item at once, so it sits over the list of every item - not in the Plan
+                  panel, which is about one. Beside the item's own wizard, in the same purple, the two
+                  read as one action with two names: "The top one doesn't really suggest that it's for
+                  all of the user stories. It looks the same as the second wizard button" (Al, 25
+                  November 2026). So it is an outline button here, and says which items it is for.
+                  Every plan in the Sprint, blank ones included: a blank plan gets the suggested
+                  breakdown, a started one only what it is missing (19 Nov 2026). */}
+              {chosen.length > 1 && wandWouldAdd && onSetTasks && (
+                <Button size="sm" variant="outline" data-part="plan-wand-all" className="mt-1.5 h-7 px-2 text-xs"
+                  title="Suggests steps for every item in the Sprint. Plans you have started keep your wording; only what is missing is added."
+                  onClick={() => chosen.forEach((it) => onSetTasks(it.id, fillTheGaps(it)))}>
+                  <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for every item in this Sprint ({chosen.length})
+                </Button>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -726,23 +740,6 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
             <section className="flex min-h-0 min-w-0 flex-col gap-2 overflow-y-auto rounded-lg border-2 border-primary/40 p-3">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <h3 className="text-sm font-semibold">Plan</h3>
-                {/* The step editor carries its own "suggest" for the item in front of you. This one
-                    is for the rest: five items with no steps is five presses otherwise, and topic
-                    three is a conversation about all of them. */}
-                {/* Only for more than one: with a single plan started it did exactly what that plan's
-                    own "Fill in the gaps in this plan" does, and the two side by side read as one
-                    action with two names (scrum-master playtest, eight steps). */}
-                {/* Every plan in the Sprint, blank ones included: a blank plan gets the suggested
-                    breakdown, a started one only what it is missing (19 Nov 2026). */}
-                {chosen.length > 1 && wandWouldAdd && onSetTasks && (
-                  <Button size="sm" data-part="plan-wand-all" className={cn(WIZARD, 'h-7 shrink-0 px-2 text-xs')}
-                    title="Suggests steps for every plan in the Sprint. Plans you have started keep your wording; only what is missing is added."
-                    onClick={() => chosen.forEach((it) => onSetTasks(it.id, fillTheGaps(it)))}>
-                    {/* Says how many plans, in words: "Fill in the gaps 1" beside the item's own
-                        "Fill in the gaps" was two buttons with one name (scrum-master playtest). */}
-                    <Wand2 className="mr-1 h-3.5 w-3.5" /> Suggest steps for all {chosen.length} plans
-                  </Button>
-                )}
               </div>
 
               {/* Side by side, because they are read together: what it has to be on the left, the

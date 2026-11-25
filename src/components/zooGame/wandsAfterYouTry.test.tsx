@@ -91,16 +91,16 @@ describe('what the button says it will do', () => {
         onSave={() => {}} onCancel={() => {}} useStories onToggleStories={() => {}} />,
     );
     expect(container.textContent, 'a wand still offers to write the thing itself')
-      .not.toMatch(/Auto-suggest|Suggest tasks|Suggest steps for all/);
+      .not.toMatch(/Auto-suggest|Suggest tasks|Suggest steps for every/);
   });
 });
 
 describe('the steps wand on screen', () => {
-  it('is pressable on a blank plan, says "Suggest the steps", and writes the breakdown', async () => {
+  it('is pressable on a blank plan, says which item it suggests steps for, and writes the breakdown', async () => {
     const { TaskEditor } = await import('./Board');
     let set: SprintTask[] | null = null;
     const { getByRole } = render(<TaskEditor item={item()} onSetTasks={(_id, tasks) => { set = tasks; }} />);
-    const wand = getByRole('button', { name: /Suggest the steps/ });
+    const wand = getByRole('button', { name: `Suggest steps for ${item().name}` });
     expect(wand).not.toBeDisabled();
     fireEvent.click(wand);
     expect(set).toEqual(suggestTasks(item()));
