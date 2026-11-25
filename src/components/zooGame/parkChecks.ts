@@ -251,7 +251,12 @@ export const CRITERIA: CriterionDef[] = [
       const indoors = !growing || !water;
       const where = [!ground && 'Surface', indoors && 'Interior'].filter(Boolean).join(' and ');
       return missing.length
-        ? { met: false, evidence: `no ${missing.join(' or ')} yet - under ${where}` }
+        // All three are needed, said with "and". Joined with "or" it read as a choice - "no ground
+        // or shelter or planting or water yet" - so the player added water, saw it still unmet, and
+        // could not tell why: "Water counts as shelter or planting presumably" (sm24). What is in
+        // already is said first, so what is still missing is plainly the rest.
+        ? { met: false, evidence: `${has.length ? `${has.join(' and ')} in; ` : ''}still needs ${
+          missing.length > 1 ? `${missing.slice(0, -1).join(', ')} and ${missing[missing.length - 1]}` : missing[0]} - under ${where}` }
         : { met: true, evidence: `${has.join(', ')} in` };
     },
   },

@@ -82,7 +82,7 @@ describe('what the park can already answer about a habitat', () => {
     const bare = habitat({ colors: {} as ItemDesign['colors'], flora: [], water: [] });
     const before = checkCriterion(bare.s, bare.item, 'Can I tell an animal lives here, not a shed?')!;
     expect(before.met, 'an empty pen counted as a home').toBe(false);
-    expect(before.evidence, 'nothing says what is missing').toMatch(/no .* yet/);
+    expect(before.evidence, 'nothing says what is missing').toMatch(/still needs .* - under/);
 
     const base = presetFor(bare.item);
     const done = habitat({
