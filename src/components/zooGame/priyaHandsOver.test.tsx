@@ -22,8 +22,16 @@ const aSprintReady = () => {
 };
 
 describe('Priya hands each step over', () => {
-  it('hands over her starter, and asks for just enough to start with how far along it is', () => {
+  it('asks what Done means before anything is sized', () => {
+    // "We cannot size PBIs without an understanding of the DoD. It should be created before we size
+    // any PBIs."
     const h = handover(written())!;
+    expect(h.key).toBe('dod');
+    expect(h.says).toMatch(/^Before we size anything: what does Done mean\?/);
+  });
+
+  it('hands over her starter, and asks for just enough to start with how far along it is', () => {
+    const h = handover({ ...written(), dodAgreed: true } as ZooGameState)!;
     expect(h.key).toBe('refinement');
     expect(h.says).toMatch(/one epic for each area/);
     expect(h.says).toMatch(/The rest we refine as we go/);
@@ -72,7 +80,7 @@ describe('Priya hands each step over', () => {
   });
 
   it('is drawn as a line from Priya with a "needs you" card under it', () => {
-    const { container } = render(<PriyaHandover state={written()} />);
+    const { container } = render(<PriyaHandover state={{ ...written(), dodAgreed: true } as ZooGameState} />);
     const line = container.querySelector('[data-part="chat-message"]')!;
     expect(line.getAttribute('data-who')).toBe('product_owner');
     expect(line.textContent).toContain('Priya');

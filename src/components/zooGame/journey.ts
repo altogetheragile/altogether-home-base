@@ -1,5 +1,4 @@
 import type { ZooGameState } from './types';
-import { enoughToStart } from './engine';
 import { eventPill } from './header';
 
 // Where you are in the whole of Scrum, on one line.
@@ -26,8 +25,8 @@ export interface JourneyStep {
 export const JOURNEY: { key: JourneyKey; label: string }[] = [
   { key: 'goal', label: 'Product Goal' },
   { key: 'backlog', label: 'Product Backlog' },
-  { key: 'refinement', label: 'Refinement' },
   { key: 'dod', label: 'Definition of Done' },
+  { key: 'refinement', label: 'Refinement' },
   { key: 'planning', label: 'Sprint Planning' },
   { key: 'sprint', label: 'Sprint' },
   { key: 'review', label: 'Sprint Review' },
@@ -38,13 +37,14 @@ export const JOURNEY: { key: JourneyKey; label: string }[] = [
 const CYCLE: JourneyKey[] = ['planning', 'sprint', 'review', 'retro'];
 
 /** Which step the game is on. Refinement and the Definition of Done share a screen, so which of
- *  the two it is depends on what is still to do there: enough Ready to start first, then Done
- *  agreed. */
+ *  the two it is depends on what is still to do there: Done agreed first, then enough Ready to
+ *  start. */
 function current(state: ZooGameState): JourneyKey | null {
   switch (state.phase) {
     case 'intro': return 'goal';
     case 'brief': return 'backlog';
-    case 'refine': return enoughToStart(state) && !state.dodAgreed ? 'dod' : 'refinement';
+    // The Definition of Done first, before anything is sized against it.
+    case 'refine': return !state.dodAgreed ? 'dod' : 'refinement';
     case 'planning': return 'planning';
     case 'sprint': return 'sprint';
     case 'review': return 'review';

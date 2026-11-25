@@ -31,6 +31,17 @@ export function handover(state: ZooGameState): Handover | null {
     // explain what she is handing over: it is the Product Backlog the team has been working from.
     if (state.sprintNumber !== 1 || state.velocity.length > 0) return null;
     const cap = sprintCapacity(state).points;
+    // What Done means comes first, before anything is sized. A size is a guess at how much work it
+    // takes to FINISH something, and until the team agrees what finished looks like, everybody is
+    // sizing a different thing. It was asked after enough was sized to start: "the DoD tells us what
+    // finished looks like. We cannot size PBIs without an understanding of the DoD."
+    if (!state.dodAgreed) {
+      return {
+        key: 'dod',
+        says: 'Before we size anything: what does Done mean? A size is a guess at what it takes to finish something, so we need to agree what finished looks like first.',
+        asks: 'Agree the Definition of Done as a Scrum Team, or start without one.',
+      };
+    }
     if (!enoughToStart(state)) {
       const ready = availableItems(state).filter((it) => isReady(it, state)).reduce((n, it) => n + it.estimate, 0);
       return {
@@ -45,13 +56,6 @@ export function handover(state: ZooGameState): Handover | null {
         // ...and then it was still read as items: "0 of 11 points" beside 13 cards, "why 11 rather
         // than 13?" (sm16, sm17). So it leads with what is counted, and says the target last.
         progress: `Sized and ready to start: ${pts(ready)} so far. The team can do about ${pts(cap)} a Sprint, so about ${pts(Math.round(cap * START_READY))} ready is enough to begin the Sprint, not to fill it: the rest is refined during the Sprint. This counts points, not items`,
-      };
-    }
-    if (!state.dodAgreed) {
-      return {
-        key: 'dod',
-        says: 'That is enough ready to start. One more thing before we plan: what does Done mean? I want us all to know when something is finished.',
-        asks: 'Agree the Definition of Done as a Scrum Team, or start without one.',
       };
     }
     return state.definitionOfDone.length

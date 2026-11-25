@@ -26,11 +26,15 @@ const ready = (over: Partial<ZooGameState> = {}): ZooGameState =>
   ({ ...initialZooState(3), phase: 'refine', ...over }) as ZooGameState;
 
 describe('the way to Sprint Planning', () => {
-  it('is open whether or not anybody agreed what Done means', () => {
+  it('opens once the team has agreed what Done means, or chosen to start without one', () => {
+    // It used to be open before either: Planning sizes work, and "we cannot size PBIs without an
+    // understanding of the DoD". Starting without one is still a choice the game offers.
     const { unmount } = refine(ready({ dodAgreed: false }));
-    expect(screen.getByRole('button', { name: /Go to Sprint Planning/ }),
-      'the game still refuses to start a Sprint without a Definition of Done').toBeEnabled();
+    expect(screen.queryByRole('button', { name: /Go to Sprint Planning/ }), 'Planning opened before anything was decided about Done').toBeNull();
     unmount();
+    const without = refine(ready({ dodAgreed: true, definitionOfDone: [] }));
+    expect(screen.getByRole('button', { name: /Go to Sprint Planning/ }), 'the game refuses to start a Sprint without a Definition of Done').toBeEnabled();
+    without.unmount();
     refine(ready({ dodAgreed: true }));
     expect(screen.getByRole('button', { name: /Go to Sprint Planning/ })).toBeEnabled();
   });
@@ -85,15 +89,14 @@ describe('what the Sprint remembers about it', () => {
 });
 
 describe('the order the agreements are made in', () => {
-  it('puts what Done means within reach before the sizing is finished', () => {
-    // "When we estimate size then we need to understand what Done looks like." Quite so: the bar the
-    // work has to meet is part of how big the work is. Priya asks for refinement first (the flow's
-    // order), so while that is the move, agreeing what Done means is one press away on the screen.
+  it('asks what Done means before anything is sized', () => {
+    // "When we estimate size then we need to understand what Done looks like." It was made one press
+    // away while refinement was the move, and that was not enough: "the DoD tells us what finished
+    // looks like. We cannot size PBIs without an understanding of the DoD. It should be created
+    // before we size any PBIs." So Priya asks for it first, before any sizing.
     const s = ready({ dodAgreed: false });
     const { container } = refine({ ...s, backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState);
-    const line = container.querySelector('[data-part="settled-dod"]');
-    expect(line, 'the screen no longer offers to agree what Done means').toBeTruthy();
-    expect(line!.textContent).toMatch(/nobody has agreed it yet/);
-    expect(line!.querySelector('button')?.textContent).toMatch(/Read it and agree/);
+    expect(container.textContent).toMatch(/Before we size anything: what does Done mean\?/);
+    expect(container.textContent).toMatch(/We agree - this is our Definition of Done/);
   });
 });

@@ -14,7 +14,7 @@ import type { ZooGameState } from './types';
 
 const noop = () => {};
 const nothingReady = (): ZooGameState => {
-  const s = { ...initialZooState(3), phase: 'refine', adopted: ['refinement'] } as ZooGameState;
+  const s = { ...initialZooState(3), phase: 'refine', adopted: ['refinement'], dodAgreed: true } as ZooGameState;
   return { ...s, backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState;
 };
 

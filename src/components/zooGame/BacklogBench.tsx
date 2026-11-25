@@ -87,9 +87,13 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
   //
   // Only if there is somewhere for the choice to go. Opening on an act nobody can perform renders
   // neither the panel NOR the button that offers it, and the card reads as a dead end.
+  // Nothing is sized before the Scrum Team agrees what Done means: a size is a guess at what it
+  // takes to finish something, and "finished" is what the Definition of Done says. Starting without
+  // one is still a choice, and it counts as made.
+  const sizeLocked = state.phase === 'refine' && !state.dodAgreed;
   const [doing, setDoing] = useState<'size' | 'split' | 'choose' | 'word' | null>(
     !item ? null : item.category === 'need' ? (onChooseSolution ? 'choose' : null)
-      : item.category === 'epic' ? 'split' : item.unsized ? 'size' : null);
+      : item.category === 'epic' ? 'split' : item.unsized && !sizeLocked ? 'size' : null);
   const enclosures = state.backlog.filter((it) => it.category === 'enclosure').map((it) => ({ id: it.id, name: it.name }));
 
   if (!item) {
@@ -191,6 +195,10 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
             onClick={() => setDoing('split')}>
             <Scissors className="mr-1 h-3.5 w-3.5" /> Split it up<Cost state={state} seconds={REFINE_COSTS.split} />
           </Button>
+        ) : sizeLocked ? (
+          <span data-part="size-after-dod" className="text-[11px] text-muted-foreground">
+            Sized once the Scrum Team agrees the Definition of Done: a size is a guess at what it takes to finish it.
+          </span>
         ) : (
           <Button size="sm" variant={item.unsized ? 'default' : 'outline'} className="h-7 px-2 text-xs"
             onClick={() => setDoing('size')}>
@@ -204,7 +212,7 @@ export function ItemBench({ state, item, onEstimate, onRefinePbi, onSplitEpic, o
         )}
       </div>
 
-      {doing === 'size' && (
+      {doing === 'size' && !sizeLocked && (
         <div className="rounded-lg border border-border p-2">
           <PlanningPoker item={item} state={state} seed={state.gameSeed} talk={false}
             onCommit={(pts) => { onEstimate(item.id, pts); setDoing(null); onDone?.(); }} />

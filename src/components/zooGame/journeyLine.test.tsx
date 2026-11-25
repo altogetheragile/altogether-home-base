@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
 import { initialZooState, DEFAULT_BRIEF } from './config';
-import { writeBacklog, splitEpic, estimateItem } from './engine';
+import { writeBacklog } from './engine';
 import type { ZooGameState } from './types';
 import { journey, JOURNEY } from './journey';
 import { JourneyLine } from './JourneyLine';
@@ -16,8 +16,8 @@ const now = (s: ZooGameState) => journey(s).steps.find((x) => x.status === 'now'
 
 describe('the journey line', () => {
   it('has the eight steps in Scrum\'s order', () => {
-    expect(JOURNEY.map((s) => s.label)).toEqual(['Product Goal', 'Product Backlog', 'Refinement',
-      'Definition of Done', 'Sprint Planning', 'Sprint', 'Sprint Review', 'Retrospective']);
+    expect(JOURNEY.map((s) => s.label)).toEqual(['Product Goal', 'Product Backlog',
+      'Definition of Done', 'Refinement', 'Sprint Planning', 'Sprint', 'Sprint Review', 'Retrospective']);
   });
 
   it('lights the Product Goal first, and nothing is ticked', () => {
@@ -26,17 +26,15 @@ describe('the journey line', () => {
     expect(Object.values(statusOf(s)).filter((x) => x === 'done')).toEqual([]);
   });
 
-  it('is on Refinement until a Sprint\'s worth is Ready, then on the Definition of Done', () => {
+  it('is on the Definition of Done first, then on Refinement once it is agreed', () => {
+    // Before anything is sized: "We cannot size PBIs without an understanding of the DoD."
     const written = writeBacklog(at({}), DEFAULT_BRIEF);
-    expect(now(written)).toBe('refinement');
+    expect(now(written), 'sizing is asked for before Done is agreed').toBe('dod');
     expect(statusOf(written).goal).toBe('done');
     expect(statusOf(written).backlog).toBe('done');
-    // Split the first area and size everything that comes out of it.
-    let s = splitEpic(written, 'bigcats', (written.backlog.find((it) => it.id === 'bigcats')?.epicMembers ?? []).map((m) => m.id));
-    for (const it of s.backlog.filter((x) => x.unsized && x.category !== 'epic' && x.category !== 'need')) s = estimateItem(s, it.id, 3);
-    expect(now(s), 'a Sprint\'s worth is Ready and the line has not moved on').toBe('dod');
-    expect(statusOf(s).refinement).toBe('done');
-    expect(now({ ...s, dodAgreed: true } as ZooGameState), 'Done is agreed and the line is still asking for it').not.toBe('dod');
+    const agreed = { ...written, dodAgreed: true } as ZooGameState;
+    expect(now(agreed), 'Done is agreed and the line is still asking for it').toBe('refinement');
+    expect(statusOf(agreed).dod).toBe('done');
   });
 
   it('ticks a Definition of Done agreed early', () => {
