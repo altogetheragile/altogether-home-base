@@ -27,7 +27,9 @@ const built = (item: BacklogItem): ItemDesign => {
   const p = presetFor(item);
   switch (item.category) {
     case 'enclosure':
-      return { ...p, colors: { ...p.colors, ground: '#c8a06a' },
+      // A border the Developers chose, as the build takeover asks for one: "Fence it securely" is
+      // ticked by what borders it now, not by the habitat existing.
+      return { ...p, parts: { ...p.parts, barrier: 'high' }, colors: { ...p.colors, ground: '#c8a06a' },
         flora: addFloraTo({ ...p, flora: [] }, HABITAT_FEATURE_TYPES[0]), water: addWaterTo({ ...p, water: [] }) };
     case 'exhibit':
       return { ...p, group: { males: 1, females: 1, juveniles: 0, cubs: 0 }, colors: { ...p.colors, coat: '#c8761f' } };

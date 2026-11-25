@@ -4,6 +4,7 @@ import { initialZooState, DAY_SECONDS } from './config';
 import { presetFor, hasRoomToRoam } from './design';
 import { suggestTasks, startItem, buildItem, isSignOffTask, readyToMove, openItem } from './engine';
 import type { ZooGameState, BacklogItem } from './types';
+import type { ItemDesign } from './design';
 
 // The plan and the criteria answer to the same facts.
 //
@@ -25,7 +26,9 @@ const sprint = (): ZooGameState => {
     backlog: base.backlog.map((it) => ({ ...it, tasks: it.tasks?.length ? it.tasks : suggestTasks(it) })),
   } as ZooGameState;
 };
-const withStarted = (s: ZooGameState, id: string, design = presetFor(s.backlog.find((i) => i.id === id)!)) => {
+/** The preset with a border chosen: what the Developers would have picked under Perimeter. */
+const bordered = (item: BacklogItem): ItemDesign => { const p = presetFor(item); return { ...p, parts: { ...p.parts, barrier: 'fence' } }; };
+const withStarted = (s: ZooGameState, id: string, design = bordered(s.backlog.find((i) => i.id === id)!)) => {
   let game = { ...s, backlog: s.backlog.map((it) => (it.id === id
     ? { ...it, status: 'committed' as const, sprintNumber: 1 } : it)) } as ZooGameState;
   game = startItem(game, id, 'developer');

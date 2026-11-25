@@ -1349,12 +1349,20 @@ export function designSatisfiesTask(item: BacklogItem, design: ItemDesign, label
     // Fenced by construction, which is what the park says about the criterion too ("Closed"). It
     // used to wait for a fence COLOUR, and the colour control is gone - so the step could never be
     // ticked, and Done needs every step: "I still cannot move this PBI to Done."
-    if (/fence/.test(s)) return true;
+    //
+    // ...and then the perimeter became a choice, and "nothing borders it yet" sat on the card beside
+    // this step already ticked. Done when something borders it, as the park's own check starts; a
+    // tank is held by its glass. Whether that border holds THESE animals is the criterion's to say.
+    if (/fence/.test(s)) return isTank(design, [], item) || !!chosenBarrier(design);
     // Three things are promised by this step, so three things are what it takes. Checking the
     // ground colour alone let a bare box tick "Lay the ground, shelter and water" with no
     // shelter and no water anywhere in it.
     if (/ground|shelter|water|lay/.test(s)) {
-      return !!c.ground && (enclosureWater(design).length > 0 || enclosureFlora(design).length > 0);
+      // All three, as the park's "Can I tell an animal lives here?" asks: ground, something growing
+      // or to shelter behind, and water. Ground and either one ticked the step while the criterion
+      // beside it still said "still needs shelter or planting". A tank is water already.
+      const tank = isTank(design, [], item);
+      return (tank || !!c.ground) && enclosureFlora(design).length > 0 && (tank || enclosureWater(design).length > 0);
     }
     return false;
   }
