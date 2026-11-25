@@ -19,7 +19,10 @@ export function PriyaHandover({ state, className, children, side = false }: {
 }) {
   const h = handover(state);
   if (!h) return null;
-  const msg: ChatMessage = { id: `handover-${h.key}`, who: 'product_owner', from: state.team.productOwner.name, text: h.says, day: state.dayNumber };
+  // Mostly Priya, handing over what she wants next. The Definition of Done is asked for by Sam.
+  const sm = h.who === 'scrum_master';
+  const msg: ChatMessage = { id: `handover-${h.key}`, who: sm ? 'scrum_master' : 'product_owner',
+    from: sm ? state.team.scrumMaster.name : state.team.productOwner.name, text: h.says, day: state.dayNumber };
   return (
     <section data-part="handover" data-step={h.key} data-side={side ? 'yes' : undefined}
       className={cn(side ? 'grid gap-2 lg:grid-cols-2 lg:items-center lg:gap-4' : 'space-y-2', className)}>
