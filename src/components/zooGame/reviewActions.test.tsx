@@ -107,7 +107,7 @@ describe('a second passing', () => {
     } as ZooGameState;
     s = startItem(s, h.id, 'developer');
     // Something the park WOULD tick, if it were asked.
-    s = buildItem(s, h.id, { ...presetFor(h), colors: { ground: '#c8a06a', fence: '#8a6a3b' } });
+    s = buildItem(s, h.id, { ...presetFor(h), parts: { ...presetFor(h).parts, barrier: 'fence' }, colors: { ground: '#c8a06a', fence: '#8a6a3b' } });
     const unticked = { ...s, backlog: s.backlog.map((it) => (it.id === h.id
       ? { ...it, tasks: (it.tasks ?? []).map((t) => ({ ...t, done: false })) } : it)) } as ZooGameState;
     const done = (g: ZooGameState) => (g.backlog.find((it) => it.id === h.id)?.tasks ?? []).filter((t) => t.done).length;
