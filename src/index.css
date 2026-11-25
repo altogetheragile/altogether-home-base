@@ -401,6 +401,19 @@
 }
 .zoo-attention { animation: zoo-attention 1.6s ease-in-out 3; }
 @media (prefers-reduced-motion: reduce) { .zoo-attention { animation: none; } }
+/* Somebody telling you what to do next: a halo in their own colour that stays, and three slow pulses
+   of it when the line changes. "Can all the speech prompts be highlighted for a player? To draw their
+   eye so they see what to do next?" (Al, 25 November 2026). An outline, so it sits outside the ink
+   shadow the bubble already has rather than replacing it. `--prompt` is the speaker's colour. */
+@keyframes zoo-prompt {
+  50% { outline-width: 5px; outline-offset: 4px; outline-color: var(--prompt); }
+}
+.zoo-prompt {
+  outline: 3px solid color-mix(in srgb, var(--prompt) 55%, transparent);
+  outline-offset: 3px;
+  animation: zoo-prompt 1.6s ease-in-out 3;
+}
+@media (prefers-reduced-motion: reduce) { .zoo-prompt { animation: none; } }
 
 .zoo-paper {
   background-color: hsl(var(--zoo-paper));
