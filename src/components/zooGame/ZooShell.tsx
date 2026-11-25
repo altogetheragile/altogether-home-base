@@ -412,7 +412,9 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
           </div>
 
           {/* The clock, dead centre and the biggest thing on the strip. */}
-          <div className="flex flex-1 justify-center"><DayClock state={state} onPause={onSetClockPaused} /></div>
+          {/* min-w-0 and clipped, so what is in the middle gives way rather than running over the
+              counter on its left and the Sprint Goal on its right. */}
+          <div className="flex min-w-0 flex-1 justify-center overflow-hidden"><DayClock state={state} onPause={onSetClockPaused} /></div>
 
           {/* Is the Sprint Goal safe. The answer in bold, from the Sprint's own arithmetic; the Goal
               itself in small type under it, opening in full when you ask for it.
