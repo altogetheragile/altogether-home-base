@@ -366,6 +366,8 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   };
 
   const goal = goalLine(state);
+  // The same test `goalLine` uses for "No Sprint yet".
+  const noSprintYet = state.phase === 'intro' || state.phase === 'brief' || state.phase === 'refine';
 
   const notes: GameNote[] = [];
   if (refused) notes.push({ id: 'refused', title: 'Whose call it is', tone: 'rule', body: refused, text: refused, onDismiss: onDismissRefused });
@@ -414,12 +416,31 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             {/* What the zoo is worth to the people who come to it: one for every visit that was
                 worth making. Not money and not points - a forecast buys nothing, which is the rule
                 this counter exists to make visible. */}
-            <span data-part="value" title="What the zoo is worth to its visitors: one for every visit worth making, less welfare penalties"
-              className="flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-sm font-bold text-emerald-200">
-              <Heart className="h-4 w-4" aria-hidden />
-              {(state.value ?? 0).toLocaleString()}
-              <span className="sr-only"> value</span>
-            </span>
+            {/* It was a label with a tooltip, which on a tablet is a label: "What do all of these
+                do? 2 seem to do nothing" (Al, 25 November 2026). It opens and says what it is. */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <button type="button" data-part="value" aria-label={`Value: ${(state.value ?? 0).toLocaleString()}. What is this?`}
+                  className={cn(FOCUS, 'flex shrink-0 items-center gap-1 rounded-full bg-white/10 px-2.5 py-1 text-sm font-bold text-emerald-200 transition-colors hover:bg-white/20')}>
+                  <Heart className="h-4 w-4" aria-hidden />
+                  {(state.value ?? 0).toLocaleString()}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent align="start" data-part="value-explained" className="zoo-theme w-[min(92vw,22rem)] space-y-1.5">
+                <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Value to visitors</div>
+                <p className="text-sm font-semibold leading-snug">
+                  {(state.value ?? 0).toLocaleString()} so far
+                </p>
+                <p className="text-[12px] leading-snug text-muted-foreground">
+                  One for every visit to the zoo that was worth making, less penalties for animals kept badly.
+                  Visitors come to what is open, and each Sprint&rsquo;s visits are counted at its Sprint Review.
+                  {state.sprintNumber <= 1 && (state.value ?? 0) === 0 ? ' Nothing is open yet, so it starts at nothing.' : ''}
+                </p>
+                <p className="text-[11px] leading-snug text-zoo-quiet">
+                  This is the game&rsquo;s score, not a Scrum measure. Opening new ground for the zoo is paid for out of it.
+                </p>
+              </PopoverContent>
+            </Popover>
           </div>
 
           {/* The clock, dead centre and the biggest thing on the strip. */}
@@ -432,7 +453,10 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               The one place the verdict is written. The board's banner below carries the Goal in
               full where the work is chosen, and used to carry the verdict on the end of its label
               as well - the same words, 170 pixels apart. See the banner in `SprintBoard`. */}
-          <Popover>
+          {/* Before Sprint Planning there is no Sprint to have a Goal for, and the clock beside it
+              already says "no Sprint yet": the same words twice, one of them a button that opened
+              to say them a third time. It arrives with Planning, where the Goal is agreed. */}
+          {!noSprintYet && <Popover>
             <PopoverTrigger asChild>
               <button type="button" data-part="goal-line" title={state.sprintGoal.trim() || 'No Sprint Goal yet - agree one at Planning'}
                 className={cn(FOCUS, 'hidden min-w-0 max-w-[26rem] shrink flex-col items-start overflow-hidden rounded-md px-1 py-0.5 text-left hover:bg-white/10 lg:flex')}>
@@ -460,7 +484,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                 </p>
               )}
             </PopoverContent>
-          </Popover>
+          </Popover>}
 
           <div className="flex shrink-0 items-center gap-1.5">
             {/* Refinement belongs where refinement happens: shaping the Product Backlog before the first
