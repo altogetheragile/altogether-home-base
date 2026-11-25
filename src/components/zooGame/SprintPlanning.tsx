@@ -2,7 +2,7 @@ import { SplitPanes } from './SplitPanes';
 import { PriyaHandover } from './PriyaHandover';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { ZooGameState, SprintTask, SprintBet } from './types';
-import { START_READY, availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, goalSource, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn } from './engine';
+import { START_READY, availableItems, adopted, fillTheGaps, goalCandidates, readyHorizon, sprintCapacity, suggestSprintGoal, rewordSprintGoal, goalSource, isDraftedGoal, notReady, revealed, betLine, betReading, WHO_LABEL, forecastWaitingOn, enclosureReady, enclosureOf } from './engine';
 import { useYou } from './you';
 
 
@@ -22,7 +22,7 @@ import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { cn } from '@/lib/utils';
 import { Target, Wand2, Star, Lightbulb, ChevronDown, ArrowRight } from 'lucide-react';
-import { EYEBROW, FOCUS, WIZARD } from './ui/tokens';
+import { EYEBROW, FOCUS, WIZARD, TONE } from './ui/tokens';
 
 // ============= Sprint Planning =============
 //
@@ -564,6 +564,19 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
                   That is all the ready work. Refinement aimed for about {Math.round(capacity * START_READY)} pts, enough to begin rather than to fill the Sprint, so the other {capacity - committed - refinePts} pts are room to refine more as you go, or to size another item here and pull it in.
                 </p>
               )}
+              {/* An animal goes in once its habitat is Done. Forecast without the habitat, and with the
+                  habitat not Done yet, it sits in To Do all Sprint: "Tiger and Leopard waiting for their
+                  enclosures to be Done, but I have no Tiger Enclosure or Leopard Enclosure on the board"
+                  (sm26). Said here, where the choice is made; the choice stays the Developers'. */}
+              {(() => {
+                const stranded = chosen.filter((it) => !enclosureReady(state, it) && !selected.has(enclosureOf(state, it)?.id ?? ''));
+                return stranded.length > 0 && (
+                  <p data-part="waits-outside" className={cn('rounded-md border px-2.5 py-1.5 text-xs', TONE.attention.soft, TONE.attention.text)}>
+                    {stranded.map((it) => `${it.name} waits for ${enclosureOf(state, it)?.name ?? 'its habitat'} to be Done`).join('; ')}.{' '}
+                    {stranded.length === 1 ? 'That habitat is' : 'Those habitats are'} not in this Sprint, so {stranded.length === 1 ? 'it' : 'they'} cannot be started. Add the habitat, or leave the animal for a later Sprint.
+                  </p>
+                );
+              })()}
               {/* Refinement is work in the plan, so it is planned like work: sized, in the forecast, and
                   somebody has to hold it. A yes/no flag made it a tax nobody paid attention to.
                   Here in topic two, beside the total, because it comes out of the same capacity: read
