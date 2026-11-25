@@ -251,7 +251,18 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
   // confusing. It was: the board and the thing you are building are the same work, and hiding
   // either of them to show the other made you flip back and forth to answer one question.
   const onSprint = tab === 'sprint' && state.phase === 'sprint';
-  const takeover = state.phase === 'planning' || state.phase === 'review' || state.phase === 'retro';
+  const event = state.phase === 'planning' || state.phase === 'review' || state.phase === 'retro';
+  // An event can be set aside to look at another artifact, and taken up again. The tabs used to
+  // change behind it with nothing to show for it: "These tabs do not do anything when I am in Sprint
+  // planning" (Al, 25 November 2026). Pressing another tab now shows it, with a way back.
+  // Kept as WHICH event was set aside, so the next one opens over its tab without anything having to
+  // be reset when the phase changes.
+  const thisEvent = `${state.sprintNumber}:${state.phase}`;
+  const [asideFrom, setAsideFrom] = useState<string | null>(null);
+  const lookingAway = event && asideFrom === thisEvent;
+  const takeover = event && !lookingAway;
+  const eventName = state.phase === 'planning' ? 'Sprint Planning' : state.phase === 'review' ? 'the Sprint Review' : 'the Retrospective';
+  const pickTab = (t: ArtifactTab) => { setTab(t); setAsideFrom(event && t !== home ? thisEvent : null); };
   // The game moves you to the artifact it is about: Refinement to the Product Backlog, a Sprint to
   // the Sprint Backlog, the Review to the Increment. You can go anywhere from there; this only says
   // where each part of the game starts, so nobody arrives at a screen behind the wrong tab.
@@ -505,14 +516,14 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               is that a learner meets the same picture on the diagram, in the game and on a lesson
               card. They were a clipboard, a checklist and a clump of trees: good icons, and nothing
               to do with the board somebody had been reading ten minutes earlier. */}
-          <Tab active={tab === 'backlog'} onClick={() => setTab('backlog')} label="Product Backlog"
+          <Tab active={tab === 'backlog'} onClick={() => pickTab('backlog')} label="Product Backlog"
             icon={(p) => <BoardIcon name={BOARD.productBacklog} {...p} />} />
-          <Tab active={tab === 'sprint'} onClick={() => setTab('sprint')} label="Sprint Backlog"
+          <Tab active={tab === 'sprint'} onClick={() => pickTab('sprint')} label="Sprint Backlog"
             icon={(p) => <BoardIcon name={BOARD.sprintBacklog} {...p} />}
             locked={sprintBacklog ? undefined : 'made at Planning'} />
           {/* Naming it matters: the park is the PRODUCT, and what each Sprint adds to it is an
               Increment. A learner who never connects the two is playing a building game. */}
-          <Tab active={tab === 'increment'} onClick={() => setTab('increment')} label="Increment"
+          <Tab active={tab === 'increment'} onClick={() => pickTab('increment')} label="Increment"
             icon={(p) => <BoardIcon name={BOARD.increment} {...p} />} badge={open ? String(open) : undefined} />
           {/* ...and the teaching for wherever you are, at the end of the row. It used to be a card
               stacked above the Product Backlog, open, pushing the artifact down the screen - and
@@ -526,6 +537,15 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             </span>
           )}
         </div>
+        {/* The event set aside, said, with the way back to it. */}
+        {event && lookingAway && (
+          <div data-part="event-aside" className="mt-1 flex flex-wrap items-center justify-between gap-2 rounded-md border border-primary/40 bg-primary/[0.06] px-3 py-1.5 text-sm">
+            <span><span className="font-semibold">{eventName[0].toUpperCase() + eventName.slice(1)}</span> is still open. You are looking at the {tab === 'backlog' ? 'Product Backlog' : tab === 'increment' ? 'Increment' : 'Sprint Backlog'}.</span>
+            <button type="button" onClick={() => pickTab(home)} className={cn(FOCUS, 'rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground hover:bg-primary/90')}>
+              Back to {eventName}
+            </button>
+          </div>
+        )}
       </header>
 
       {/* The band: who does what now, and what each of the five is doing. The accountabilities were
@@ -547,7 +567,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
                 screen on this tab before the first Sprint; for the rest of the game the tab is the
                 bench, because refinement is ongoing work and not a phase in front of the Sprints.
                 The read-only glance is what is left when nobody handed a bench in. */}
-            {home === 'backlog' && !takeover ? children : (backlogTab ?? <BacklogGlance state={state} />)}
+            {home === 'backlog' && !event ? children : (backlogTab ?? <BacklogGlance state={state} />)}
           </div>
         </div>
 
@@ -575,7 +595,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
             <SplitPanes id="sprint" between={['the work', 'the park']} from="xl" sizes={[50, 50]} min={[30, 25]} className="w-full flex-1"
               stackedClassName="flex min-h-0 w-full flex-1 flex-col gap-3"
               firstClassName="flex min-h-0 min-w-0 flex-col" secondClassName="flex min-h-0 min-w-0 flex-col"
-              first={home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
+              first={home === 'sprint' && !event ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
               second={
                 // Stacked, the park keeps its own height under the board and the pane scrolls past it;
                 // side by side, it fills its half.
@@ -683,7 +703,7 @@ export function ZooShell({ state, children, parkTab, onSetTab, links, menuLinks,
               } />
           ) : (
             <div className={cn('mx-auto flex min-h-0 w-full max-w-[1600px] flex-1 flex-col gap-3', DOCK_GUTTER)}>
-              {home === 'sprint' && !takeover ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
+              {home === 'sprint' && !event ? children : <SprintBacklogGlance state={state} locked={!sprintBacklog} />}
             </div>
           )}
         </div>
