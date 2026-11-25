@@ -85,7 +85,7 @@ interface RefineBacklogProps {
   /** Agreed once, here, before the first Sprint. After that only a Retrospective changes it. */
   onSetSprintDays?: (days: number) => void;
   /** The Increment's commitment, agreed before the first Sprint. */
-  onSetDod?: (dod: string[]) => void;
+  onSetDod?: (dod: string[], draft?: boolean) => void;
   onAgreeDod?: () => void;
   /** The refinement teaching card, shown inside the "?" rather than on the page. */
   teachCard?: string | null;
@@ -134,7 +134,8 @@ export function RefineBacklog({ state, onSetSprintDays, onSetDod, onAgreeDod, on
   const step = first ? handover(state)?.key : undefined;
   const dodEditor = onSetDod && (
     <div className="space-y-2">
-      <DodEditor dod={state.definitionOfDone} onSave={onSetDod} suggesting={!state.dodAgreed} brief />
+      {/* Editing the suggestion is drafting it: only the button below agrees it. */}
+      <DodEditor dod={state.definitionOfDone} onSave={(d) => onSetDod(d, !state.dodAgreed)} suggesting={!state.dodAgreed} brief />
       {!state.dodAgreed && onAgreeDod && (<>
         <Button size="sm" className="w-full" disabled={!state.definitionOfDone.length} onClick={() => { onAgreeDod(); setDodChanging(false); }}>
           <Check className="mr-1 h-4 w-4" /> We agree - this is our Definition of Done

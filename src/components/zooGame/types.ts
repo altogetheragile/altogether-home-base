@@ -883,7 +883,7 @@ export type ZooAction =
   | { type: 'SET_SPRINT_BET'; bet: { who: SegmentId | 'all'; metric: 'happiness' | 'visitors'; by: number } | null }
   | { type: 'ASK_PLACEMENT'; id: string }
   | { type: 'ANSWER_PLACEMENT'; id: string; choice: string }
-  | { type: 'SET_DOD'; dod: string[]; by?: string }
+  | { type: 'SET_DOD'; dod: string[]; by?: string; draft?: boolean }
   | { type: 'ACCEPT_SIGNAL'; index: number; by?: string }
   | { type: 'DECLINE_SIGNAL'; index: number; by?: string }
   | { type: 'PLAN_SPRINT'; ids: string[]; refinementPoints?: number; by?: string }
