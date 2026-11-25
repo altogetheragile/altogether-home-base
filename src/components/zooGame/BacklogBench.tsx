@@ -12,7 +12,6 @@ import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
 import { EYEBROW, FOCUS, PADDING, SURFACE, TONE } from './ui/tokens';
 import { Scissors, HelpCircle, Pencil, Clock, MessageCircleQuestion, Check, AlertCircle, X } from 'lucide-react';
-import { BoardIcon, BOARD } from './board/BoardIcon';
 
 // The Product Backlog tab, as a place you can work.
 //
@@ -275,21 +274,7 @@ export function BacklogTab({ state, onEstimate, onAddPbi, onRefinePbi, onReorder
 
   return (
     <div className="space-y-3">
-      {/* The commitment of the Product Backlog, on the Product Backlog. An artifact and its
-          commitment belong together, and this said the Sprint Backlog already worked that way. It
-          did not: the Sprint Goal was in the top strip, truncated, and nowhere near the board. It
-          is above the board now, so the claim is true and the two artifacts match.
-          In Priya's orange, with the label in ink so it can be read: the Product Goal is the Product Owner's, and the game's blue is for the
-          move waiting on you, which this is not. */}
-      <div className="rounded-lg border-2 border-[hsl(var(--zoo-po))] bg-[hsl(var(--zoo-po)/0.10)] px-3 py-2">
-        <div className={cn(EYEBROW, 'flex items-center gap-1.5 text-foreground')}>
-          <BoardIcon name={BOARD.productGoal} className="h-3.5 w-3.5" /> Product Goal <span className="font-normal normal-case tracking-normal text-muted-foreground">commitment of the Product Backlog</span>
-        </div>
-        <p className={cn('text-sm leading-snug', state.productGoal.trim() ? 'font-semibold' : 'text-muted-foreground')}>
-          {state.productGoal.trim() || 'No Product Goal set yet - it is the long-term objective the Product Backlog is ordered towards.'}
-        </p>
-      </div>
-
+      {/* The Product Goal heads the list itself now (ProductGoalBar, in ProductBacklogSidebar). */}
       {/* What refinement has cost today, where the spending happens. Only during a Sprint: outside
           one this is the dedicated time for it and it costs nothing. */}
       {inSprint && !state.learnMode && (

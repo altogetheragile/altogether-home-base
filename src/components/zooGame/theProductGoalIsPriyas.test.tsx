@@ -9,7 +9,7 @@ const src = (f: string) => readFileSync(`src/components/zooGame/${f}`, 'utf8');
 
 describe('the Product Goal panel', () => {
   it('is in the Product Owner’s orange, not the move’s blue', () => {
-    const panel = src('BacklogBench.tsx').split('commitment of the Product Backlog, on the Product Backlog')[1].slice(0, 900);
+    const panel = src('ProductGoalBar.tsx').split('export function ProductGoalBar')[1];
     expect(panel, 'the panel is not in her orange').toMatch(/--zoo-po/);
     expect(panel, 'the panel is still in the move colour').not.toMatch(/\b(border|bg|text)-primary\b/);
   });

@@ -130,10 +130,6 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
   // is for it. At topic one it is still being written, on the page.
   const goal = state.phase === 'sprint'
     || (state.phase === 'planning' && (state.planningTopic ?? 'why') !== 'why' && !!state.sprintGoal.trim());
-  // Before the Sprint Goal: the Product Backlog being written and refined, and Planning's first
-  // topic, where the Sprint Goal is drawn from it.
-  const productGoalHere = !goal && !!state.productGoal.trim()
-    && (state.phase === 'brief' || state.phase === 'refine' || state.phase === 'planning');
   const mine = observer ? null : seat ?? null;
   const covered = new Set(observer ? [] : covering ?? []);
   // An observer covers nothing, but they should still see who has dropped out: they are often the
@@ -156,19 +152,9 @@ export function SeatBand({ state, seat, covering, away, observer, onWho, onRenam
             {state.sprintGoal.trim() || 'None. The Scrum Team did not agree one at Sprint Planning.'}
           </span>
         </p>
-      ) : productGoalHere ? (
-        // ...and before there is one, the Product Goal, in the same place. The Product Backlog is
-        // refined and the Sprint Goal is drawn toward it, and neither screen showed it: "I cannot
-        // see the Product Goal on this page. The backlog should be created to meet the product
-        // goal" (Al, 20 November 2026).
-        <p data-part="product-goal" className="flex min-w-0 flex-1 items-baseline gap-2 text-foreground">
-          {observer && <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
-          <span title="The commitment of the Product Backlog" className="flex shrink-0 items-center gap-1 text-[10px] font-bold uppercase tracking-[0.08em] text-foreground">
-            <Target className="h-3.5 w-3.5 self-center" aria-hidden /> Product Goal
-          </span>
-          <span data-part="product-goal-text" className="min-w-0 text-sm font-bold leading-snug">{state.productGoal.trim()}</span>
-        </p>
       ) : (
+        // Before there is a Sprint Goal the band carried the Product Goal here: one line of small
+        // type nobody saw. It heads the Product Backlog now (ProductGoalBar).
         <p className="min-w-0 shrink-0 text-xs font-medium text-foreground">
           {observer && <span className="mr-1.5 rounded bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-muted-foreground">watching</span>}
           {sentence}
