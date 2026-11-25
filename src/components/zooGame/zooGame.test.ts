@@ -1173,7 +1173,7 @@ describe('zoo game: enclosures are built before their animals', () => {
     let s = addPbi(base, { name: 'Toucan Enclosure', category: 'enclosure', zone: 'Rainforest', acceptance: ['Secure'], enclosureSize: 'small' });
     const home = s.backlog.find((i) => i.name === 'Toucan Enclosure')!;
     expect(home.category).toBe('enclosure');
-    expect(home.enclosureSize).toBe('small');
+    expect(home.askedSize, 'the size asked for is part of what was asked').toBe('small');
     // Add an animal linked to it - no enclosure is auto-created.
     s = addPbi(s, { name: 'Toucan', category: 'exhibit', zone: 'Rainforest', acceptance: ['Recognisable'], enclosureId: home.id });
     expect(s.backlog.find((i) => i.name === 'Toucan')!.enclosureId).toBe(home.id);
@@ -1385,7 +1385,7 @@ describe('zoo game: the toolbox', () => {
     const s = addPbi(refines(initialZooState(1)), toolboxDraft(large));
     const item = s.backlog.find((i) => i.name === large.name && i.status === 'backlog')!;
     expect(item.category).toBe('enclosure');
-    expect(item.enclosureSize).toBe('large');
+    expect(item.askedSize, 'the size asked for is part of what was asked').toBe('large');
     expect(item.unsized).toBe(true);
   });
 

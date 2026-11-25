@@ -74,6 +74,10 @@ export function draftKind(draft: Pick<PbiDraft, 'category' | 'template'>): ItemK
 /** What it is and where it belongs: "Habitat · Big Cats". An epic's area is usually its name, and
  *  "Big Cats" over "Epic · Big Cats" is the word said twice. */
 export function typeLine(item: BacklogItem): string {
-  const kind = KIND_LABEL[itemKind(item)];
+  // A habitat says the size asked for, on every card it is read from: it is in its acceptance
+  // criteria and it decides how much work it is, so it is in front of the Developers when they size it.
+  const kind = item.category === 'enclosure' && item.askedSize
+    ? `${item.askedSize[0].toUpperCase()}${item.askedSize.slice(1)} ${KIND_LABEL[itemKind(item)].toLowerCase()}`
+    : KIND_LABEL[itemKind(item)];
   return item.zone && item.zone !== item.name ? `${kind} · ${item.zone}` : kind;
 }

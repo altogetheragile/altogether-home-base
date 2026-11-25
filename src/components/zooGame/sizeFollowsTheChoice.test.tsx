@@ -63,7 +63,8 @@ describe('when the work stops being what was sized', () => {
     const s = estimateItem(base, found.id, 5);
     const pen = s.backlog.find((it) => it.id === found.id)!;
     // Whatever it is not, so the fixture cannot quietly change nothing.
-    const bigger = (pen.enclosureSize === 'large' ? 'small' : 'large') as 'small' | 'large';
+    // A habitat carries the size asked for from the start now, so "not what it is" is measured from that.
+    const bigger = ((pen.enclosureSize ?? pen.askedSize) === 'large' ? 'small' : 'large') as 'small' | 'large';
     return { s, pen, bigger };
   };
 
@@ -79,7 +80,7 @@ describe('when the work stops being what was sized', () => {
     expect(said, 'five points still stands for work nobody is doing').toBeTruthy();
     expect(said!.now, 'the new size is not the size of the new work')
       .toBe(effortOf({ category: 'enclosure', enclosureSize: bigger }));
-    expect(said!.was).toBe(effortOf({ category: 'enclosure', enclosureSize: pen.enclosureSize ?? 'medium' }));
+    expect(said!.was).toBe(effortOf({ category: 'enclosure', enclosureSize: pen.enclosureSize ?? pen.askedSize ?? 'medium' }));
   });
 
   it('does not re-size it, because the estimate is the Developers', () => {

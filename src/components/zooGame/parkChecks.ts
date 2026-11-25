@@ -201,7 +201,17 @@ export const CRITERIA: CriterionDef[] = [
     answer: (state, item) => {
       // ...and how big it is, which is the Developers' decision too. An unchosen footprint used to
       // read as a medium one, so a habitat nobody had sized had room to move about in it.
-      if (!item.enclosureSize) return { met: false, evidence: 'no footprint chosen yet - how big is it?' };
+      //
+      // ...and how big was ASKED for is the Product Owner's, in the item's acceptance criteria before
+      // it was sized: "an initial AC that help determine the story size". So the footprint is built
+      // to it, and a different one does not meet it until it matches or the criteria are refined.
+      const asked = item.askedSize;
+      if (!item.enclosureSize) {
+        return { met: false, evidence: asked ? `no footprint built yet - ${asked} was asked for, under Size` : 'no footprint chosen yet - how big is it?' };
+      }
+      if (asked && item.enclosureSize !== asked) {
+        return { met: false, evidence: `built ${item.enclosureSize}, ${asked} was asked for - change it under Size, or refine the criteria with the Product Owner` };
+      }
       const size = ENCLOSURE_SIZE[item.enclosureSize ?? 'medium'];
       const tiles = `${Math.round(size.w / 22)} \u00d7 ${Math.round(size.h / 22)}`;
       // Against the animals that will actually live here, where the Product Backlog says which.
