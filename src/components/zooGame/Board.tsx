@@ -15,6 +15,7 @@ import { cn } from '@/lib/utils';
 import { Plus, Pencil, HelpCircle, FilePlus, GripVertical, ChevronUp, ChevronDown, Check, X, Wand2, ListChecks, Star, Boxes, Scissors, CopyPlus, Trash2, ChevronsLeft, ChevronsRight, Undo2, Clock } from 'lucide-react';
 import { ICONS, iconKey } from './itemIcons';
 import { PbiCard } from './PbiCard';
+import { ProductGoalBar } from './ProductGoalBar';
 import { Chip } from './ui/Chip';
 import { Workspace } from './ui/Workspace';
 import { FOCUS, PADDING, SURFACE, TAP, TONE, WIZARD } from './ui/tokens';
@@ -888,6 +889,8 @@ export function ProductBacklogSidebar({ state, mode, compact = false, laterFolds
           </div>
         )}
       </div>
+      {/* The commitment of the Product Backlog, at its head, wherever the list is shown. */}
+      <ProductGoalBar goal={state.productGoal} />
       {/* The explanation is in Learn. What belongs on this screen is the order itself: a paragraph
           over a list you are meant to read is a paragraph you read instead of the list. */}
       {!compact && (

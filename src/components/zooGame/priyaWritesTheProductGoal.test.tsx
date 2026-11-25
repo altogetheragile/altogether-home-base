@@ -81,9 +81,11 @@ describe('her starter Product Backlog', () => {
 });
 
 describe('the band, before there is a Sprint Goal', () => {
-  it('carries the Product Goal while the Product Backlog is refined', () => {
+  it('leaves the Product Goal to the Product Backlog it heads', () => {
+    // It was here, one line of small type, and "basically invisible" (Al, 25 November 2026). It
+    // heads the Product Backlog now: see productGoalHeadsTheBacklog.test.tsx.
     const s = { ...initialZooState(3), phase: 'refine', productGoal: priyaGoal('Waterside') } as ZooGameState;
     const band = render(<SeatBand state={s} />).container;
-    expect(band.querySelector('[data-part="product-goal-text"]')?.textContent).toBe(priyaGoal('Waterside'));
+    expect(band.querySelector('[data-part="product-goal"]')).toBeNull();
   });
 });

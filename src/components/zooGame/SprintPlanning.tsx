@@ -8,6 +8,7 @@ import { useYou } from './you';
 
 import { TaskEditor, SplitEpicPanel, ChooseSolutionPanel } from './Board';
 import { PbiCard } from './PbiCard';
+import { ProductGoalBar } from './ProductGoalBar';
 import { ShapeChooser } from './ShapeChooser';
 import { Workspace } from './ui/Workspace';
 import { PickCard } from './PickCard';
@@ -219,8 +220,9 @@ function PlanColumns({ left, right }: { left: ReactNode; right: ReactNode }) {
 }
 
 /** The left column's heading, so all three topics label it the same way. */
-function BacklogHeading({ count, note, onRefine }: { count: number; note?: string; onRefine?: () => void }) {
+function BacklogHeading({ count, goal, note, onRefine }: { count: number; goal: string; note?: string; onRefine?: () => void }) {
   return (
+    <>
     <div className="flex flex-wrap items-baseline justify-between gap-x-2">
       <h3 className="text-sm font-semibold">Product Backlog <span className="font-normal text-muted-foreground">({count})</span></h3>
       {onRefine
@@ -228,6 +230,9 @@ function BacklogHeading({ count, note, onRefine }: { count: number; note?: strin
           className={cn(FOCUS, "text-[11px] text-muted-foreground underline-offset-2 hover:text-foreground hover:underline")}>Refine the Product Backlog</button>
         : note && <span className="text-[11px] text-zoo-quiet">{note}</span>}
     </div>
+    {/* The Sprint Goal is drawn towards it, so it heads the list it is drawn from. */}
+    <ProductGoalBar goal={goal} />
+    </>
   );
 }
 
@@ -383,7 +388,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
       {step === 'why' && (
         <PlanColumns
           left={<>
-            <BacklogHeading count={items.length} note="ordered by the Product Owner - open one to read it" />
+            <BacklogHeading count={items.length} goal={state.productGoal} note="ordered by the Product Owner - open one to read it" />
             <p className="text-[11px] text-zoo-quiet">
               {candidates.length
                 ? <>What the Product Owner is proposing value from. The marked items are about a Sprint&rsquo;s worth off the
@@ -544,7 +549,7 @@ export function SprintPlanning({ state, onPlan, onSetForecast, mustAgree = [], m
           {/* Pick from the left, and watch the Sprint fill on the right. */}
           <PlanColumns
             left={<>
-              <BacklogHeading count={items.length - chosen.length} onRefine={onRefine} />
+              <BacklogHeading count={items.length - chosen.length} goal={state.productGoal} onRefine={onRefine} />
               <div className="max-h-[46vh] space-y-1.5 overflow-y-auto pr-1">
                 {items.filter((i) => !selected.has(i.id)).map((it) => (
                   <PickCard key={it.id} item={it} why={notReady(it, state)} onPick={() => toggle(it.id)} onFix={() => setFixing(it.id)}
