@@ -3661,6 +3661,19 @@ export function suggestSprintGoal(items: BacklogItem[]): string {
   // because one Sprint opens some of an area and not the whole thing.
   const epic = items.find((i) => i.category === 'epic');
   if (epic) return `Our goal is to open the first of the ${epic.zone || epic.name} to visitors so that there is something worth coming for`;
+  // Habitats, with their animals still to come. There was no case for them, so a Sprint of Lion
+  // Enclosure fell through to "make the park pleasanter to be in" beside a Product Goal about the big
+  // cats: "looks like a generic park-improvement goal rather than something tied to the Big Cats
+  // Product Goal" (sm23, sm26, sm27). A habitat is FOR its animals, so the goal says whose home it is.
+  const habitats = items.filter((i) => i.category === 'enclosure');
+  if (habitats.length) {
+    const animals = habitats.map((h) => h.name.replace(/\s*(enclosure|habitat)$/i, '').trim()).filter(Boolean);
+    const few = animals.length > 0 && habitats.length <= 3;
+    const who = few ? `the ${list(animals.map(many))}` : `the ${habitats[0].zone || 'new'} animals`;
+    const what = few ? `the ${list(habitats.map((h) => h.name.toLowerCase()))}` : `the ${habitats[0].zone || 'new'} habitats`;
+    // The animals in the "so that", which "Reword it for me" keeps on its own: "they" would lose them.
+    return `Our goal is to build ${what} so that ${who} can go on show next`;
+  }
   const amenities = items.filter((i) => i.category === 'amenity');
   const paths = items.filter((i) => i.category === 'path');
   if (amenities.length && paths.length) {

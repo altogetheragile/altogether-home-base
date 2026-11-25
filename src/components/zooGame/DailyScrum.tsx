@@ -90,9 +90,9 @@ function useStandUp(state: ZooGameState) {
 /** One of the event's steps: a number, the question it answers, and what you do about it. Asked
  *  while playing it: "what is important? What should I do?" The screen had seven panels of the
  *  same weight and no order to read them in. */
-function Step({ n, title, aside, children }: { n: number; title: string; aside?: string; children: ReactNode }) {
+function Step({ n, title, aside, faded, children }: { n: number; title: string; aside?: string; faded?: boolean; children: ReactNode }) {
   return (
-    <section data-step={n} className="space-y-2">
+    <section data-step={n} data-faded={faded || undefined} className={cn('space-y-2 transition-opacity', faded && 'opacity-60')}>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-foreground text-sm font-bold text-background">{n}</span>
         <h2 className="text-lg font-bold leading-tight">{title}</h2>
@@ -189,7 +189,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
           : { tone: 'done', head: 'Yes, on track.', facts: `${pts(prog.remaining)} left over ${days(daysLeft)}. ${done}.` };
   const VerdictIcon = verdict.tone === 'done' ? CheckCircle2 : AlertTriangle;
 
-  const steps: { title: string; aside?: string; body: ReactNode }[] = [];
+  const steps: { title: string; aside?: string; faded?: boolean; body: ReactNode }[] = [];
   steps.push({ title: 'Will we make the Sprint Goal?', body: (
     <div data-part="verdict" data-tone={verdict.tone}
       className={cn('grid items-center gap-3 rounded-lg border-2 px-3 py-2 lg:grid-cols-[minmax(0,1fr)_260px]', TONE[verdict.tone].soft)}>
@@ -365,7 +365,13 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
   // What the team escalated and is still waiting on, said, so it is not mistaken for something new
   // or for an escalation that did nothing.
   const waiting = state.carriedImpediment?.waitDays ? state.carriedImpediment : null;
-  steps.push({ title: 'Change today\u2019s plan', body: waiting ? (
+  // One after the other, said. Both were open at once with nothing between them, and every
+  // scrum-master playtest from sm23 on asked which came first: "unclear whether I need to pick what I
+  // say before dealing with the blocker". The round comes first - it is where a blocker is said out
+  // loud - so until you have had your turn this step says so and stands back. Still open: it also
+  // holds ending the event, and that is never locked behind speaking.
+  const afterYourTurn = standUp && options.length > 0;
+  steps.push({ title: 'Change today\u2019s plan', aside: afterYourTurn ? 'After your turn round the room.' : undefined, faded: afterYourTurn, body: waiting ? (
     <div className="space-y-2">
       <p data-part="still-waiting" className="text-sm text-muted-foreground">
         <span className="font-semibold text-foreground">Still waiting: {waiting.title}.</span> Escalated, so it is out of the team&rsquo;s hands, and it clears {waiting.waitDays === 1 ? 'by tomorrow' : 'in a day or two'}.
@@ -395,7 +401,7 @@ export function DailyScrum({ state, onHold, onSkip, onDrop, onAnswer, onAskScrum
         </div>
       </div>
 
-      {steps.map((st, i) => <Step key={st.title} n={i + 1} title={st.title} aside={st.aside}>{st.body}</Step>)}
+      {steps.map((st, i) => <Step key={st.title} n={i + 1} title={st.title} aside={st.aside} faded={st.faded}>{st.body}</Step>)}
 
       {/* Whose event this is, said rather than implied. */}
       <p data-part="in-the-room" className="border-t border-border pt-3 text-[11px] text-muted-foreground">
