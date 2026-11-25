@@ -226,6 +226,13 @@ export interface BacklogItem {
    *  and the animals inside it are rendered to scale, so you see animals in a space, not
    *  one giant one. Chosen when building the enclosure in the studio. */
   enclosureSize?: 'small' | 'medium' | 'large';
+  /** For an ENCLOSURE item: the size the Product Owner asked for, as part of its acceptance
+   *  criteria. Known before the item is sized, because it decides how much work it is: "It seems
+   *  unlikely after sizing the items that the enclosure size would be set. I would say this is an
+   *  initial AC that help determine the story size" (Al, 25 November 2026). The Developers still
+   *  build the footprint (`enclosureSize`), and "Can an animal move about in here?" checks the two
+   *  agree. */
+  askedSize?: 'small' | 'medium' | 'large';
   /** For an EXHIBIT (animal): the id of the enclosure it lives in. The animal can only be
    *  built once that enclosure is built (Done), and it is drawn inside it in the park. */
   enclosureId?: string;

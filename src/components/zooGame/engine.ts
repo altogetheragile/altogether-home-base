@@ -1256,7 +1256,8 @@ export function addPbi(state: ZooGameState, draft: PbiDraft): ZooGameState {
     // it is not gated (nothing to wait for); assign it later by refining it.
     item = { ...base, enclosureId: draft.enclosureId || undefined, appeal: { families: 6, enthusiasts: 6, comfortSeekers: 6 }, capacity: 320 };
   } else if (draft.category === 'amenity') item = { ...base, services: draft.services, serviceCapacity: draft.services ? 500 : undefined };
-  else if (draft.category === 'enclosure') item = { ...base, enclosureSize: draft.enclosureSize ?? 'medium' };
+  // The size asked for, not the size built: the footprint is the Developers' to build to it.
+  else if (draft.category === 'enclosure') item = { ...base, askedSize: draft.enclosureSize ?? 'medium' };
   else item = base; // flora is scenery: designable and placeable, no simulation input yet
   // A team that has not taken refinement on cannot size anything, so an item that arrived unsized
   // would be an item they could never plan. The Developers size it off-screen, the same as they
@@ -1287,7 +1288,9 @@ export function refinePbi(state: ZooGameState, id: string, draft: PbiDraft): Zoo
           acceptance: acceptance.length ? acceptance : it.acceptance,
           // An animal can be (re)assigned to an enclosure and given a base shape while refining it.
           ...(it.category === 'exhibit' ? { enclosureId: draft.enclosureId || undefined, template: draft.template || undefined } : {}),
-          ...(it.category === 'enclosure' && draft.enclosureSize ? { enclosureSize: draft.enclosureSize } : {}),
+          // Refining a habitat can change the size asked for; what has been built is left alone, and
+          // its criterion says when the two differ.
+          ...(it.category === 'enclosure' && draft.enclosureSize ? { askedSize: draft.enclosureSize } : {}),
         }
       : it,
   );
@@ -1315,6 +1318,8 @@ export function splitEpic(state: ZooGameState, id: string, memberIds: string[]):
       created.push({
         id: mem.enclosureId ?? `${mem.id}-enc`, name: mem.habitat ?? `${mem.name} Enclosure`, category: 'enclosure', zone,
         acceptance: enclosureAcceptance(),
+        // The size Priya asks for is part of what is asked, so it is on the item before it is sized.
+        askedSize: mem.footprint ?? 'medium',
         // A habitat is sized by the work of building one, not as a fraction of its animal. It used
         // to be `max(3, mem.size / 2)` - half a number that measured how much visitors like a lion.
         status: 'backlog', sprintNumber: null, accessible: true, unsized: true, estimate: 0,
@@ -1427,7 +1432,11 @@ export function outgrown(item: BacklogItem): { was: number; now: number } | null
   // Nothing to compare with while the thing itself is undecided. A habitat carries the size the
   // Product Owner had in mind as `trueSize` and no footprint of its own until the Developers choose
   // one, so reading it before they have is comparing an intention with a default.
-  if (item.category === 'enclosure' && !item.enclosureSize) return null;
+  //
+  // ...and now a habitat carries the size asked for from the start, so that is what it is compared
+  // on until the Developers build a footprint of their own. Asked for bigger in refinement after it
+  // was sized, and the points beside it no longer describe it.
+  if (item.category === 'enclosure' && !item.enclosureSize && !item.askedSize) return null;
   const now = effortOf(item);
   return now === was ? null : { was, now };
 }

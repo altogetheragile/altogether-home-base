@@ -205,8 +205,10 @@ export const PRODUCT_GOAL = 'Open a zoo that visitors love and come back to.';
  *  in four places, which is the same number four times until somebody changes one of them. */
 export const DEFAULT_SERVICE_CAPACITY = 500;
 
-export function effortOf(it: { category: string; enclosureSize?: string; template?: string; services?: string }): number {
-  if (it.category === 'enclosure') return { small: 3, medium: 5, large: 8 }[it.enclosureSize ?? 'medium'] ?? 5;
+export function effortOf(it: { category: string; enclosureSize?: string; askedSize?: string; template?: string; services?: string }): number {
+  // The footprint built, or else the size asked for: a habitat is the work of the size it is going
+  // to be, and until it is built that is the size in its acceptance criteria.
+  if (it.category === 'enclosure') return { small: 3, medium: 5, large: 8 }[it.enclosureSize ?? it.askedSize ?? 'medium'] ?? 5;
   if (it.category === 'exhibit') return 2;
   if (it.category === 'path') return 3;
   // Somewhere to sit is a bench; somewhere to eat is a building you go inside.
@@ -526,6 +528,9 @@ function enc(id: string, name: string, zone: string, footprint: 'small' | 'mediu
   const size = effortOf({ category: 'enclosure', enclosureSize: footprint });
   return {
     id, name, category: 'enclosure', zone, estimate: unsized ? 0 : size, unsized, trueSize: size,
+    // ...but what the Product Owner asks for IS written onto it, as part of its acceptance criteria,
+    // so the Developers know how big a thing they are sizing.
+    askedSize: footprint,
     acceptance: enclosureAcceptance(),
     status: 'backlog', sprintNumber: null, accessible: true,
   };

@@ -325,7 +325,8 @@ function pullNext(state: ZooGameState, dev?: ScrumTeamMember): AiMove | null {
  *  reducer used to fill these in for a build the game made; a player chooses them, so this does. */
 function finishSetup(state: ZooGameState, item: BacklogItem): AiMove | null {
   if (item.category === 'enclosure' && !item.enclosureSize) {
-    return { action: { type: 'SET_ENCLOSURE', id: item.id, size: sizeForTheAnimals(item, state.backlog) }, says: 'sized it' };
+    // To the size asked for, which is in its acceptance criteria; the animals' needs where none was.
+    return { action: { type: 'SET_ENCLOSURE', id: item.id, size: item.askedSize ?? sizeForTheAnimals(item, state.backlog) }, says: 'sized it' };
   }
   if (item.category === 'amenity' && !item.services) {
     const wanted = wantedServices(item);

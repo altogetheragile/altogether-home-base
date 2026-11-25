@@ -53,13 +53,17 @@ export function ShapeChooser({ item, enclosures, onPlan }: {
   enclosures: { id: string; name: string }[];
   onPlan: (patch: { enclosureSize?: 'small' | 'medium' | 'large'; enclosureId?: string; template?: string }) => void;
 }) {
+  // Not asked here any more. How big a habitat is was asked for in its acceptance criteria before it
+  // was sized - "It seems unlikely after sizing the items that the enclosure size would be set"
+  // (Al, 25 November 2026) - so Planning says what was asked and the Developers build to it.
   if (item.category === 'enclosure') {
-    return (
-      <Field label="Size in the park">
-        <Choice options={SIZES.map((s) => ({ key: s.key, label: s.label, hint: s.hint }))}
-          value={item.enclosureSize ?? 'medium'} onPick={(k) => onPlan({ enclosureSize: k as 'small' | 'medium' | 'large' })} />
-      </Field>
-    );
+    const asked = SIZES.find((s) => s.key === item.askedSize);
+    return asked ? (
+      <p data-part="asked-size" className="text-sm">
+        <span className="font-semibold">{asked.label}</span>
+        <span className="text-muted-foreground"> was asked for, in its acceptance criteria. The Developers build the footprint to it.</span>
+      </p>
+    ) : null;
   }
 
   if (item.category === 'exhibit') {
