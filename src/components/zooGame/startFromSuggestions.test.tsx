@@ -4,7 +4,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { RefineBacklog } from './RefineBacklog';
 import { DodEditor } from './DodEditor';
 import { initialZooState, DEFAULT_BRIEF, DEFAULT_DOD, DOD_LIBRARY } from './config';
-import { writeBacklog, splitEpic, estimateItem } from './engine';
+import { writeBacklog } from './engine';
 import type { ZooGameState } from './types';
 
 // "Start from something, never from a blank page" (docs/ZOO_GAME_FLOW.md). The Definition of Done
@@ -22,17 +22,11 @@ const refine = (state: ZooGameState) => render(
 ).container;
 
 const written = () => ({ ...writeBacklog(initialZooState(1), DEFAULT_BRIEF), phase: 'refine' } as ZooGameState);
-const aSprintReady = () => {
-  const w = written();
-  let s = splitEpic(w, 'bigcats', (w.backlog.find((it) => it.id === 'bigcats')?.epicMembers ?? []).map((m) => m.id));
-  for (const it of s.backlog.filter((x) => x.unsized && x.category !== 'epic' && x.category !== 'need')) s = estimateItem(s, it.id, 3);
-  return s;
-};
 
 describe('the Definition of Done starts from suggestions', () => {
-  it('opens when Priya asks what Done means', () => {
-    expect(refine(written()).querySelector('[data-part="dod-suggested"]'), 'open before anybody asked').toBeNull();
-    expect(refine(aSprintReady()).querySelector('[data-part="dod-suggested"]')).not.toBeNull();
+  it('opens when Priya asks what Done means, which is first, before anything is sized', () => {
+    expect(refine(written()).querySelector('[data-part="dod-suggested"]')).not.toBeNull();
+    expect(refine({ ...written(), dodAgreed: true } as ZooGameState).querySelector('[data-part="dod-suggested"]'), 'still open once agreed').toBeNull();
   });
 
   it('says the lines are a suggestion and shows the rest of the library, until it is agreed', () => {

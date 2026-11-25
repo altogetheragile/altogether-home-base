@@ -2,6 +2,7 @@ import { Check, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ZooGameState } from './types';
 import { journey } from './journey';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 /** The whole of Scrum on one line, with where you are lit. See `journey.ts`. */
 export function JourneyLine({ state, className }: { state: ZooGameState; className?: string }) {
@@ -23,6 +24,18 @@ export function JourneyLine({ state, className }: { state: ZooGameState; classNa
             </span>
           )}
           {i > 0 && s.key !== 'planning' && <span aria-hidden className="h-px w-2 bg-border sm:w-3" />}
+          {s.key === 'dod' && state.dodAgreed && state.definitionOfDone.length > 0
+            ? <DodStep state={state}>{pill(s)}</DodStep>
+            : pill(s)}
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/** The step as a pill: where you are, what is behind you, and what was never agreed. */
+function pill(s: ReturnType<typeof journey>['steps'][number]) {
+  return (
           <span className={cn('flex items-center gap-1 rounded-full px-2 py-0.5',
             // Where you are, in ink. Orange is for what is yours to do, and this is a place.
             s.status === 'now' && 'bg-[hsl(var(--zoo-ink))] font-bold text-white',
@@ -37,8 +50,30 @@ export function JourneyLine({ state, className }: { state: ZooGameState; classNa
             {s.detail && <span className="font-medium opacity-90">· {s.detail}</span>}
             {s.status !== 'now' && s.status !== 'done' && <span aria-hidden className="h-1.5 w-1.5 rounded-full bg-current opacity-50 md:hidden" />}
           </span>
-        </li>
-      ))}
-    </ol>
+  );
+}
+
+/** Once agreed, the Definition of Done is one press away from anywhere in the game.
+ *
+ *  It was agreed on one screen and then could only be found under Learn, or in topic three of
+ *  Sprint Planning: "I still cannot see the DoD after it is created." It is the bar every item has
+ *  to clear, all Sprint long, so it lives on the line that is always on screen. */
+function DodStep({ state, children }: { state: ZooGameState; children: React.ReactNode }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" data-part="journey-dod" aria-label="Definition of Done: show it"
+          className="rounded-full underline decoration-dotted underline-offset-2 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+          {children}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent data-part="journey-dod-list" align="start" className="w-80 space-y-2 text-sm">
+        <div className="font-semibold">Definition of Done</div>
+        <ul className="list-disc space-y-1 pl-5">
+          {state.definitionOfDone.map((line) => <li key={line}>{line}</li>)}
+        </ul>
+        <p className="text-xs text-muted-foreground">Agreed by the Scrum Team. Every item has to meet it before it is Done.</p>
+      </PopoverContent>
+    </Popover>
   );
 }

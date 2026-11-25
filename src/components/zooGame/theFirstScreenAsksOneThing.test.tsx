@@ -15,7 +15,7 @@ import type { ZooGameState } from './types';
 const noop = () => {};
 const screen = (over: Partial<ZooGameState> = {}) => render(
   <MemoryRouter>
-    <RefineBacklog state={{ ...initialZooState(3), phase: 'refine', ...over } as ZooGameState}
+    <RefineBacklog state={{ ...initialZooState(3), phase: 'refine', dodAgreed: true, ...over } as ZooGameState}
       onSetSprintDays={noop} onSetDod={noop} onAgreeDod={noop}
       onEstimate={noop} onAddPbi={noop} onRefinePbi={noop} onReorder={noop} onMoveZone={noop}
       onMoveBefore={noop} onSetUseStories={noop} onSplitEpic={noop} onDeletePbi={noop}
@@ -25,7 +25,7 @@ const screen = (over: Partial<ZooGameState> = {}) => render(
 
 describe('the first screen', () => {
   it('asks one thing, and the Definition of Done is done inside the card that asks for it', () => {
-    const c = screen();
+    const c = screen({ dodAgreed: false });
     expect(c.querySelectorAll('[data-part="needs-you"]')).toHaveLength(1);
     const card = c.querySelector('[data-part="needs-you"]')!;
     expect(card.textContent).toMatch(/Agree the Definition of Done/);
@@ -64,7 +64,7 @@ describe('the move before the first Sprint', () => {
   // in Sprint Planning." (5 Nov) So no row is singled out, and the card offers both ways to start.
   const starter = () => {
     const s = { ...initialZooState(3), phase: 'refine' } as ZooGameState;
-    return { ...s, adopted: ['refinement'], backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState;
+    return { ...s, adopted: ['refinement'], dodAgreed: true, backlog: s.backlog.map((it) => ({ ...it, unsized: true })) } as ZooGameState;
   };
 
   it('is a choice: refine some now, or refine in Sprint Planning', () => {
